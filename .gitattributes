@@ -1,0 +1,8 @@
+# Zeilenenden bleiben, wie sie sind.
+#
+# Git schreibt sie unter Windows sonst von LF auf CRLF um. Das waere hier
+# nicht harmlos: die Werkzeuge liegen mit LF vor, _design/LIESMICH.md mit
+# CRLF, und _design/sync.mjs schreibt zwischen die Marken genau das zurueck,
+# was es vorfindet. Eine Umschreibung durch Git gaebe gemischte Enden in
+# derselben Datei.
+* -text

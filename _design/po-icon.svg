@@ -1,0 +1,28 @@
+<!-- ======================================================================
+     POCKETOPS · PRODUKTZEICHEN (Favicon)
+
+     Urfassung. Die Werkzeuge laden diese Datei nicht — jedes traegt das
+     Zeichen als data:-Adresse im Kopf, damit es als einzelne Datei laeuft.
+     Wird hier etwas geaendert, mit _design/sync.mjs nachziehen.
+
+     Derselbe Koffer wie .po-mark in der Kopfzeile, aber fuer 16 Pixel
+     gezeichnet: gefuellt statt umrandet, Griff breit und flach. Ein
+     schmaler, hoher Griff mit duennem Strich sieht klein wie ein
+     Vorhaengeschloss aus — deshalb diese Form.
+
+     Die Deckelnaht ist mit demselben Verlauf gefuellt wie die Kachel.
+     Das geht nur, weil der Verlauf userSpaceOnUse ist und damit ueber
+     die ganze Flaeche laeuft: die Naht trifft die Kachelfarbe genau.
+     ====================================================================== -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="po" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9E292B"/>
+      <stop offset="1" stop-color="#39756F"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7.5" fill="url(#po)"/>
+  <path d="M11.4 11.6V9.8a2.2 2.2 0 0 1 2.2-2.2h4.8a2.2 2.2 0 0 1 2.2 2.2v1.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="5" y="11.2" width="22" height="13.8" rx="2.6" fill="#fff"/>
+  <rect x="5" y="17.2" width="22" height="1.7" fill="url(#po)"/>
+</svg>

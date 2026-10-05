@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer · PocketOps</title>
+  <!-- PO-ICON:ANFANG (Urfassung: _design/po-icon.svg · nachziehen mit _design/sync.mjs) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E %3Cdefs%3E %3ClinearGradient id='po' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E %3Cstop stop-color='%239E292B'/%3E %3Cstop offset='1' stop-color='%2339756F'/%3E %3C/linearGradient%3E %3C/defs%3E %3Crect width='32' height='32' rx='7.5' fill='url(%23po)'/%3E %3Cpath d='M11.4 11.6V9.8a2.2 2.2 0 0 1 2.2-2.2h4.8a2.2 2.2 0 0 1 2.2 2.2v1.8' fill='none' stroke='%23fff' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E %3Crect x='5' y='11.2' width='22' height='13.8' rx='2.6' fill='%23fff'/%3E %3Crect x='5' y='17.2' width='22' height='1.7' fill='url(%23po)'/%3E %3C/svg%3E">
+  <!-- PO-ICON:ENDE -->
+    <style>
+        /* PO-TOKENS:ANFANG (Urfassung: _design/po-tokens.css · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME GESTALTUNG
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft. Wird hier etwas
+           geändert, muss es in alle Werkzeuge nachgezogen werden.
+           ====================================================================== */
+        /* Breite und Höhe schließen Innenabstand und Rahmen ein. Ohne das rechnet
+           der Browser sie obendrauf, und eine Angabe wie width:100% ragt über ihren
+           Platz hinaus. */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            /* Markenfarben */
+            --po-accent:      #9E292B;
+            --po-accent-dark: #852224;
+            --po-teal:        #39756F;
+            --po-teal-dark:   #2F635E;
+            --po-slate:       #697896;
+            --po-frost:       #81BED7;
+            --po-frost-soft:  #D9F3FF;
+            --po-teal-soft:   #E8F5F1;
+            --po-slate-soft:  #E0E8F8;
+
+            /* Flächen */
+            --po-bg:          #F1F5F9;
+            --po-surface:     #FFFFFF;
+            --po-surface-2:   #F8FAFC;
+            --po-surface-3:   #E2E8F0;
+            --po-stage:       #CBD5E1;
+
+            /* Kopfzeile */
+            --po-chrome:      #0F172A;
+            --po-chrome-2:    #1E293B;
+            --po-chrome-line: #334155;
+            --po-on-chrome:   #F8FAFC;
+            --po-on-chrome-2: #94A3B8;
+
+            /* Text */
+            --po-ink:         #1E293B;
+            --po-ink-2:       #475569;
+            --po-ink-3:       #94A3B8;
+
+            /* Linien */
+            --po-line:        #E2E8F0;
+            --po-line-2:      #CBD5E1;
+
+            /* Zustände */
+            --po-ok:          #39756F;
+            --po-warn:        #D89B2B;
+            --po-bad:         #9E292B;
+
+            /* Maße */
+            --po-r-sm:   4px;
+            --po-r:      6px;
+            --po-r-lg:  10px;
+            --po-r-pill: 999px;
+            --po-head-h: 64px;
+            --po-shadow:    0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .10);
+            --po-shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, .25);
+            --po-font: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            --po-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+        }
+
+        /* ---------- Seitengerüst ---------- */
+        .po-body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--po-bg);
+            color: var(--po-ink);
+            font-family: var(--po-font);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .po-main { flex: 1; overflow: auto; padding: 20px; }
+        .po-wrap { max-width: 1280px; margin: 0 auto; }
+        .po-wrap--wide { max-width: 1600px; margin: 0 auto; }
+        .po-split { display: grid; gap: 16px; align-items: start; }
+        .po-split--1-2 { grid-template-columns: minmax(280px, 1fr) 2fr; }
+        .po-split--2-1 { grid-template-columns: 2fr minmax(280px, 1fr); }
+        .po-split--1-1 { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 1000px) {
+            .po-split--1-2, .po-split--2-1, .po-split--1-1 { grid-template-columns: 1fr; }
+        }
+        .po-stack > * + * { margin-top: 12px; }
+        .po-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* ---------- Kopfzeile und Marke ---------- */
+        .po-head {
+            height: var(--po-head-h);
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            box-shadow: var(--po-shadow);
+            position: relative;
+            z-index: 20;
+        }
+        .po-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .po-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--po-r);
+            padding: 4px 6px;
+            margin-left: -6px;
+            transition: background-color .15s;
+        }
+        a.po-brand:hover { background: var(--po-chrome-2); }
+        .po-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--po-r-lg);
+            background: linear-gradient(135deg, var(--po-accent), var(--po-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+        }
+        .po-mark svg { width: 19px; height: 19px; display: block; }
+        .po-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .po-line-name {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--po-on-chrome-2);
+        }
+        .po-tool-name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+        .po-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--po-on-chrome-2);
+            background: var(--po-chrome-2);
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            padding: 3px 9px;
+            white-space: nowrap;
+        }
+        .po-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .po-head-sep { width: 1px; height: 24px; background: var(--po-chrome-line); flex-shrink: 0; }
+
+        /* ---------- Sprache und Anleitung in der Kopfzeile ----------
+           Beides setzt po-base.js selbst in die Kopfzeile, links vor die
+           Aktionen des Werkzeugs: es gehört zur Reihe, nicht zum Werkzeug. */
+        .po-meta { display: flex; align-items: center; gap: 8px; }
+        .po-sprach {
+            display: inline-flex;
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            overflow: hidden;
+            background: var(--po-chrome-2);
+        }
+        .po-sprach button {
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            padding: 5px 10px;
+            border: none;
+            background: transparent;
+            color: var(--po-on-chrome-2);
+            cursor: pointer;
+            transition: background-color .15s, color .15s;
+        }
+        .po-sprach button:hover { color: #fff; }
+        .po-sprach button[aria-pressed="true"] { background: var(--po-accent); color: #fff; }
+        .po-sprach button:focus-visible { outline: 2px solid var(--po-frost); outline-offset: -2px; }
+        .po-frage {
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E2E8F0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-frage:hover { background: #2B3A4F; color: #fff; }
+        .po-frage:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Der Trinkgeldknopf steht neben dem Fragezeichen und ist genauso gebaut. Nur
+           das Herz trägt Farbe — auffallen soll er, drängeln nicht. */
+        .po-trinkgeld {
+            font: inherit;
+            font-size: 13px;
+            line-height: 1;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E79A9B;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-trinkgeld:hover { background: #2B3A4F; color: #fff; }
+        .po-trinkgeld:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Ein Verweis, der wie ein Knopf aussieht, bringt die Unterstreichung mit. */
+        a.po-btn { text-decoration: none; }
+
+        /* ---------- Das Hilfefenster ---------- */
+        .po-hilfe { max-height: 68vh; overflow: auto; }
+        .po-hilfe p { line-height: 1.55; }
+        .po-hilfe a { color: var(--po-teal); font-weight: 600; }
+        .po-hilfe-titel {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 6px;
+        }
+        .po-hilfe-liste { margin: 0; padding-left: 20px; }
+        .po-hilfe-liste li { margin-bottom: 5px; line-height: 1.5; }
+        .po-hilfe-teil { border-top: 1px solid var(--po-line); margin-top: 14px; padding-top: 12px; }
+
+        /* ---------- Schaltflächen ---------- */
+        .po-btn {
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--po-r);
+            border: 1px solid var(--po-line-2);
+            background: var(--po-surface);
+            color: var(--po-ink-2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .po-btn:hover { background: var(--po-surface-2); border-color: var(--po-slate); color: var(--po-ink); }
+        .po-btn:active { transform: translateY(1px); }
+        .po-btn:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+        .po-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+        .po-head .po-btn { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #E2E8F0; }
+        .po-head .po-btn:hover { background: #2B3A4F; border-color: #475569; color: #fff; }
+
+        .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+        .po-head .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-head .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+
+        .po-btn--go { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+        .po-btn--go:hover { background: var(--po-teal-dark); border-color: var(--po-teal-dark); color: #fff; }
+
+        .po-btn--danger { color: var(--po-bad); border-color: #FECACA; background: #FEF2F2; }
+        .po-btn--danger:hover { background: #FEE2E2; border-color: #FCA5A5; color: #7F1D1D; }
+        .po-head .po-btn--danger { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #FCA5A5; }
+        .po-head .po-btn--danger:hover { background: #4C1D1D; border-color: #991B1B; color: #FEE2E2; }
+
+        .po-btn--ghost { background: transparent; border-color: transparent; color: var(--po-ink-3); padding: 5px 7px; }
+        .po-btn--ghost:hover { background: var(--po-surface-3); color: var(--po-ink); border-color: transparent; }
+
+        .po-btn--sm { font-size: 11px; padding: 4px 8px; }
+        .po-btn--block { width: 100%; justify-content: center; }
+
+        /* kleines rundes Löschen-Kreuz in Listen und Tabellen */
+        .po-x {
+            font: inherit;
+            font-size: 10px;
+            line-height: 1;
+            width: 18px;
+            height: 18px;
+            border-radius: var(--po-r-pill);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--po-ink-3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background-color .15s, color .15s;
+        }
+        .po-x:hover { background: #FEE2E2; color: var(--po-bad); }
+
+        /* ---------- Panels und Abschnitte ---------- */
+        .po-panel {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+        }
+        .po-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--po-surface-2);
+            border-bottom: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg) var(--po-r-lg) 0 0;
+        }
+        .po-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--po-ink-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .po-panel-body { padding: 14px; }
+        .po-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 8px;
+        }
+        .po-hint {
+            font-size: 11px;
+            color: var(--po-ink-2);
+            background: var(--po-surface-2);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r);
+            padding: 10px 12px;
+            line-height: 1.5;
+        }
+
+        /* ---------- Eingabefelder ---------- */
+        .po-label { font-size: 11px; font-weight: 600; color: var(--po-ink-2); display: block; margin-bottom: 4px; }
+        .po-input, .po-select, .po-textarea {
+            font: inherit;
+            font-size: 12px;
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid var(--po-line-2);
+            border-radius: var(--po-r);
+            background: var(--po-surface);
+            color: var(--po-ink);
+            box-sizing: border-box;
+        }
+        /* Ein Farbfeld füllt der Browser selbst aus. Ohne eigene Höhe fiele es
+           gegenüber den anderen Feldern zusammen, und der Innenabstand ließe den
+           Farbfleck zu klein wirken. */
+        .po-input[type="color"] { height: 32px; padding: 3px; cursor: pointer; }
+        .po-input:focus, .po-select:focus, .po-textarea:focus {
+            outline: none;
+            border-color: var(--po-frost);
+            box-shadow: 0 0 0 3px rgba(129, 190, 215, .25);
+        }
+        .po-textarea { min-height: 72px; resize: vertical; }
+        .po-search { font-size: 13px; padding: 10px 14px; border-radius: var(--po-r-lg); }
+        .po-num { width: 58px; text-align: center; padding: 5px 4px; }
+        .po-field { display: flex; gap: 6px; align-items: center; }
+        .po-field .po-input { flex: 1; min-width: 0; }
+
+        .po-range { width: 100%; accent-color: var(--po-teal); }
+        .po-range-value { font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+
+        .po-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; font-weight: 600; color: var(--po-ink-2); cursor: pointer; }
+        .po-check input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--po-teal); flex-shrink: 0; }
+
+        /* ---------- Karten ---------- */
+        .po-card {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+            padding: 14px;
+        }
+        .po-card--pick { cursor: pointer; transition: border-color .15s, background-color .15s; }
+        .po-card--pick:hover { border-color: var(--po-frost); background: var(--po-surface-2); }
+
+        /* ---------- Tabellen ---------- */
+        .po-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .po-table th, .po-table td { padding: 8px 10px; border: 1px solid var(--po-line); text-align: left; }
+        .po-table th {
+            background: var(--po-surface-2);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--po-ink-2);
+            white-space: nowrap;
+        }
+        .po-table tbody tr:nth-child(even) { background: var(--po-surface-2); }
+        .po-table--center th, .po-table--center td { text-align: center; }
+        .po-table--center th:first-child, .po-table--center td:first-child { text-align: left; }
+
+        /* ---------- Zustände ---------- */
+        .po-badge {
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--po-r-pill);
+            padding: 2px 8px;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .po-badge--ok   { color: var(--po-ok);  background: var(--po-teal-soft); border-color: #BFE3DA; }
+        .po-badge--warn { color: #92610F;       background: #FEF6E7;             border-color: #F5D9A0; }
+        .po-badge--bad  { color: var(--po-bad); background: #FEF2F2;             border-color: #FECACA; }
+        .po-badge--neutral { color: var(--po-ink-2); background: var(--po-surface-3); border-color: var(--po-line-2); }
+
+        .po-empty { text-align: center; color: var(--po-ink-3); font-size: 12px; padding: 28px 16px; line-height: 1.6; }
+
+        /* ---------- Hinweisfenster unten rechts ---------- */
+        .po-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 200;
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 11px 16px;
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            max-width: 340px;
+            line-height: 1.45;
+        }
+
+        /* ---------- Dialog ---------- */
+        .po-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .55);
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .po-dialog {
+            background: var(--po-surface);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+        .po-dialog-head { padding: 16px 18px 0; font-size: 15px; font-weight: 700; color: var(--po-ink); }
+        .po-dialog-body { padding: 10px 18px 16px; font-size: 13px; color: var(--po-ink-2); line-height: 1.55; }
+        .po-dialog-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--po-surface-2);
+            border-top: 1px solid var(--po-line);
+        }
+
+        /* ---------- Bildlaufleisten ---------- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--po-line-2); border-radius: var(--po-r-pill); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--po-slate); }
+
+        /* ---------- Druck ---------- */
+        @media print {
+            .po-head, .po-toast, .po-backdrop, .po-no-print { display: none !important; }
+            .po-body { height: auto; overflow: visible; }
+            .po-main { overflow: visible; padding: 0; }
+            .po-panel { box-shadow: none; border-color: #ccc; }
+        }
+        /* PO-TOKENS:ENDE */
+
+        /* ---------- nur für dieses Werkzeug ---------- */
+        .uhr-mitte { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .uhr-karte { width: 100%; max-width: 560px; text-align: center; padding: 36px 28px 28px; }
+
+        #display {
+            font-family: var(--po-mono);
+            font-size: clamp(3.5rem, 13vw, 7rem);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: .02em;
+            color: var(--po-ink);
+            font-variant-numeric: tabular-nums;
+            padding: 6px 14px;
+            border-radius: var(--po-r-lg);
+            border: 2px dashed var(--po-line-2);
+            display: inline-block;
+            min-width: 5ch;
+            outline: none;
+            cursor: text;
+            transition: color .2s, border-color .2s, background-color .2s;
+        }
+        #display:focus { border-color: var(--po-frost); background: var(--po-surface-2); border-style: solid; }
+        .laeuft #display { color: var(--po-teal); border-color: transparent; }
+        .alarm  #display { color: var(--po-accent); border-color: transparent; animation: po-blink 1s steps(2, start) infinite; }
+        @keyframes po-blink { to { opacity: .35; } }
+
+        .uhr-zustand { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--po-ink-3); margin-top: 14px; min-height: 16px; }
+        .laeuft .uhr-zustand { color: var(--po-teal); }
+        .alarm  .uhr-zustand { color: var(--po-accent); }
+
+        .uhr-knoepfe { display: flex; gap: 8px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+        .uhr-knoepfe .po-btn { font-size: 13px; padding: 9px 20px; }
+
+        .uhr-vorgaben { display: flex; gap: 6px; justify-content: center; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--po-line); flex-wrap: wrap; }
+
+        .uhr-balken { height: 4px; background: var(--po-surface-3); border-radius: var(--po-r-pill); overflow: hidden; margin-top: 24px; }
+        .uhr-balken i { display: block; height: 100%; width: 0; background: var(--po-teal); border-radius: var(--po-r-pill); transition: width .98s linear; }
+        .alarm .uhr-balken i { background: var(--po-accent); }
+    </style>
+</head>
+<body class="po-body">
+
+    <header class="po-head">
+        <div class="po-head-left">
+            <a class="po-brand" href="../Start_PocketOps.html" title="Zur PocketOps-Übersicht">
+                <span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>
+                <span class="po-brand-text">
+                    <span class="po-line-name">PocketOps</span>
+                    <span class="po-tool-name">Timer</span>
+                </span>
+            </a>
+            <span class="po-chip">Zeit im Blick behalten</span>
+        </div>
+        <div class="po-head-actions">
+            <button class="po-btn" onclick="tonProbe()" title="Prüfen, ob der Signalton hörbar ist">Ton prüfen</button>
+        </div>
+    </header>
+
+    <div class="uhr-mitte">
+        <div class="po-panel uhr-karte" id="uhr">
+            <div id="display" contenteditable="true" spellcheck="false" aria-label="Verbleibende Zeit">05:00</div>
+            <div class="uhr-zustand" id="zustand">Zeit anklicken, um sie zu ändern</div>
+
+            <div class="uhr-balken"><i id="balken"></i></div>
+
+            <div class="uhr-knoepfe">
+                <button class="po-btn po-btn--go" id="btn-start" onclick="startTimer()">Start</button>
+                <button class="po-btn" id="btn-pause" onclick="pauseTimer()">Pause</button>
+                <button class="po-btn" onclick="stopTimer()">Zurücksetzen</button>
+            </div>
+
+            <div class="uhr-vorgaben">
+                <button class="po-btn po-btn--sm" onclick="setzeMinuten(5)">5 min</button>
+                <button class="po-btn po-btn--sm" onclick="setzeMinuten(10)">10 min</button>
+                <button class="po-btn po-btn--sm" onclick="setzeMinuten(15)">15 min</button>
+                <button class="po-btn po-btn--sm" onclick="setzeMinuten(25)">25 min</button>
+                <button class="po-btn po-btn--sm" onclick="setzeMinuten(45)">45 min</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* PO-SPRACHE:ANFANG (Urfassung: _design/sprache/Timer.js · nachziehen mit _design/sync.mjs) */
+        /* Timer · Anleitung und Wörterbuch */
+
+        const PO_HILFE = {
+            de: {
+                kurz: 'Eine Uhr, die rückwärts läuft und am Ende einen Ton gibt.',
+                schritte: [
+                    'Eine der Vorgaben wählen — <b>5</b>, <b>10</b>, <b>15</b>, <b>25</b> oder <b>45 min</b>.',
+                    'Für eine eigene Dauer auf die angezeigte Zeit klicken und sie ändern.',
+                    '<b>Start</b> lässt sie laufen, <b>Pause</b> hält sie an.'
+                ],
+                tipps: [
+                    'Mit <b>Ton prüfen</b> hörst du vorher, ob das Signal auch wirklich ankommt.',
+                    'Das Fenster darf in den Hintergrund — die Uhr läuft weiter.'
+                ]
+            },
+            en: {
+                kurz: 'A clock that counts down and sounds a note when it reaches zero.',
+                schritte: [
+                    'Pick one of the presets — <b>5</b>, <b>10</b>, <b>15</b>, <b>25</b> or <b>45 min</b>.',
+                    'For your own length, click the time shown and change it.',
+                    '<b>Start</b> sets it running, <b>Pause</b> holds it.'
+                ],
+                tipps: [
+                    '<b>Test sound</b> lets you check beforehand that you will actually hear the signal.',
+                    'The window may go to the background — the clock keeps running.'
+                ]
+            }
+        };
+
+        const PO_WB = {
+            'Timer · PocketOps': 'Timer · PocketOps',
+            'Timer': 'Timer',
+            'Zeit im Blick behalten': 'Keep an eye on the time',
+            'Start': 'Start',
+            'Pause': 'Pause',
+            'Ton prüfen': 'Test sound',
+            'Prüfen, ob der Signalton hörbar ist': 'Check that the signal can be heard',
+            'Zeit anklicken, um sie zu ändern': 'Click the time to change it',
+            '5 min': '5 min',
+            '10 min': '10 min',
+            '15 min': '15 min',
+            '25 min': '25 min',
+            '45 min': '45 min'
+        };
+        /* PO-SPRACHE:ENDE */
+    </script>
+
+    <script>
+        /* PO-BASE:ANFANG (Urfassung: _design/po-base.js · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME BAUSTEINE
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft.
+
+           poToast(text)                  kurzer Hinweis unten rechts
+           poConfirm(frage, opt)          Rückfrage, liefert ein Versprechen
+           poAsk(titel, felder)           kleine Eingabemaske statt prompt()
+                                          Feld: { name, label, wert, typ, pflicht }
+                                          typ 'date', 'number', 'color' kommen vom
+                                          Browser; typ 'auswahl' braucht zusätzlich
+                                          optionen: [{ wert, text }] und wird zur Liste
+           poEsc(text)                    Text für HTML entschärfen
+           poDownload(name, text, typ)    Datei zum Herunterladen anbieten
+           poReadFile(input, fn)          gewählte Datei als Text lesen
+           ====================================================================== */
+
+        function poEsc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        let _poToastTimer = null;
+        function poToast(text, dauer = 2600) {
+            let t = document.getElementById('po-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'po-toast';
+                t.className = 'po-toast';
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.style.display = 'block';
+            clearTimeout(_poToastTimer);
+            _poToastTimer = setTimeout(() => { t.style.display = 'none'; }, dauer);
+        }
+
+        function _poModal(innerHtml, aufbau) {
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `<div class="po-dialog" role="dialog" aria-modal="true">${innerHtml}</div>`;
+            document.body.appendChild(back);
+            const schliessen = () => { document.removeEventListener('keydown', aufTaste); back.remove(); };
+            const aufTaste = e => { if (e.key === 'Escape') { e.preventDefault(); back.__abbruch && back.__abbruch(); } };
+            document.addEventListener('keydown', aufTaste);
+            back.addEventListener('mousedown', e => { if (e.target === back) back.__abbruch && back.__abbruch(); });
+            aufbau(back, schliessen);
+            return back;
+        }
+
+        function poConfirm(frage, { titel = 'Bitte bestätigen', ja = 'Ja, weiter', nein = 'Abbrechen', gefahr = false } = {}) {
+            return new Promise(res => {
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body">${poEsc(frage)}</div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>${poEsc(nein)}</button>
+                        <button class="po-btn ${gefahr ? 'po-btn--primary' : 'po-btn--go'}" data-ja>${poEsc(ja)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(false);
+                    back.querySelector('[data-nein]').onclick = () => fertig(false);
+                    back.querySelector('[data-ja]').onclick = () => fertig(true);
+                    setTimeout(() => back.querySelector('[data-ja]').focus(), 30);
+                });
+            });
+        }
+
+        /* felder: [{ name, label, wert, typ: 'text'|'number', min, max, pflicht }]
+           Ergebnis: Objekt mit den Werten, oder null bei Abbruch. */
+        function poAsk(titel, felder, { ok = 'Hinzufügen' } = {}) {
+            return new Promise(res => {
+                /* typ: 'auswahl' erwartet zusätzlich optionen: [{ wert, text }] und wird
+                   zur Liste. Alles andere geht als type an ein <input> — 'date', 'number'
+                   und 'color' kommen so vom Browser, ohne eigenes Zutun. */
+                const html = felder.map((f, i) => {
+                    const feld = f.typ === 'auswahl'
+                        ? `<select class="po-select" id="po-f-${i}">`
+                          + (f.optionen || []).map(o =>
+                                `<option value="${poEsc(o.wert)}"${String(o.wert) === String(f.wert) ? ' selected' : ''}>${poEsc(o.text)}</option>`
+                            ).join('')
+                          + `</select>`
+                        : `<input class="po-input" id="po-f-${i}" type="${f.typ || 'text'}"
+                               value="${poEsc(f.wert == null ? '' : f.wert)}"
+                               ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''}
+                               ${f.platzhalter ? `placeholder="${poEsc(f.platzhalter)}"` : ''}>`;
+                    return `
+                    <div style="margin-bottom:10px">
+                        <label class="po-label" for="po-f-${i}">${poEsc(f.label)}</label>
+                        ${feld}
+                    </div>`;
+                }).join('');
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body"><form id="po-ask-form">${html}</form></div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${poEsc(ok)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(null);
+                    back.querySelector('[data-nein]').onclick = () => fertig(null);
+                    const senden = () => {
+                        const out = {};
+                        let fehlt = null;
+                        felder.forEach((f, i) => {
+                            const el = back.querySelector('#po-f-' + i);
+                            let v = el.value.trim();
+                            if (f.typ === 'number') v = v === '' ? null : Number(v);
+                            if (f.pflicht !== false && (v === '' || v === null)) fehlt = fehlt || el;
+                            out[f.name] = v;
+                        });
+                        if (fehlt) { fehlt.focus(); fehlt.style.borderColor = 'var(--po-bad)'; return; }
+                        fertig(out);
+                    };
+                    back.querySelector('[data-ja]').onclick = senden;
+                    back.querySelector('#po-ask-form').onsubmit = e => { e.preventDefault(); senden(); };
+                    setTimeout(() => back.querySelector('#po-f-0') && back.querySelector('#po-f-0').focus(), 30);
+                });
+            });
+        }
+
+        function poDownload(name, inhalt, typ = 'application/json') {
+            const blob = new Blob([inhalt], { type: typ });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }
+
+        function poReadFile(input, fn) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const r = new FileReader();
+            const melden = e => poToast('Die Datei lässt sich nicht lesen: ' + (e && e.message ? e.message : e), 4200);
+            r.onerror = () => melden(new Error('Die Datei ließ sich nicht öffnen.'));
+            r.onload = ev => {
+                // Ein Rückruf mit async wirft nicht, er gibt ein abgelehntes Versprechen
+                // zurück. Beides muss hier ankommen, sonst bleibt ein Fehler stumm.
+                try {
+                    const p = fn(ev.target.result);
+                    if (p && typeof p.catch === 'function') p.catch(melden);
+                } catch (e) { melden(e); }
+            };
+            r.readAsText(f);
+        }
+
+        /* Markenzeichen für die Kopfzeile — in jedem Werkzeug gleich */
+        const PO_MARK = '<span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>';
+
+        /* ======================================================================
+           POCKETOPS · ZWEISPRACHIGKEIT
+
+           Die Werkzeuge sind auf Deutsch geschrieben — Beschriftungen, Hinweise,
+           Meldungen, alles. Englisch entsteht nicht aus einem zweiten Satz
+           Quelltext, sondern aus einem Wörterbuch: deutscher Satz → englischer
+           Satz. Ein Beobachter schreibt um, was auf der Seite steht, und merkt
+           sich am Knoten das Original — darum geht beim Zurückschalten nichts
+           verloren, und am deutschen Quelltext ändert sich nichts.
+
+           Je Werkzeug steht sein Wörterbuch in einem eigenen Block
+           (PO-SPRACHE, Urfassung: _design/sprache/<Datei>.js) vor diesem hier.
+           Gemeinsames — Kopfzeile, Dialoge, Meldungen aus dieser Datei — steht
+           unten in PO_WB_BASIS.
+
+           Platzhalter: '{}' steht für eine Stelle, die unverändert bleibt.
+               '{} von {} Fehlern'  →  '{} of {} mistakes'
+
+           Was nie übersetzt wird: was der Nutzer selbst geschrieben hat.
+           Eingabefelder, Textflächen, alles unter contenteditable und alles
+           unter data-po-roh bleibt unangetastet.
+           ====================================================================== */
+
+        /* Gemeinsame Einträge. Gelten in jedem Werkzeug. */
+        const PO_WB_BASIS = {
+            'Zur PocketOps-Übersicht': 'To the PocketOps overview',
+            'Trinkgeld': 'Tip jar',
+            'Speichern': 'Save',
+            'Öffnen': 'Open',
+            'Zurücksetzen': 'Reset',
+            'Abbrechen': 'Cancel',
+            'Ja, weiter': 'Yes, go ahead',
+            'Ja, löschen': 'Yes, delete',
+            'Ja, alles löschen': 'Yes, delete everything',
+            'Ja, entfernen': 'Yes, remove',
+            'Bitte bestätigen': 'Please confirm',
+            'Hinzufügen': 'Add',
+            'Drucken': 'Print',
+            'Kopieren': 'Copy',
+            'Anleitung': 'Help',
+            'Sprache / Language': 'Sprache / Language',
+            'Schließen': 'Close',
+            'Die Datei lässt sich nicht lesen: {}': 'The file cannot be read: {}',
+            'Die Datei ließ sich nicht öffnen.': 'The file could not be opened.',
+            'Es ist noch nichts gezählt.': 'Nothing has been counted yet.',
+            'Es ist nichts zu löschen.': 'There is nothing to delete.',
+            'Zähler zurücksetzen': 'Reset counters',
+            'Zähler zurückgesetzt': 'Counters reset',
+            'Gegen den Rechner': 'Against the computer'
+        };
+
+        /* Text der Hilfe selbst — in beiden Sprachen, nicht über das Wörterbuch. */
+        const PO_HILFE_TEXTE = {
+            de: {
+                titel: 'Kurzanleitung',
+                schritte: 'So geht es',
+                tipps: 'Gut zu wissen',
+                oertlich: 'Deine Arbeit bleibt auf diesem Rechner. Sie wird nirgendwohin geschickt.',
+                oertlichMitNetz: 'Deine Arbeit bleibt auf diesem Rechner und wird nirgendwohin geschickt. Dieses Werkzeug lädt beim Öffnen allerdings eine Programmbibliothek nach, von: {}. Der fremde Server erfährt dabei deine IP-Adresse. Woran du arbeitest, verlässt den Rechner auch dann nicht.',
+                sicherung: 'Sichern und Zurückholen',
+                sicherungText: 'Mit <b>Speichern</b> legt das Werkzeug deine Arbeit als Datei neben sich — eine <b>.json</b>-Datei. Das ist nichts Gefährliches: eine Textdatei, die du mit dem Editor öffnen und lesen kannst. Mit <b>Öffnen</b> holst du sie zurück, in dieses oder in ein anderes Fenster.',
+                sicherungWarum: 'Warum das wichtig ist: deine Arbeit liegt sonst nur im Browser. Räumt jemand den Browser auf, ist sie weg. Die gespeicherte Datei bleibt.',
+                mehr: 'Ausführlich: Sichern &amp; Zurückholen',
+                schluss: 'Verstanden'
+            },
+            en: {
+                titel: 'Quick guide',
+                schritte: 'How it works',
+                tipps: 'Worth knowing',
+                oertlich: 'Your work stays on this computer. It is not sent anywhere.',
+                oertlichMitNetz: 'Your work stays on this computer and is not sent anywhere. This tool does fetch a code library when it opens, from: {}. That server learns your IP address. What you are working on still never leaves the machine.',
+                sicherung: 'Saving and restoring',
+                sicherungText: '<b>Save</b> puts your work into a file next to the tool — a <b>.json</b> file. Nothing dangerous about it: a text file you can open and read in any editor. <b>Open</b> brings it back, into this window or another one.',
+                sicherungWarum: 'Why this matters: otherwise your work only lives inside the browser. If someone clears the browser, it is gone. The saved file stays.',
+                mehr: 'In full: Backups &amp; restoring',
+                schluss: 'Got it'
+            }
+        };
+
+        let _poSpr = 'de';
+        try { if (localStorage.getItem('po_sprache') === 'en') _poSpr = 'en'; } catch (e) { /* ohne Speicher eben Deutsch */ }
+
+        const poSprache = () => _poSpr;
+
+        /* ---------- Wörterbuch ---------- */
+
+        const _poNormal = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+        const _poEscRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        let _poExakt = null, _poMuster = null;
+
+        function _poWbBauen() {
+            if (_poExakt) return;
+            _poExakt = new Map();
+            _poMuster = [];
+            const quellen = [PO_WB_BASIS, (typeof PO_WB !== 'undefined' ? PO_WB : null)];
+            for (const q of quellen) {
+                if (!q) continue;
+                for (const de of Object.keys(q)) {
+                    const en = q[de];
+                    if (!en) continue;
+                    if (de.indexOf('{}') >= 0) {
+                        const teile = _poNormal(de).split('{}');
+                        _poMuster.push({ re: new RegExp('^' + teile.map(_poEscRe).join('([\\s\\S]*?)') + '$'), en });
+                    } else {
+                        _poExakt.set(_poNormal(de), en);
+                    }
+                }
+            }
+        }
+
+        /* Was das Wörterbuch nicht kennt, wird hier gesammelt. Beim Pflegen einer
+           Übersetzung zeigt poLuecken() im Browser, was noch fehlt. */
+        const _poLuecken = new Set();
+        function poLuecken() { return Array.from(_poLuecken).sort((a, b) => a.localeCompare(b, 'de')); }
+
+        /* Liefert die Übersetzung oder null, wenn das Wörterbuch nichts kennt. */
+        function _poNachschlagen(text) {
+            _poWbBauen();
+            const n = _poNormal(text);
+            if (!n) return null;
+            const treffer = _poExakt.get(n);
+            if (treffer !== undefined) return treffer;
+            for (const m of _poMuster) {
+                const t = n.match(m.re);
+                if (!t) continue;
+                let i = 0;
+                return m.en.replace(/\{\}/g, () => { i++; return t[i] === undefined ? '' : t[i]; });
+            }
+            if (_poLuecken.size < 2000) _poLuecken.add(n);
+            return null;
+        }
+
+        /* Für Text, der nicht im Seitengerüst steht, sondern gezeichnet wird —
+           auf einer Leinwand etwa. Gibt auf Deutsch den Text unverändert zurück. */
+        function poT(text) {
+            if (_poSpr !== 'en') return text;
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* Die englische Fassung, unabhängig von der eingestellten Sprache. Gebraucht
+           dort, wo beide Sprachen zugleich gelten müssen — etwa in einem Suchfeld,
+           das auch nach dem Umschalten noch finden soll. */
+        function poEn(text) {
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* ---------- Die Seite umschreiben ---------- */
+
+        const _PO_ATTR = ['placeholder', 'title', 'aria-label', 'alt'];
+        const _PO_TABU = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1, PRE: 1, CODE: 1, CANVAS: 1 };
+
+        function _poDarf(el) {
+            for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+                if (_PO_TABU[e.tagName]) return false;
+                if (e.isContentEditable) return false;
+                if (e.hasAttribute('data-po-roh')) return false;
+                if (e.hasAttribute('data-po-nur')) return false;   // steht schon in seiner Sprache
+            }
+            return true;
+        }
+
+        /* Längere Texte — eine ganze Seite Erklärung etwa — zerfielen im Wörterbuch
+           an jedem <b> in Stücke. Dafür gibt es den zweiten Weg: zwei Blöcke, einer
+           je Sprache, ausgezeichnet mit data-po-nur="de" bzw. "en". Es wird immer
+           nur einer gezeigt.
+           Bewusst über style.display statt über hidden: eine Klasse mit display:flex
+           gewänne sonst gegen hidden, und der Block stünde trotzdem da. */
+        function _poSprachbloecke() {
+            document.querySelectorAll('[data-po-nur]').forEach(el => {
+                el.style.display = (el.getAttribute('data-po-nur') === _poSpr) ? '' : 'none';
+            });
+        }
+
+        function _poTextKnoten(k) {
+            if (!k || !k.nodeValue || !k.nodeValue.trim()) return;
+            if (k.nodeValue === k.__poEn) return;                 // steht schon auf Englisch
+            if (!_poDarf(k.parentElement)) return;
+            const neu = _poNachschlagen(k.nodeValue);
+            if (neu === null) return;
+            k.__poDe = k.nodeValue;
+            k.nodeValue = k.nodeValue.match(/^\s*/)[0] + neu + k.nodeValue.match(/\s*$/)[0];
+            k.__poEn = k.nodeValue;
+        }
+
+        function _poMerkmal(el, name) {
+            if (!el || el.nodeType !== 1 || !el.hasAttribute(name)) return;
+            if (!_poDarf(el)) return;
+            const wert = el.getAttribute(name);
+            el.__poAttrEn = el.__poAttrEn || {};
+            el.__poAttrDe = el.__poAttrDe || {};
+            if (wert === el.__poAttrEn[name]) return;
+            const neu = _poNachschlagen(wert);
+            if (neu === null) return;
+            el.__poAttrDe[name] = wert;
+            el.setAttribute(name, neu);
+            el.__poAttrEn[name] = neu;
+        }
+
+        function _poAnwenden(wurzel) {
+            if (_poSpr !== 'en' || !wurzel) return;
+            if (wurzel.nodeType === 3) { _poTextKnoten(wurzel); return; }
+            if (wurzel.nodeType !== 1) return;
+            const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) _poTextKnoten(k);
+            const mit = [wurzel].concat(Array.from(wurzel.querySelectorAll('*')));
+            for (const el of mit) for (const a of _PO_ATTR) if (el.hasAttribute && el.hasAttribute(a)) _poMerkmal(el, a);
+        }
+
+        function _poZurueck() {
+            const lauf = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) {
+                if (k.__poDe !== undefined && k.nodeValue === k.__poEn) { k.nodeValue = k.__poDe; k.__poEn = undefined; }
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (!el.__poAttrDe) continue;
+                for (const a of Object.keys(el.__poAttrDe)) {
+                    if (el.getAttribute(a) === el.__poAttrEn[a]) el.setAttribute(a, el.__poAttrDe[a]);
+                }
+                el.__poAttrEn = {};
+            }
+        }
+
+        let _poStill = false;
+        let _poBeob = null;
+
+        function _poBeobachten() {
+            _poBeob = new MutationObserver(aenderungen => {
+                if (_poStill || _poSpr !== 'en') return;
+                _poStill = true;
+                try {
+                    for (const a of aenderungen) {
+                        if (a.type === 'childList') a.addedNodes.forEach(n => {
+                            _poAnwenden(n);
+                            if (n.nodeType === 1 && n.querySelector && (n.hasAttribute('data-po-nur') || n.querySelector('[data-po-nur]'))) _poSprachbloecke();
+                        });
+                        else if (a.type === 'characterData') _poTextKnoten(a.target);
+                        else if (a.type === 'attributes') _poMerkmal(a.target, a.attributeName);
+                    }
+                } finally {
+                    _poBeob.takeRecords();          // eigene Änderungen nicht noch einmal ansehen
+                    _poStill = false;
+                }
+            });
+            _poBeob.observe(document.documentElement, {
+                childList: true, subtree: true, characterData: true,
+                attributes: true, attributeFilter: _PO_ATTR
+            });
+        }
+
+        /* ---------- Umschalten ---------- */
+
+        function poSpracheSetzen(spr) {
+            const neu = spr === 'en' ? 'en' : 'de';
+            if (neu === _poSpr) return;
+            _poSpr = neu;
+            try { localStorage.setItem('po_sprache', neu); } catch (e) { /* dann eben nur für dieses Fenster */ }
+            document.documentElement.lang = neu;
+            /* Beide Fenster werden geschlossen statt übersetzt: ihr Inhalt steht als
+               data-po-roh und geht am Wörterbuch vorbei. Beim nächsten Öffnen baut er
+               sich in der neuen Sprache neu auf. Ohne das bliebe nach einem Wechsel
+               bei offenem Fenster die alte Sprache stehen. */
+            const hilfe = document.getElementById('po-hilfe-fenster');
+            if (hilfe) hilfe.remove();
+            const trinkgeld = document.getElementById('po-trinkgeld-fenster');
+            if (trinkgeld) trinkgeld.remove();
+            _poStill = true;
+            try {
+                if (neu === 'en') _poAnwenden(document.documentElement);
+                else _poZurueck();
+            } finally {
+                if (_poBeob) _poBeob.takeRecords();
+                _poStill = false;
+            }
+            _poSprachbloecke();
+            _poKopfMalen();
+            // Werkzeuge, die selbst zeichnen, müssen danach neu zeichnen.
+            if (typeof poNeuZeichnen === 'function') poNeuZeichnen();
+        }
+
+        function _poKopfMalen() {
+            document.querySelectorAll('.po-sprach button').forEach(b => {
+                b.setAttribute('aria-pressed', String(b.dataset.spr === _poSpr));
+            });
+        }
+
+        /* ---------- Trinkgeld ----------
+           PocketOps verschenkt sich. Der Knopf ist die einzige Stelle, an der das
+           Werkzeug etwas von sich aus möchte — entsprechend zurückhaltend.
+
+           Bewusst „Trinkgeld“ und nicht „Spende“: eine Spende im steuerlichen Sinn
+           kann nur eine anerkannt gemeinnützige Einrichtung entgegennehmen. Hier ist
+           es eine freiwillige Zuwendung an eine Privatperson.
+
+           Der Verweis geht an PayPal.me. Bewusst nicht an die Spendenseite mit der
+           E-Mail-Adresse als Kennung: die stünde damit im Quelltext jeder der
+           sechsundzwanzig Dateien und wäre, seit das Ganze öffentlich liegt, für
+           Adress-Sammler maschinell abgreifbar. Der PayPal.me-Name zeigt sie nicht.
+
+           Den Betrag gibt der Besucher selbst an — deshalb der blanke Name ohne
+           angehängte Zahl. Soll sich das ändern, ist hier die eine Zeile zu ändern
+           und _design/sync.mjs laufen zu lassen. */
+        const PO_TRINKGELD_LINK = 'https://paypal.me/JensHeitmann306';
+
+        const PO_TRINKGELD_TEXTE = {
+            de: {
+                titel: 'Trinkgeld',
+                frei: 'PocketOps ist frei. Nimm es, gib es weiter, bau es um — es kostet nichts und wird nichts kosten.',
+                arbeit: 'Darin steckt allerdings eine Menge Arbeit. Wenn dir eines der Werkzeuge den Tag leichter gemacht hat, freue ich mich über ein Trinkgeld. Wie viel, entscheidest du.',
+                hinweis: 'Der Knopf öffnet PayPal in einem neuen Fenster. Hier wird nichts abgefragt und nichts mitgeschnitten.',
+                knopf: 'Trinkgeld über PayPal',
+                nein: 'Vielleicht später'
+            },
+            en: {
+                titel: 'Tip jar',
+                frei: 'PocketOps is free. Take it, pass it on, rebuild it — it costs nothing and it never will.',
+                arbeit: 'There is a fair amount of work in it, though. If one of these tools has made your day easier, a tip would be welcome. You decide how much.',
+                hinweis: 'The button opens PayPal in a new window. Nothing is asked for or recorded here.',
+                knopf: 'Leave a tip via PayPal',
+                nein: 'Maybe later'
+            }
+        };
+
+        function poTrinkgeld() {
+            if (document.getElementById('po-trinkgeld-fenster')) return;
+            const t = PO_TRINKGELD_TEXTE[_poSpr] || PO_TRINKGELD_TEXTE.de;
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(t.titel) + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.frei) + '</p>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.arbeit) + '</p>'
+              +   '<p style="margin:0;color:var(--po-ink-3);font-size:11px">' + poEsc(t.hinweis) + '</p>'
+              + '</div>'
+              + '<div class="po-dialog-foot">'
+              +   '<button class="po-btn" data-zu>' + poEsc(t.nein) + '</button>'
+              +   '<a class="po-btn po-btn--primary" href="' + PO_TRINKGELD_LINK + '" target="_blank" rel="noopener noreferrer">'
+              +     poEsc(t.knopf) + '</a>'
+              + '</div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    /* Nach dem Sprung zu PayPal soll hier nicht noch ein Fenster offen
+                       stehenbleiben, auf das niemand mehr schaut. */
+                    b.querySelector('a.po-btn').onclick = () => setTimeout(schliessen, 150);
+                });
+            back.id = 'po-trinkgeld-fenster';
+        }
+
+        function _poKopfBauen() {
+            const leiste = document.querySelector('.po-head-actions');
+            if (!leiste || document.querySelector('.po-meta')) return;
+            const box = document.createElement('div');
+            box.className = 'po-meta';
+            box.innerHTML =
+                '<div class="po-sprach" role="group" aria-label="Sprache / Language">'
+              + '<button type="button" data-spr="de">DE</button>'
+              + '<button type="button" data-spr="en">EN</button></div>'
+              + '<button type="button" class="po-trinkgeld" title="Trinkgeld" aria-label="Trinkgeld">&#9829;</button>'
+              + '<button type="button" class="po-frage" title="Anleitung" aria-label="Anleitung">?</button>'
+              + '<div class="po-head-sep"></div>';
+            leiste.insertBefore(box, leiste.firstChild);
+            box.querySelectorAll('[data-spr]').forEach(b => { b.onclick = () => poSpracheSetzen(b.dataset.spr); });
+            box.querySelector('.po-frage').onclick = poHilfe;
+            box.querySelector('.po-trinkgeld').onclick = poTrinkgeld;
+            _poKopfMalen();
+        }
+
+        /* ---------- Die Anleitung ---------- */
+
+        /* Die Werkzeuge liegen im Ordner tools/, die Übersicht eine Ebene darüber.
+           Woran sich das erkennen lässt: nur ein Werkzeug trägt das Markenzeichen als
+           Rückverweis; auf der Übersicht selbst steht es als blosser Text. */
+        const _poSicherungPfad = () => document.querySelector('a.po-brand') ? 'Sicherung.html' : 'tools/Sicherung.html';
+
+        /* Die Rechner, von denen diese Seite etwas nachlädt — ohne Doppelte. */
+        function _poFremdquellen() {
+            return [...document.querySelectorAll('script[src], link[rel="stylesheet"][href]')]
+                .map(e => e.getAttribute('src') || e.getAttribute('href'))
+                .filter(u => /^https?:\/\//i.test(u || ''))
+                .map(u => { try { return new URL(u).hostname; } catch (e) { return null; } })
+                .filter((h, i, a) => h && a.indexOf(h) === i);
+        }
+
+        function poHilfe() {
+            if (document.getElementById('po-hilfe-fenster')) return;
+            const t = PO_HILFE_TEXTE[_poSpr];
+            const h = (typeof PO_HILFE !== 'undefined' && PO_HILFE && PO_HILFE[_poSpr]) ? PO_HILFE[_poSpr] : null;
+            const name = (document.querySelector('.po-tool-name') || {}).textContent || 'PocketOps';
+
+            const teile = [];
+            if (h && h.kurz) teile.push('<p style="margin:0 0 12px">' + h.kurz + '</p>');
+            if (h && h.schritte && h.schritte.length) {
+                teile.push('<div class="po-hilfe-titel">' + t.schritte + '</div>'
+                         + '<ol class="po-hilfe-liste">' + h.schritte.map(s => '<li>' + s + '</li>').join('') + '</ol>');
+            }
+            if (h && h.tipps && h.tipps.length) {
+                teile.push('<div class="po-hilfe-teil"><div class="po-hilfe-titel">' + t.tipps + '</div>'
+                         + '<ul class="po-hilfe-liste">' + h.tipps.map(s => '<li>' + s + '</li>').join('') + '</ul></div>');
+            }
+            teile.push('<div class="po-hilfe-teil">'
+                     + '<div class="po-hilfe-titel">' + t.sicherung + '</div>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungText + '</p>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungWarum + '</p>'
+                     + '<p style="margin:0"><a href="' + _poSicherungPfad() + '">' + t.mehr + '</a></p></div>');
+            /* Ein paar Werkzeuge holen sich eine Programmbibliothek aus dem Netz. Der
+               Hinweis liest das aus der Seite selbst aus, statt es pauschal zu
+               behaupten — so bleibt er richtig, auch wenn später eine Quelle dazukommt
+               oder wegfällt. */
+            const fremd = _poFremdquellen();
+            teile.push('<div class="po-hilfe-teil" style="color:var(--po-ink-3);font-size:11px">'
+                     + (fremd.length ? t.oertlichMitNetz.replace('{}', fremd.join(', ')) : t.oertlich)
+                     + '</div>');
+
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(name) + ' — ' + t.titel + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>' + teile.join('') + '</div>'
+              + '<div class="po-dialog-foot"><button class="po-btn po-btn--go" data-zu>' + t.schluss + '</button></div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    setTimeout(() => b.querySelector('[data-zu]').focus(), 30);
+                });
+            back.id = 'po-hilfe-fenster';
+            back.querySelector('.po-dialog').style.maxWidth = '560px';
+        }
+
+        function _poStart() {
+            document.documentElement.lang = _poSpr;
+            _poKopfBauen();
+            _poSprachbloecke();
+            if (_poSpr === 'en') {
+                _poStill = true;
+                try { _poAnwenden(document.documentElement); } finally { _poStill = false; }
+            }
+            _poBeobachten();
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F1') { e.preventDefault(); poHilfe(); }
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _poStart);
+        else _poStart();
+        /* PO-BASE:ENDE */
+
+        /* ======================================================================
+           TIMER
+           ====================================================================== */
+
+        let timer = null;
+        let restSekunden = 0;
+        let startSekunden = 0;
+        let laeuft = false;
+        let audioCtx = null;
+
+        const el = id => document.getElementById(id);
+
+        function tonKontext() {
+            // Erst beim ersten Klick anlegen: ohne Zutun des Nutzers bleibt der Ton stumm
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function piep(anzahl = 3) {
+            const ctx = tonKontext();
+            for (let i = 0; i < anzahl; i++) {
+                setTimeout(() => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.28);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(); osc.stop(ctx.currentTime + 0.3);
+                }, i * 420);
+            }
+        }
+
+        function tonProbe() { piep(1); poToast('Ein Ton wurde abgespielt. Bleibt es still, ist der Browser stummgeschaltet.', 3600); }
+
+        function leseZeit() {
+            const teile = el('display').innerText.replace(/\s/g, '').split(':');
+            const m = parseInt(teile[0], 10) || 0;
+            const s = parseInt(teile[1], 10) || 0;
+            return Math.max(0, Math.min(99 * 60 + 59, m * 60 + s));
+        }
+
+        function zeigeZeit(sekunden) {
+            const m = Math.floor(sekunden / 60), s = sekunden % 60;
+            el('display').innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function zustand(text, klasse) {
+            el('zustand').textContent = text;
+            el('uhr').className = 'po-panel uhr-karte' + (klasse ? ' ' + klasse : '');
+        }
+
+        function balken() {
+            const anteil = startSekunden ? (1 - restSekunden / startSekunden) * 100 : 0;
+            el('balken').style.width = anteil + '%';
+        }
+
+        function startTimer() {
+            if (laeuft) return;
+            if (restSekunden <= 0) { restSekunden = leseZeit(); startSekunden = restSekunden; }
+            if (restSekunden <= 0) { poToast('Stelle zuerst eine Zeit größer als null ein.'); return; }
+            tonKontext();                       // Tonrechte holen, solange ein Klick vorliegt
+            el('display').contentEditable = 'false';
+            laeuft = true;
+            zustand('läuft', 'laeuft');
+            balken();
+            timer = setInterval(() => {
+                restSekunden--;
+                zeigeZeit(restSekunden);
+                balken();
+                if (restSekunden <= 0) {
+                    clearInterval(timer);
+                    laeuft = false;
+                    el('display').contentEditable = 'true';
+                    zustand('Zeit abgelaufen', 'alarm');
+                    piep(3);
+                    poToast('Die Zeit ist abgelaufen.', 5000);
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            if (!laeuft) return;
+            clearInterval(timer);
+            laeuft = false;
+            el('display').contentEditable = 'true';
+            zustand('angehalten', '');
+        }
+
+        function stopTimer() {
+            clearInterval(timer);
+            laeuft = false;
+            el('display').contentEditable = 'true';
+            restSekunden = 0;
+            startSekunden = 0;
+            zeigeZeit(startSekunden || leseZeit());
+            el('balken').style.width = '0';
+            zustand('Zeit anklicken, um sie zu ändern', '');
+        }
+
+        function setzeMinuten(m) {
+            clearInterval(timer);
+            laeuft = false;
+            el('display').contentEditable = 'true';
+            startSekunden = m * 60;
+            restSekunden = 0;
+            zeigeZeit(startSekunden);
+            el('balken').style.width = '0';
+            zustand('Zeit anklicken, um sie zu ändern', '');
+        }
+
+        // Eingabe im Anzeigefeld sauber halten
+        el('display').addEventListener('blur', () => { zeigeZeit(leseZeit()); startSekunden = leseZeit(); });
+        el('display').addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); el('display').blur(); startTimer(); }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (document.activeElement === el('display') || e.target.closest('.po-backdrop')) return;
+            if (e.code === 'Space') { e.preventDefault(); laeuft ? pauseTimer() : startTimer(); }
+        });
+
+        startSekunden = leseZeit();
+    </script>
+</body>
+</html>

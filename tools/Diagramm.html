@@ -1,0 +1,2735 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramm · PocketOps</title>
+  <!-- PO-ICON:ANFANG (Urfassung: _design/po-icon.svg · nachziehen mit _design/sync.mjs) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E %3Cdefs%3E %3ClinearGradient id='po' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E %3Cstop stop-color='%239E292B'/%3E %3Cstop offset='1' stop-color='%2339756F'/%3E %3C/linearGradient%3E %3C/defs%3E %3Crect width='32' height='32' rx='7.5' fill='url(%23po)'/%3E %3Cpath d='M11.4 11.6V9.8a2.2 2.2 0 0 1 2.2-2.2h4.8a2.2 2.2 0 0 1 2.2 2.2v1.8' fill='none' stroke='%23fff' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E %3Crect x='5' y='11.2' width='22' height='13.8' rx='2.6' fill='%23fff'/%3E %3Crect x='5' y='17.2' width='22' height='1.7' fill='url(%23po)'/%3E %3C/svg%3E">
+  <!-- PO-ICON:ENDE -->
+    <style>
+        /* PO-TOKENS:ANFANG (Urfassung: _design/po-tokens.css · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME GESTALTUNG
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft. Wird hier etwas
+           geändert, muss es in alle Werkzeuge nachgezogen werden.
+           ====================================================================== */
+        /* Breite und Höhe schließen Innenabstand und Rahmen ein. Ohne das rechnet
+           der Browser sie obendrauf, und eine Angabe wie width:100% ragt über ihren
+           Platz hinaus. */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            /* Markenfarben */
+            --po-accent:      #9E292B;
+            --po-accent-dark: #852224;
+            --po-teal:        #39756F;
+            --po-teal-dark:   #2F635E;
+            --po-slate:       #697896;
+            --po-frost:       #81BED7;
+            --po-frost-soft:  #D9F3FF;
+            --po-teal-soft:   #E8F5F1;
+            --po-slate-soft:  #E0E8F8;
+
+            /* Flächen */
+            --po-bg:          #F1F5F9;
+            --po-surface:     #FFFFFF;
+            --po-surface-2:   #F8FAFC;
+            --po-surface-3:   #E2E8F0;
+            --po-stage:       #CBD5E1;
+
+            /* Kopfzeile */
+            --po-chrome:      #0F172A;
+            --po-chrome-2:    #1E293B;
+            --po-chrome-line: #334155;
+            --po-on-chrome:   #F8FAFC;
+            --po-on-chrome-2: #94A3B8;
+
+            /* Text */
+            --po-ink:         #1E293B;
+            --po-ink-2:       #475569;
+            --po-ink-3:       #94A3B8;
+
+            /* Linien */
+            --po-line:        #E2E8F0;
+            --po-line-2:      #CBD5E1;
+
+            /* Zustände */
+            --po-ok:          #39756F;
+            --po-warn:        #D89B2B;
+            --po-bad:         #9E292B;
+
+            /* Maße */
+            --po-r-sm:   4px;
+            --po-r:      6px;
+            --po-r-lg:  10px;
+            --po-r-pill: 999px;
+            --po-head-h: 64px;
+            --po-shadow:    0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .10);
+            --po-shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, .25);
+            --po-font: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            --po-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+        }
+
+        /* ---------- Seitengerüst ---------- */
+        .po-body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--po-bg);
+            color: var(--po-ink);
+            font-family: var(--po-font);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .po-main { flex: 1; overflow: auto; padding: 20px; }
+        .po-wrap { max-width: 1280px; margin: 0 auto; }
+        .po-wrap--wide { max-width: 1600px; margin: 0 auto; }
+        .po-split { display: grid; gap: 16px; align-items: start; }
+        .po-split--1-2 { grid-template-columns: minmax(280px, 1fr) 2fr; }
+        .po-split--2-1 { grid-template-columns: 2fr minmax(280px, 1fr); }
+        .po-split--1-1 { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 1000px) {
+            .po-split--1-2, .po-split--2-1, .po-split--1-1 { grid-template-columns: 1fr; }
+        }
+        .po-stack > * + * { margin-top: 12px; }
+        .po-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* ---------- Kopfzeile und Marke ---------- */
+        .po-head {
+            height: var(--po-head-h);
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            box-shadow: var(--po-shadow);
+            position: relative;
+            z-index: 20;
+        }
+        .po-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .po-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--po-r);
+            padding: 4px 6px;
+            margin-left: -6px;
+            transition: background-color .15s;
+        }
+        a.po-brand:hover { background: var(--po-chrome-2); }
+        .po-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--po-r-lg);
+            background: linear-gradient(135deg, var(--po-accent), var(--po-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+        }
+        .po-mark svg { width: 19px; height: 19px; display: block; }
+        .po-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .po-line-name {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--po-on-chrome-2);
+        }
+        .po-tool-name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+        .po-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--po-on-chrome-2);
+            background: var(--po-chrome-2);
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            padding: 3px 9px;
+            white-space: nowrap;
+        }
+        .po-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .po-head-sep { width: 1px; height: 24px; background: var(--po-chrome-line); flex-shrink: 0; }
+
+        /* ---------- Sprache und Anleitung in der Kopfzeile ----------
+           Beides setzt po-base.js selbst in die Kopfzeile, links vor die
+           Aktionen des Werkzeugs: es gehört zur Reihe, nicht zum Werkzeug. */
+        .po-meta { display: flex; align-items: center; gap: 8px; }
+        .po-sprach {
+            display: inline-flex;
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            overflow: hidden;
+            background: var(--po-chrome-2);
+        }
+        .po-sprach button {
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            padding: 5px 10px;
+            border: none;
+            background: transparent;
+            color: var(--po-on-chrome-2);
+            cursor: pointer;
+            transition: background-color .15s, color .15s;
+        }
+        .po-sprach button:hover { color: #fff; }
+        .po-sprach button[aria-pressed="true"] { background: var(--po-accent); color: #fff; }
+        .po-sprach button:focus-visible { outline: 2px solid var(--po-frost); outline-offset: -2px; }
+        .po-frage {
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E2E8F0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-frage:hover { background: #2B3A4F; color: #fff; }
+        .po-frage:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Der Trinkgeldknopf steht neben dem Fragezeichen und ist genauso gebaut. Nur
+           das Herz trägt Farbe — auffallen soll er, drängeln nicht. */
+        .po-trinkgeld {
+            font: inherit;
+            font-size: 13px;
+            line-height: 1;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E79A9B;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-trinkgeld:hover { background: #2B3A4F; color: #fff; }
+        .po-trinkgeld:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Ein Verweis, der wie ein Knopf aussieht, bringt die Unterstreichung mit. */
+        a.po-btn { text-decoration: none; }
+
+        /* ---------- Das Hilfefenster ---------- */
+        .po-hilfe { max-height: 68vh; overflow: auto; }
+        .po-hilfe p { line-height: 1.55; }
+        .po-hilfe a { color: var(--po-teal); font-weight: 600; }
+        .po-hilfe-titel {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 6px;
+        }
+        .po-hilfe-liste { margin: 0; padding-left: 20px; }
+        .po-hilfe-liste li { margin-bottom: 5px; line-height: 1.5; }
+        .po-hilfe-teil { border-top: 1px solid var(--po-line); margin-top: 14px; padding-top: 12px; }
+
+        /* ---------- Schaltflächen ---------- */
+        .po-btn {
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--po-r);
+            border: 1px solid var(--po-line-2);
+            background: var(--po-surface);
+            color: var(--po-ink-2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .po-btn:hover { background: var(--po-surface-2); border-color: var(--po-slate); color: var(--po-ink); }
+        .po-btn:active { transform: translateY(1px); }
+        .po-btn:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+        .po-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+        .po-head .po-btn { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #E2E8F0; }
+        .po-head .po-btn:hover { background: #2B3A4F; border-color: #475569; color: #fff; }
+
+        .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+        .po-head .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-head .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+
+        .po-btn--go { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+        .po-btn--go:hover { background: var(--po-teal-dark); border-color: var(--po-teal-dark); color: #fff; }
+
+        .po-btn--danger { color: var(--po-bad); border-color: #FECACA; background: #FEF2F2; }
+        .po-btn--danger:hover { background: #FEE2E2; border-color: #FCA5A5; color: #7F1D1D; }
+        .po-head .po-btn--danger { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #FCA5A5; }
+        .po-head .po-btn--danger:hover { background: #4C1D1D; border-color: #991B1B; color: #FEE2E2; }
+
+        .po-btn--ghost { background: transparent; border-color: transparent; color: var(--po-ink-3); padding: 5px 7px; }
+        .po-btn--ghost:hover { background: var(--po-surface-3); color: var(--po-ink); border-color: transparent; }
+
+        .po-btn--sm { font-size: 11px; padding: 4px 8px; }
+        .po-btn--block { width: 100%; justify-content: center; }
+
+        /* kleines rundes Löschen-Kreuz in Listen und Tabellen */
+        .po-x {
+            font: inherit;
+            font-size: 10px;
+            line-height: 1;
+            width: 18px;
+            height: 18px;
+            border-radius: var(--po-r-pill);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--po-ink-3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background-color .15s, color .15s;
+        }
+        .po-x:hover { background: #FEE2E2; color: var(--po-bad); }
+
+        /* ---------- Panels und Abschnitte ---------- */
+        .po-panel {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+        }
+        .po-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--po-surface-2);
+            border-bottom: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg) var(--po-r-lg) 0 0;
+        }
+        .po-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--po-ink-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .po-panel-body { padding: 14px; }
+        .po-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 8px;
+        }
+        .po-hint {
+            font-size: 11px;
+            color: var(--po-ink-2);
+            background: var(--po-surface-2);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r);
+            padding: 10px 12px;
+            line-height: 1.5;
+        }
+
+        /* ---------- Eingabefelder ---------- */
+        .po-label { font-size: 11px; font-weight: 600; color: var(--po-ink-2); display: block; margin-bottom: 4px; }
+        .po-input, .po-select, .po-textarea {
+            font: inherit;
+            font-size: 12px;
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid var(--po-line-2);
+            border-radius: var(--po-r);
+            background: var(--po-surface);
+            color: var(--po-ink);
+            box-sizing: border-box;
+        }
+        /* Ein Farbfeld füllt der Browser selbst aus. Ohne eigene Höhe fiele es
+           gegenüber den anderen Feldern zusammen, und der Innenabstand ließe den
+           Farbfleck zu klein wirken. */
+        .po-input[type="color"] { height: 32px; padding: 3px; cursor: pointer; }
+        .po-input:focus, .po-select:focus, .po-textarea:focus {
+            outline: none;
+            border-color: var(--po-frost);
+            box-shadow: 0 0 0 3px rgba(129, 190, 215, .25);
+        }
+        .po-textarea { min-height: 72px; resize: vertical; }
+        .po-search { font-size: 13px; padding: 10px 14px; border-radius: var(--po-r-lg); }
+        .po-num { width: 58px; text-align: center; padding: 5px 4px; }
+        .po-field { display: flex; gap: 6px; align-items: center; }
+        .po-field .po-input { flex: 1; min-width: 0; }
+
+        .po-range { width: 100%; accent-color: var(--po-teal); }
+        .po-range-value { font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+
+        .po-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; font-weight: 600; color: var(--po-ink-2); cursor: pointer; }
+        .po-check input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--po-teal); flex-shrink: 0; }
+
+        /* ---------- Karten ---------- */
+        .po-card {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+            padding: 14px;
+        }
+        .po-card--pick { cursor: pointer; transition: border-color .15s, background-color .15s; }
+        .po-card--pick:hover { border-color: var(--po-frost); background: var(--po-surface-2); }
+
+        /* ---------- Tabellen ---------- */
+        .po-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .po-table th, .po-table td { padding: 8px 10px; border: 1px solid var(--po-line); text-align: left; }
+        .po-table th {
+            background: var(--po-surface-2);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--po-ink-2);
+            white-space: nowrap;
+        }
+        .po-table tbody tr:nth-child(even) { background: var(--po-surface-2); }
+        .po-table--center th, .po-table--center td { text-align: center; }
+        .po-table--center th:first-child, .po-table--center td:first-child { text-align: left; }
+
+        /* ---------- Zustände ---------- */
+        .po-badge {
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--po-r-pill);
+            padding: 2px 8px;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .po-badge--ok   { color: var(--po-ok);  background: var(--po-teal-soft); border-color: #BFE3DA; }
+        .po-badge--warn { color: #92610F;       background: #FEF6E7;             border-color: #F5D9A0; }
+        .po-badge--bad  { color: var(--po-bad); background: #FEF2F2;             border-color: #FECACA; }
+        .po-badge--neutral { color: var(--po-ink-2); background: var(--po-surface-3); border-color: var(--po-line-2); }
+
+        .po-empty { text-align: center; color: var(--po-ink-3); font-size: 12px; padding: 28px 16px; line-height: 1.6; }
+
+        /* ---------- Hinweisfenster unten rechts ---------- */
+        .po-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 200;
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 11px 16px;
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            max-width: 340px;
+            line-height: 1.45;
+        }
+
+        /* ---------- Dialog ---------- */
+        .po-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .55);
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .po-dialog {
+            background: var(--po-surface);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+        .po-dialog-head { padding: 16px 18px 0; font-size: 15px; font-weight: 700; color: var(--po-ink); }
+        .po-dialog-body { padding: 10px 18px 16px; font-size: 13px; color: var(--po-ink-2); line-height: 1.55; }
+        .po-dialog-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--po-surface-2);
+            border-top: 1px solid var(--po-line);
+        }
+
+        /* ---------- Bildlaufleisten ---------- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--po-line-2); border-radius: var(--po-r-pill); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--po-slate); }
+
+        /* ---------- Druck ---------- */
+        @media print {
+            .po-head, .po-toast, .po-backdrop, .po-no-print { display: none !important; }
+            .po-body { height: auto; overflow: visible; }
+            .po-main { overflow: visible; padding: 0; }
+            .po-panel { box-shadow: none; border-color: #ccc; }
+        }
+        /* PO-TOKENS:ENDE */
+
+        /* ---------- nur für dieses Werkzeug ---------- */
+
+        /* Auswahl der Diagrammart */
+        .dg-arten { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+        .dg-art {
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            padding: 9px 10px 8px;
+            color: var(--po-ink-2);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            transition: border-color .15s, background-color .15s, color .15s;
+        }
+        .dg-art:hover { border-color: var(--po-frost); background: var(--po-surface-2); color: var(--po-ink); }
+        .dg-art:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+        .dg-art svg { width: 42px; height: 26px; display: block; }
+        .dg-art b { font-size: 12px; font-weight: 700; color: var(--po-ink); }
+        .dg-art span { font-size: 10px; line-height: 1.35; color: var(--po-ink-3); }
+        .dg-art[aria-pressed="true"] {
+            border-color: var(--po-teal);
+            background: var(--po-teal-soft);
+            box-shadow: inset 0 0 0 1px var(--po-teal);
+        }
+        .dg-art[aria-pressed="true"] b,
+        .dg-art[aria-pressed="true"] span { color: var(--po-teal-dark); }
+
+        /* Leinwand */
+        .dg-bild { position: relative; display: flex; justify-content: center; }
+        #dgCanvas { display: block; border-radius: var(--po-r); }
+        .dg-tip {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            font-size: 11px;
+            line-height: 1.4;
+            font-weight: 700;
+            padding: 6px 9px;
+            border-radius: var(--po-r);
+            box-shadow: var(--po-shadow-lg);
+            white-space: nowrap;
+            display: none;
+        }
+        .dg-tip i { display: block; font-style: normal; font-weight: 400; color: var(--po-on-chrome-2); }
+
+        /* Datenfelder */
+        .dg-feld { border: none; background: transparent; font: inherit; font-size: 12px; padding: 3px 4px; width: 100%; }
+        .dg-feld:focus { background: var(--po-surface); border-radius: var(--po-r-sm); box-shadow: 0 0 0 2px rgba(129, 190, 215, .35); outline: none; }
+        .dg-feld--zahl { text-align: right; font-variant-numeric: tabular-nums; }
+        th .dg-feld { font-weight: 700; font-size: 11px; color: var(--po-ink-2); }
+        #dgTabelle th { min-width: 96px; }
+        #dgTabelle th:first-child, #dgTabelle td:first-child { min-width: 136px; }
+        .dg-punkt { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
+    </style>
+</head>
+<body class="po-body">
+
+    <header class="po-head">
+        <div class="po-head-left">
+            <a class="po-brand" href="../Start_PocketOps.html" title="Zur PocketOps-Übersicht">
+                <span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>
+                <span class="po-brand-text">
+                    <span class="po-line-name">PocketOps</span>
+                    <span class="po-tool-name">Diagramm</span>
+                </span>
+            </a>
+            <span class="po-chip">Zahlen zum Bild</span>
+        </div>
+        <div class="po-head-actions">
+            <button class="po-btn" onclick="exportJSON()">Speichern</button>
+            <button class="po-btn" onclick="document.getElementById('import').click()">Öffnen</button>
+            <input type="file" id="import" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
+            <button class="po-btn" onclick="kopieren()">Kopieren</button>
+            <div class="po-head-sep"></div>
+            <button class="po-btn po-btn--danger" onclick="resetAlles()">Zurücksetzen</button>
+            <button class="po-btn po-btn--primary" onclick="pngSpeichern()">PNG speichern</button>
+        </div>
+    </header>
+
+    <main class="po-main">
+        <div class="po-wrap po-stack">
+
+            <div class="po-panel po-no-print">
+                <div class="po-panel-head">
+                    <span class="po-panel-title">Diagrammart</span>
+                    <span class="po-badge po-badge--neutral" id="artHinweis"></span>
+                </div>
+                <div class="po-panel-body">
+                    <div class="dg-arten" id="arten" role="group" aria-label="Diagrammart wählen"></div>
+                </div>
+            </div>
+
+            <div class="po-panel">
+                    <div class="po-panel-head">
+                        <span class="po-panel-title">Diagramm</span>
+                        <label class="po-check po-no-print" style="font-size:11px">
+                            <input type="checkbox" id="mitTabelle" onchange="tabelleMitSchalten(this.checked)">
+                            Tabelle ins Bild
+                        </label>
+                    </div>
+                    <div class="po-panel-body">
+                        <div class="dg-bild" id="bildBox">
+                            <canvas id="dgCanvas" role="img" aria-label="Diagramm der eingegebenen Werte"></canvas>
+                            <div class="dg-tip" id="tip"></div>
+                        </div>
+                        <div class="po-row po-no-print" style="justify-content:space-between;margin-top:10px">
+                            <span style="font-size:11px;color:var(--po-ink-3)" id="bildHinweis"></span>
+                            <span style="font-size:11px;color:var(--po-ink-3)">Zahlen stehen in der Tabelle darunter</span>
+                        </div>
+                    </div>
+            </div>
+
+            <div class="po-split po-split--2-1">
+
+                <div class="po-panel">
+                    <div class="po-panel-head">
+                        <span class="po-panel-title">Daten</span>
+                        <div class="po-row po-no-print" style="gap:6px">
+                            <button class="po-btn po-btn--sm" onclick="einfuegenOeffnen()">Aus Excel einfügen</button>
+                            <button class="po-btn po-btn--sm po-btn--go" onclick="zeileDazu()">+ Zeile</button>
+                            <button class="po-btn po-btn--sm po-btn--go" onclick="reiheDazu()">+ Reihe</button>
+                        </div>
+                    </div>
+                    <div class="po-panel-body">
+                        <div style="overflow-x:auto">
+                            <table class="po-table" id="dgTabelle">
+                                <thead><tr id="dgKopf"></tr></thead>
+                                <tbody id="dgKoerper"></tbody>
+                            </table>
+                        </div>
+                        <div class="po-hint po-no-print" style="margin-top:10px" id="datenHinweis"></div>
+                    </div>
+                </div>
+
+                <div class="po-stack po-no-print">
+                    <div class="po-panel">
+                        <div class="po-panel-head"><span class="po-panel-title">Beschriftung</span></div>
+                        <div class="po-panel-body po-stack">
+                            <div>
+                                <label class="po-label" for="titel">Überschrift</label>
+                                <input class="po-input" id="titel" placeholder="z. B. Umsatz je Quartal" oninput="d.titel = this.value; malen(); sichern()">
+                            </div>
+                            <div>
+                                <label class="po-label" for="einheit">Einheit</label>
+                                <input class="po-input" id="einheit" placeholder="z. B. €, %, Stück" oninput="d.einheit = this.value; malen(); sichern()">
+                            </div>
+                            <label class="po-check">
+                                <input type="checkbox" id="zeigeWerte" onchange="d.zeigeWerte = this.checked; malen(); sichern()">
+                                Werte am Diagramm anschreiben
+                            </label>
+                            <label class="po-check">
+                                <input type="checkbox" id="raster" onchange="d.raster = this.checked; malen(); sichern()">
+                                Hilfslinien zeigen
+                            </label>
+                        </div>
+                    </div>
+                    <div class="po-hint" id="artErklaerung"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Einfügen aus einer Tabellenkalkulation.
+         Kein hidden-Merkmal: .po-backdrop setzt display:flex, und das gewinnt
+         gegen hidden. Darum wird die Anzeige hier unmittelbar geschaltet. -->
+    <div class="po-backdrop" id="einfuegenBox" style="display:none">
+        <div class="po-dialog" role="dialog" aria-modal="true" aria-labelledby="einfuegenTitel" style="max-width:580px">
+            <div class="po-dialog-head" id="einfuegenTitel">Aus Excel einfügen</div>
+            <div class="po-dialog-body">
+                <p style="margin:0 0 8px">
+                    Bereich in Excel markieren, kopieren, hier einfügen. Die erste Spalte wird
+                    zur Beschriftung; steht in der ersten Zeile Text, werden daraus die Namen
+                    der Reihen.
+                </p>
+                <textarea class="po-textarea" id="einfuegenText" style="min-height:150px;font-family:var(--po-mono);font-size:11px"
+                          placeholder="Quartal&#9;2025&#9;2026&#10;Q1&#9;120&#9;132&#10;Q2&#9;145&#9;151"
+                          oninput="kopfRaten()"></textarea>
+                <label class="po-check" style="margin-top:10px">
+                    <input type="checkbox" id="einfuegenKopf" onchange="kopfHandSchalter = true">
+                    Erste Zeile enthält die Namen der Reihen
+                </label>
+                <p style="margin:6px 0 0;font-size:11px;color:var(--po-ink-3)">
+                    Der Haken wird geraten. Stehen in der ersten Zeile Jahreszahlen, ist das
+                    nicht eindeutig — dann hier nachsehen.
+                </p>
+            </div>
+            <div class="po-dialog-foot">
+                <button class="po-btn" onclick="einfuegenSchliessen()">Abbrechen</button>
+                <button class="po-btn po-btn--go" onclick="einfuegenUebernehmen()">Übernehmen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* PO-SPRACHE:ANFANG (Urfassung: _design/sprache/Diagramm.js · nachziehen mit _design/sync.mjs) */
+        /* Diagramm · Anleitung und Wörterbuch */
+
+        const PO_HILFE = {
+            de: {
+                kurz: 'Zahlen eintragen, Diagramm herausbekommen — als Bild für Folien, Berichte oder E-Mails.',
+                schritte: [
+                    'Oben die <b>Diagrammart</b> wählen.',
+                    'Unten in der Tabelle Beschriftungen und Zahlen eintragen. Das Diagramm folgt sofort.',
+                    '<b>Kopieren</b> legt das Bild in die Zwischenablage, <b>PNG speichern</b> als Datei.'
+                ],
+                tipps: [
+                    'Aus Excel geht es schneller: Bereich kopieren und über <b>Aus Excel einfügen</b> hineingeben.',
+                    'Der Haken <b>Tabelle ins Bild</b> stellt die Zahlen mit unter das Diagramm.',
+                    'Leere Felder sind Lücken, keine Nullen: im Balken fehlt der Balken, die Linie bricht auf.'
+                ]
+            },
+            en: {
+                kurz: 'Put numbers in, get a chart out — as a picture for slides, reports or emails.',
+                schritte: [
+                    'Pick the <b>chart type</b> at the top.',
+                    'Enter labels and numbers in the table below. The chart follows at once.',
+                    '<b>Copy</b> puts the picture on the clipboard, <b>Save PNG</b> into a file.'
+                ],
+                tipps: [
+                    'From Excel it is quicker: copy the range and bring it in with <b>Paste from Excel</b>.',
+                    'The tick <b>Table in the picture</b> puts the numbers underneath the chart.',
+                    'Empty fields are gaps, not zeros: the bar is missing, the line breaks.'
+                ]
+            }
+        };
+
+        const PO_WB = {
+            'Diagramm · PocketOps': 'Chart · PocketOps',
+            'Diagramm': 'Chart',
+            'Zahlen zum Bild': 'Numbers into a picture',
+            'Diagrammart': 'Chart type',
+            'Diagrammart wählen': 'Choose a chart type',
+            'Daten': 'Data',
+            'Beschriftung': 'Label',
+            'Überschrift': 'Title',
+            'Einheit': 'Unit',
+            'PNG speichern': 'Save PNG',
+            'Tabelle ins Bild': 'Table in the picture',
+            'Werte am Diagramm anschreiben': 'Write the values on the chart',
+            'Hilfslinien zeigen': 'Show grid lines',
+            '+ Zeile': '+ Row',
+            '+ Reihe': '+ Series',
+            'Zeile entfernen': 'Remove row',
+            'Reihe entfernen': 'Remove series',
+            'Aus Excel einfügen': 'Paste from Excel',
+            'Übernehmen': 'Use this',
+            'Zahlen stehen in der Tabelle darunter': 'The numbers are in the table below',
+            'Bild: {} × {} Punkte': 'Picture: {} × {} pixels',
+            'Bild: {} × {} Punkte · mit Tabelle': 'Picture: {} × {} pixels · with table',
+
+            /* Diagrammarten */
+            'Balken': 'Bars',
+            'Balken liegend': 'Bars across',
+            'Gestapelt': 'Stacked',
+            'Linie': 'Line',
+            'Fläche': 'Area',
+            'Torte': 'Pie',
+            'Ring': 'Ring',
+            'Werte nebeneinander vergleichen': 'Compare values side by side',
+            'Platz für lange Beschriftungen': 'Room for long labels',
+            'Anteile an einer Summe': 'Parts of a total',
+            'Verlauf über die Zeit': 'Change over time',
+            'Verlauf mit Gewicht': 'Change, with weight',
+            'Anteile am Ganzen': 'Shares of the whole',
+            'Anteile, Summe in der Mitte': 'Shares, total in the middle',
+
+            /* Erklärungen zur gewählten Art */
+            'Balken vergleichen Größen. Sie beginnen immer bei Null — sonst täuscht die Länge.':
+                'Bars compare sizes. They always start at zero — otherwise the length deceives.',
+            'Dasselbe wie Balken, nur quer. Die richtige Wahl, wenn die Beschriftungen lang sind.':
+                'The same as bars, but sideways. The right choice when the labels are long.',
+            'Zeigt die Summe und woraus sie besteht. Einzelne Teile lassen sich darin schlecht vergleichen — dafür lieber Balken nebeneinander.':
+                'Shows the total and what it is made of. Single parts are hard to compare in it — use bars side by side for that.',
+            'Für Verläufe. Die Achse beginnt hier nicht zwingend bei Null, damit kleine Bewegungen sichtbar bleiben.':
+                'For movement over time. The axis need not start at zero here, so small changes stay visible.',
+            'Eine Linie mit Füllung. Bei mehreren Reihen liegen die Flächen übereinander — ab drei wird es unübersichtlich.':
+                'A line with a fill. With several series the areas overlap — beyond three it gets muddled.',
+            'Nur sinnvoll, wenn die Teile ein Ganzes ergeben, und nur bei wenigen Teilen. Verwendet die erste Reihe; Werte bis Null bleiben außen vor. Ab dem achten Stück wird der Rest zu „Übrige" zusammengefasst.':
+                'Only worth it when the parts add up to a whole, and only with few parts. Uses the first series; values of zero or less are left out. From the eighth slice onwards the rest is gathered into "Other".',
+            'Wie die Torte, mit der Summe in der Mitte. Verwendet die erste Reihe; Werte bis Null bleiben außen vor. Ab dem achten Stück wird der Rest zu „Übrige" zusammengefasst.':
+                'Like the pie, with the total in the middle. Uses the first series; values of zero or less are left out. From the eighth slice onwards the rest is gathered into "Other".',
+
+            /* Hinweise unter der Tabelle */
+            'Leer gelassene Felder sind Lücken, keine Nullen: im Balken fehlt der Balken, in der Linie bricht sie auf. Komma oder Punkt als Dezimaltrennung — beides wird verstanden.':
+                'Empty fields are gaps, not zeros: the bar is missing, the line breaks. Comma or point as the decimal mark — both are understood.',
+            'Torte und Ring zeigen die erste Reihe . Die weiteren bleiben erhalten und kommen bei jeder anderen Art wieder zum Vorschein.':
+                'Pie and ring show the first series . The others are kept and come back with any other chart type.',
+            'Acht Reihen sind die Grenze. Mehr Farben lassen sich nicht mehr sicher unterscheiden; dann besser zwei Diagramme.':
+                'Eight series is the limit. Beyond that the colours can no longer be told apart for certain; better to use two charts.',
+            'Die {} größten Stücke stehen einzeln, der Rest als {} .': 'The {} largest slices stand on their own, the rest as {} .',
+
+            /* Einfügen aus Excel */
+            'Bereich in Excel markieren, kopieren, hier einfügen. Die erste Spalte wird zur Beschriftung; steht in der ersten Zeile Text, werden daraus die Namen der Reihen.':
+                'Select the range in Excel, copy it, paste it here. The first column becomes the labels; if the first row holds text, it becomes the names of the series.',
+            'Erste Zeile enthält die Namen der Reihen': 'First row holds the names of the series',
+            'Der Haken wird geraten. Stehen in der ersten Zeile Jahreszahlen, ist das nicht eindeutig — dann hier nachsehen.':
+                'The tick is a guess. If the first row holds years it is not clear-cut — so check it here.',
+            'Darin stecken keine zwei Spalten. Beschriftung links, Werte rechts.':
+                'There are no two columns in that. Labels on the left, values on the right.',
+            'Außer der Kopfzeile stand nichts darin.': 'There was nothing in it apart from the header row.',
+            'In den Spalten rechts stand keine Zahl.': 'There was no number in the columns on the right.',
+            'Übernommen: {} Zeilen · Reihen: {}': 'Taken over: {} rows · series: {}',
+            'Übernommen: {} Zeilen · Reihen: {} — mehr war zu viel und blieb draußen':
+                'Taken over: {} rows · series: {} — the rest was too much and stayed out',
+            'Mehr als {} Zeilen nimmt das Werkzeug nicht.': 'The tool does not take more than {} rows.',
+            'Acht Reihen sind die Grenze — mehr Farben lassen sich nicht sicher unterscheiden.':
+                'Eight series is the limit — beyond that the colours cannot be told apart for certain.',
+
+            /* Meldungen */
+            'Es ist noch nichts eingetragen.': 'Nothing has been entered yet.',
+            'Das Bild ließ sich nicht erzeugen.': 'The picture could not be produced.',
+            'Kopiert · {} × {} — mit Strg+V einfügen': 'Copied · {} × {} — paste with Ctrl+V',
+            'Kopiert · {} × {} mit Tabelle — mit Strg+V einfügen': 'Copied · {} × {} with table — paste with Ctrl+V',
+            'Das Kopieren hat der Browser abgelehnt — das Bild wurde stattdessen gespeichert.':
+                'The browser refused to copy — the picture was saved instead.',
+            'Gespeichert · {} × {}': 'Saved · {} × {}',
+            'Gespeichert · {} × {} mit Tabelle': 'Saved · {} × {} with table',
+            'Diagramm gespeichert': 'Chart saved',
+            'Die Datei enthält kein Diagramm.': 'This file does not contain a chart.',
+            'Geöffnet: {} Zeilen, {} Reihen': 'Opened: {} rows, {} series',
+            'Geöffnet: {} Zeilen, {} Reihe': 'Opened: {} rows, {} series',
+            'Beschriftungen, Reihen und alle Werte werden gelöscht. Das lässt sich nicht rückgängig machen.':
+                'Labels, series and all values will be deleted. This cannot be undone.',
+            'Diagramm zurücksetzen': 'Reset the chart',
+            'Diagramm zurückgesetzt': 'Chart reset',
+            'Die Zeile {} und ihre Werte werden gelöscht.': 'Row {} and its values will be deleted.',
+            'Die Reihe „{}" und alle ihre Werte werden gelöscht.': 'The series "{}" and all its values will be deleted.',
+            'Zeile entfernen': 'Remove row',
+
+            /* Auf der Leinwand gezeichnet */
+            'Werte in die Tabelle eintragen — das Diagramm folgt sofort.': 'Enter values in the table — the chart follows at once.',
+            'Für Torte und Ring braucht es Werte über Null.': 'Pie and ring need values above zero.',
+            'Summe': 'Total',
+            'BESCHRIFTUNG': 'LABEL',
+            'Übrige ({} Zeilen)': 'Other ({} rows)',
+
+            /* Felder und Vorlesehilfen */
+            'Zeile {}': 'Row {}',
+            'Beschriftung Zeile {}': 'Label for row {}',
+            'Name der Reihe {}': 'Name of series {}',
+            '{} bei {}': '{} at {}',
+            'Diagramm der eingegebenen Werte': 'Chart of the values entered',
+            'z. B. Umsatz je Quartal': 'e.g. revenue per quarter',
+            'z. B. €, %, Stück': 'e.g. €, %, units',
+            'Ohne Namen': 'Unnamed',
+            '{} — {}, {} Reihen, {} Zeilen. Die Werte stehen in der Tabelle darunter.':
+                '{} — {}, {} series, {} rows. The values are in the table below.',
+            '{} — {}, {} Reihe, {} Zeilen. Die Werte stehen in der Tabelle darunter.':
+                '{} — {}, {} series, {} rows. The values are in the table below.'
+        };
+        /* PO-SPRACHE:ENDE */
+    </script>
+
+    <script>
+        /* PO-BASE:ANFANG (Urfassung: _design/po-base.js · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME BAUSTEINE
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft.
+
+           poToast(text)                  kurzer Hinweis unten rechts
+           poConfirm(frage, opt)          Rückfrage, liefert ein Versprechen
+           poAsk(titel, felder)           kleine Eingabemaske statt prompt()
+                                          Feld: { name, label, wert, typ, pflicht }
+                                          typ 'date', 'number', 'color' kommen vom
+                                          Browser; typ 'auswahl' braucht zusätzlich
+                                          optionen: [{ wert, text }] und wird zur Liste
+           poEsc(text)                    Text für HTML entschärfen
+           poDownload(name, text, typ)    Datei zum Herunterladen anbieten
+           poReadFile(input, fn)          gewählte Datei als Text lesen
+           ====================================================================== */
+
+        function poEsc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        let _poToastTimer = null;
+        function poToast(text, dauer = 2600) {
+            let t = document.getElementById('po-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'po-toast';
+                t.className = 'po-toast';
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.style.display = 'block';
+            clearTimeout(_poToastTimer);
+            _poToastTimer = setTimeout(() => { t.style.display = 'none'; }, dauer);
+        }
+
+        function _poModal(innerHtml, aufbau) {
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `<div class="po-dialog" role="dialog" aria-modal="true">${innerHtml}</div>`;
+            document.body.appendChild(back);
+            const schliessen = () => { document.removeEventListener('keydown', aufTaste); back.remove(); };
+            const aufTaste = e => { if (e.key === 'Escape') { e.preventDefault(); back.__abbruch && back.__abbruch(); } };
+            document.addEventListener('keydown', aufTaste);
+            back.addEventListener('mousedown', e => { if (e.target === back) back.__abbruch && back.__abbruch(); });
+            aufbau(back, schliessen);
+            return back;
+        }
+
+        function poConfirm(frage, { titel = 'Bitte bestätigen', ja = 'Ja, weiter', nein = 'Abbrechen', gefahr = false } = {}) {
+            return new Promise(res => {
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body">${poEsc(frage)}</div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>${poEsc(nein)}</button>
+                        <button class="po-btn ${gefahr ? 'po-btn--primary' : 'po-btn--go'}" data-ja>${poEsc(ja)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(false);
+                    back.querySelector('[data-nein]').onclick = () => fertig(false);
+                    back.querySelector('[data-ja]').onclick = () => fertig(true);
+                    setTimeout(() => back.querySelector('[data-ja]').focus(), 30);
+                });
+            });
+        }
+
+        /* felder: [{ name, label, wert, typ: 'text'|'number', min, max, pflicht }]
+           Ergebnis: Objekt mit den Werten, oder null bei Abbruch. */
+        function poAsk(titel, felder, { ok = 'Hinzufügen' } = {}) {
+            return new Promise(res => {
+                /* typ: 'auswahl' erwartet zusätzlich optionen: [{ wert, text }] und wird
+                   zur Liste. Alles andere geht als type an ein <input> — 'date', 'number'
+                   und 'color' kommen so vom Browser, ohne eigenes Zutun. */
+                const html = felder.map((f, i) => {
+                    const feld = f.typ === 'auswahl'
+                        ? `<select class="po-select" id="po-f-${i}">`
+                          + (f.optionen || []).map(o =>
+                                `<option value="${poEsc(o.wert)}"${String(o.wert) === String(f.wert) ? ' selected' : ''}>${poEsc(o.text)}</option>`
+                            ).join('')
+                          + `</select>`
+                        : `<input class="po-input" id="po-f-${i}" type="${f.typ || 'text'}"
+                               value="${poEsc(f.wert == null ? '' : f.wert)}"
+                               ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''}
+                               ${f.platzhalter ? `placeholder="${poEsc(f.platzhalter)}"` : ''}>`;
+                    return `
+                    <div style="margin-bottom:10px">
+                        <label class="po-label" for="po-f-${i}">${poEsc(f.label)}</label>
+                        ${feld}
+                    </div>`;
+                }).join('');
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body"><form id="po-ask-form">${html}</form></div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${poEsc(ok)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(null);
+                    back.querySelector('[data-nein]').onclick = () => fertig(null);
+                    const senden = () => {
+                        const out = {};
+                        let fehlt = null;
+                        felder.forEach((f, i) => {
+                            const el = back.querySelector('#po-f-' + i);
+                            let v = el.value.trim();
+                            if (f.typ === 'number') v = v === '' ? null : Number(v);
+                            if (f.pflicht !== false && (v === '' || v === null)) fehlt = fehlt || el;
+                            out[f.name] = v;
+                        });
+                        if (fehlt) { fehlt.focus(); fehlt.style.borderColor = 'var(--po-bad)'; return; }
+                        fertig(out);
+                    };
+                    back.querySelector('[data-ja]').onclick = senden;
+                    back.querySelector('#po-ask-form').onsubmit = e => { e.preventDefault(); senden(); };
+                    setTimeout(() => back.querySelector('#po-f-0') && back.querySelector('#po-f-0').focus(), 30);
+                });
+            });
+        }
+
+        function poDownload(name, inhalt, typ = 'application/json') {
+            const blob = new Blob([inhalt], { type: typ });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }
+
+        function poReadFile(input, fn) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const r = new FileReader();
+            const melden = e => poToast('Die Datei lässt sich nicht lesen: ' + (e && e.message ? e.message : e), 4200);
+            r.onerror = () => melden(new Error('Die Datei ließ sich nicht öffnen.'));
+            r.onload = ev => {
+                // Ein Rückruf mit async wirft nicht, er gibt ein abgelehntes Versprechen
+                // zurück. Beides muss hier ankommen, sonst bleibt ein Fehler stumm.
+                try {
+                    const p = fn(ev.target.result);
+                    if (p && typeof p.catch === 'function') p.catch(melden);
+                } catch (e) { melden(e); }
+            };
+            r.readAsText(f);
+        }
+
+        /* Markenzeichen für die Kopfzeile — in jedem Werkzeug gleich */
+        const PO_MARK = '<span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>';
+
+        /* ======================================================================
+           POCKETOPS · ZWEISPRACHIGKEIT
+
+           Die Werkzeuge sind auf Deutsch geschrieben — Beschriftungen, Hinweise,
+           Meldungen, alles. Englisch entsteht nicht aus einem zweiten Satz
+           Quelltext, sondern aus einem Wörterbuch: deutscher Satz → englischer
+           Satz. Ein Beobachter schreibt um, was auf der Seite steht, und merkt
+           sich am Knoten das Original — darum geht beim Zurückschalten nichts
+           verloren, und am deutschen Quelltext ändert sich nichts.
+
+           Je Werkzeug steht sein Wörterbuch in einem eigenen Block
+           (PO-SPRACHE, Urfassung: _design/sprache/<Datei>.js) vor diesem hier.
+           Gemeinsames — Kopfzeile, Dialoge, Meldungen aus dieser Datei — steht
+           unten in PO_WB_BASIS.
+
+           Platzhalter: '{}' steht für eine Stelle, die unverändert bleibt.
+               '{} von {} Fehlern'  →  '{} of {} mistakes'
+
+           Was nie übersetzt wird: was der Nutzer selbst geschrieben hat.
+           Eingabefelder, Textflächen, alles unter contenteditable und alles
+           unter data-po-roh bleibt unangetastet.
+           ====================================================================== */
+
+        /* Gemeinsame Einträge. Gelten in jedem Werkzeug. */
+        const PO_WB_BASIS = {
+            'Zur PocketOps-Übersicht': 'To the PocketOps overview',
+            'Trinkgeld': 'Tip jar',
+            'Speichern': 'Save',
+            'Öffnen': 'Open',
+            'Zurücksetzen': 'Reset',
+            'Abbrechen': 'Cancel',
+            'Ja, weiter': 'Yes, go ahead',
+            'Ja, löschen': 'Yes, delete',
+            'Ja, alles löschen': 'Yes, delete everything',
+            'Ja, entfernen': 'Yes, remove',
+            'Bitte bestätigen': 'Please confirm',
+            'Hinzufügen': 'Add',
+            'Drucken': 'Print',
+            'Kopieren': 'Copy',
+            'Anleitung': 'Help',
+            'Sprache / Language': 'Sprache / Language',
+            'Schließen': 'Close',
+            'Die Datei lässt sich nicht lesen: {}': 'The file cannot be read: {}',
+            'Die Datei ließ sich nicht öffnen.': 'The file could not be opened.',
+            'Es ist noch nichts gezählt.': 'Nothing has been counted yet.',
+            'Es ist nichts zu löschen.': 'There is nothing to delete.',
+            'Zähler zurücksetzen': 'Reset counters',
+            'Zähler zurückgesetzt': 'Counters reset',
+            'Gegen den Rechner': 'Against the computer'
+        };
+
+        /* Text der Hilfe selbst — in beiden Sprachen, nicht über das Wörterbuch. */
+        const PO_HILFE_TEXTE = {
+            de: {
+                titel: 'Kurzanleitung',
+                schritte: 'So geht es',
+                tipps: 'Gut zu wissen',
+                oertlich: 'Deine Arbeit bleibt auf diesem Rechner. Sie wird nirgendwohin geschickt.',
+                oertlichMitNetz: 'Deine Arbeit bleibt auf diesem Rechner und wird nirgendwohin geschickt. Dieses Werkzeug lädt beim Öffnen allerdings eine Programmbibliothek nach, von: {}. Der fremde Server erfährt dabei deine IP-Adresse. Woran du arbeitest, verlässt den Rechner auch dann nicht.',
+                sicherung: 'Sichern und Zurückholen',
+                sicherungText: 'Mit <b>Speichern</b> legt das Werkzeug deine Arbeit als Datei neben sich — eine <b>.json</b>-Datei. Das ist nichts Gefährliches: eine Textdatei, die du mit dem Editor öffnen und lesen kannst. Mit <b>Öffnen</b> holst du sie zurück, in dieses oder in ein anderes Fenster.',
+                sicherungWarum: 'Warum das wichtig ist: deine Arbeit liegt sonst nur im Browser. Räumt jemand den Browser auf, ist sie weg. Die gespeicherte Datei bleibt.',
+                mehr: 'Ausführlich: Sichern &amp; Zurückholen',
+                schluss: 'Verstanden'
+            },
+            en: {
+                titel: 'Quick guide',
+                schritte: 'How it works',
+                tipps: 'Worth knowing',
+                oertlich: 'Your work stays on this computer. It is not sent anywhere.',
+                oertlichMitNetz: 'Your work stays on this computer and is not sent anywhere. This tool does fetch a code library when it opens, from: {}. That server learns your IP address. What you are working on still never leaves the machine.',
+                sicherung: 'Saving and restoring',
+                sicherungText: '<b>Save</b> puts your work into a file next to the tool — a <b>.json</b> file. Nothing dangerous about it: a text file you can open and read in any editor. <b>Open</b> brings it back, into this window or another one.',
+                sicherungWarum: 'Why this matters: otherwise your work only lives inside the browser. If someone clears the browser, it is gone. The saved file stays.',
+                mehr: 'In full: Backups &amp; restoring',
+                schluss: 'Got it'
+            }
+        };
+
+        let _poSpr = 'de';
+        try { if (localStorage.getItem('po_sprache') === 'en') _poSpr = 'en'; } catch (e) { /* ohne Speicher eben Deutsch */ }
+
+        const poSprache = () => _poSpr;
+
+        /* ---------- Wörterbuch ---------- */
+
+        const _poNormal = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+        const _poEscRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        let _poExakt = null, _poMuster = null;
+
+        function _poWbBauen() {
+            if (_poExakt) return;
+            _poExakt = new Map();
+            _poMuster = [];
+            const quellen = [PO_WB_BASIS, (typeof PO_WB !== 'undefined' ? PO_WB : null)];
+            for (const q of quellen) {
+                if (!q) continue;
+                for (const de of Object.keys(q)) {
+                    const en = q[de];
+                    if (!en) continue;
+                    if (de.indexOf('{}') >= 0) {
+                        const teile = _poNormal(de).split('{}');
+                        _poMuster.push({ re: new RegExp('^' + teile.map(_poEscRe).join('([\\s\\S]*?)') + '$'), en });
+                    } else {
+                        _poExakt.set(_poNormal(de), en);
+                    }
+                }
+            }
+        }
+
+        /* Was das Wörterbuch nicht kennt, wird hier gesammelt. Beim Pflegen einer
+           Übersetzung zeigt poLuecken() im Browser, was noch fehlt. */
+        const _poLuecken = new Set();
+        function poLuecken() { return Array.from(_poLuecken).sort((a, b) => a.localeCompare(b, 'de')); }
+
+        /* Liefert die Übersetzung oder null, wenn das Wörterbuch nichts kennt. */
+        function _poNachschlagen(text) {
+            _poWbBauen();
+            const n = _poNormal(text);
+            if (!n) return null;
+            const treffer = _poExakt.get(n);
+            if (treffer !== undefined) return treffer;
+            for (const m of _poMuster) {
+                const t = n.match(m.re);
+                if (!t) continue;
+                let i = 0;
+                return m.en.replace(/\{\}/g, () => { i++; return t[i] === undefined ? '' : t[i]; });
+            }
+            if (_poLuecken.size < 2000) _poLuecken.add(n);
+            return null;
+        }
+
+        /* Für Text, der nicht im Seitengerüst steht, sondern gezeichnet wird —
+           auf einer Leinwand etwa. Gibt auf Deutsch den Text unverändert zurück. */
+        function poT(text) {
+            if (_poSpr !== 'en') return text;
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* Die englische Fassung, unabhängig von der eingestellten Sprache. Gebraucht
+           dort, wo beide Sprachen zugleich gelten müssen — etwa in einem Suchfeld,
+           das auch nach dem Umschalten noch finden soll. */
+        function poEn(text) {
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* ---------- Die Seite umschreiben ---------- */
+
+        const _PO_ATTR = ['placeholder', 'title', 'aria-label', 'alt'];
+        const _PO_TABU = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1, PRE: 1, CODE: 1, CANVAS: 1 };
+
+        function _poDarf(el) {
+            for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+                if (_PO_TABU[e.tagName]) return false;
+                if (e.isContentEditable) return false;
+                if (e.hasAttribute('data-po-roh')) return false;
+                if (e.hasAttribute('data-po-nur')) return false;   // steht schon in seiner Sprache
+            }
+            return true;
+        }
+
+        /* Längere Texte — eine ganze Seite Erklärung etwa — zerfielen im Wörterbuch
+           an jedem <b> in Stücke. Dafür gibt es den zweiten Weg: zwei Blöcke, einer
+           je Sprache, ausgezeichnet mit data-po-nur="de" bzw. "en". Es wird immer
+           nur einer gezeigt.
+           Bewusst über style.display statt über hidden: eine Klasse mit display:flex
+           gewänne sonst gegen hidden, und der Block stünde trotzdem da. */
+        function _poSprachbloecke() {
+            document.querySelectorAll('[data-po-nur]').forEach(el => {
+                el.style.display = (el.getAttribute('data-po-nur') === _poSpr) ? '' : 'none';
+            });
+        }
+
+        function _poTextKnoten(k) {
+            if (!k || !k.nodeValue || !k.nodeValue.trim()) return;
+            if (k.nodeValue === k.__poEn) return;                 // steht schon auf Englisch
+            if (!_poDarf(k.parentElement)) return;
+            const neu = _poNachschlagen(k.nodeValue);
+            if (neu === null) return;
+            k.__poDe = k.nodeValue;
+            k.nodeValue = k.nodeValue.match(/^\s*/)[0] + neu + k.nodeValue.match(/\s*$/)[0];
+            k.__poEn = k.nodeValue;
+        }
+
+        function _poMerkmal(el, name) {
+            if (!el || el.nodeType !== 1 || !el.hasAttribute(name)) return;
+            if (!_poDarf(el)) return;
+            const wert = el.getAttribute(name);
+            el.__poAttrEn = el.__poAttrEn || {};
+            el.__poAttrDe = el.__poAttrDe || {};
+            if (wert === el.__poAttrEn[name]) return;
+            const neu = _poNachschlagen(wert);
+            if (neu === null) return;
+            el.__poAttrDe[name] = wert;
+            el.setAttribute(name, neu);
+            el.__poAttrEn[name] = neu;
+        }
+
+        function _poAnwenden(wurzel) {
+            if (_poSpr !== 'en' || !wurzel) return;
+            if (wurzel.nodeType === 3) { _poTextKnoten(wurzel); return; }
+            if (wurzel.nodeType !== 1) return;
+            const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) _poTextKnoten(k);
+            const mit = [wurzel].concat(Array.from(wurzel.querySelectorAll('*')));
+            for (const el of mit) for (const a of _PO_ATTR) if (el.hasAttribute && el.hasAttribute(a)) _poMerkmal(el, a);
+        }
+
+        function _poZurueck() {
+            const lauf = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) {
+                if (k.__poDe !== undefined && k.nodeValue === k.__poEn) { k.nodeValue = k.__poDe; k.__poEn = undefined; }
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (!el.__poAttrDe) continue;
+                for (const a of Object.keys(el.__poAttrDe)) {
+                    if (el.getAttribute(a) === el.__poAttrEn[a]) el.setAttribute(a, el.__poAttrDe[a]);
+                }
+                el.__poAttrEn = {};
+            }
+        }
+
+        let _poStill = false;
+        let _poBeob = null;
+
+        function _poBeobachten() {
+            _poBeob = new MutationObserver(aenderungen => {
+                if (_poStill || _poSpr !== 'en') return;
+                _poStill = true;
+                try {
+                    for (const a of aenderungen) {
+                        if (a.type === 'childList') a.addedNodes.forEach(n => {
+                            _poAnwenden(n);
+                            if (n.nodeType === 1 && n.querySelector && (n.hasAttribute('data-po-nur') || n.querySelector('[data-po-nur]'))) _poSprachbloecke();
+                        });
+                        else if (a.type === 'characterData') _poTextKnoten(a.target);
+                        else if (a.type === 'attributes') _poMerkmal(a.target, a.attributeName);
+                    }
+                } finally {
+                    _poBeob.takeRecords();          // eigene Änderungen nicht noch einmal ansehen
+                    _poStill = false;
+                }
+            });
+            _poBeob.observe(document.documentElement, {
+                childList: true, subtree: true, characterData: true,
+                attributes: true, attributeFilter: _PO_ATTR
+            });
+        }
+
+        /* ---------- Umschalten ---------- */
+
+        function poSpracheSetzen(spr) {
+            const neu = spr === 'en' ? 'en' : 'de';
+            if (neu === _poSpr) return;
+            _poSpr = neu;
+            try { localStorage.setItem('po_sprache', neu); } catch (e) { /* dann eben nur für dieses Fenster */ }
+            document.documentElement.lang = neu;
+            /* Beide Fenster werden geschlossen statt übersetzt: ihr Inhalt steht als
+               data-po-roh und geht am Wörterbuch vorbei. Beim nächsten Öffnen baut er
+               sich in der neuen Sprache neu auf. Ohne das bliebe nach einem Wechsel
+               bei offenem Fenster die alte Sprache stehen. */
+            const hilfe = document.getElementById('po-hilfe-fenster');
+            if (hilfe) hilfe.remove();
+            const trinkgeld = document.getElementById('po-trinkgeld-fenster');
+            if (trinkgeld) trinkgeld.remove();
+            _poStill = true;
+            try {
+                if (neu === 'en') _poAnwenden(document.documentElement);
+                else _poZurueck();
+            } finally {
+                if (_poBeob) _poBeob.takeRecords();
+                _poStill = false;
+            }
+            _poSprachbloecke();
+            _poKopfMalen();
+            // Werkzeuge, die selbst zeichnen, müssen danach neu zeichnen.
+            if (typeof poNeuZeichnen === 'function') poNeuZeichnen();
+        }
+
+        function _poKopfMalen() {
+            document.querySelectorAll('.po-sprach button').forEach(b => {
+                b.setAttribute('aria-pressed', String(b.dataset.spr === _poSpr));
+            });
+        }
+
+        /* ---------- Trinkgeld ----------
+           PocketOps verschenkt sich. Der Knopf ist die einzige Stelle, an der das
+           Werkzeug etwas von sich aus möchte — entsprechend zurückhaltend.
+
+           Bewusst „Trinkgeld“ und nicht „Spende“: eine Spende im steuerlichen Sinn
+           kann nur eine anerkannt gemeinnützige Einrichtung entgegennehmen. Hier ist
+           es eine freiwillige Zuwendung an eine Privatperson.
+
+           Der Verweis geht an PayPal.me. Bewusst nicht an die Spendenseite mit der
+           E-Mail-Adresse als Kennung: die stünde damit im Quelltext jeder der
+           sechsundzwanzig Dateien und wäre, seit das Ganze öffentlich liegt, für
+           Adress-Sammler maschinell abgreifbar. Der PayPal.me-Name zeigt sie nicht.
+
+           Den Betrag gibt der Besucher selbst an — deshalb der blanke Name ohne
+           angehängte Zahl. Soll sich das ändern, ist hier die eine Zeile zu ändern
+           und _design/sync.mjs laufen zu lassen. */
+        const PO_TRINKGELD_LINK = 'https://paypal.me/JensHeitmann306';
+
+        const PO_TRINKGELD_TEXTE = {
+            de: {
+                titel: 'Trinkgeld',
+                frei: 'PocketOps ist frei. Nimm es, gib es weiter, bau es um — es kostet nichts und wird nichts kosten.',
+                arbeit: 'Darin steckt allerdings eine Menge Arbeit. Wenn dir eines der Werkzeuge den Tag leichter gemacht hat, freue ich mich über ein Trinkgeld. Wie viel, entscheidest du.',
+                hinweis: 'Der Knopf öffnet PayPal in einem neuen Fenster. Hier wird nichts abgefragt und nichts mitgeschnitten.',
+                knopf: 'Trinkgeld über PayPal',
+                nein: 'Vielleicht später'
+            },
+            en: {
+                titel: 'Tip jar',
+                frei: 'PocketOps is free. Take it, pass it on, rebuild it — it costs nothing and it never will.',
+                arbeit: 'There is a fair amount of work in it, though. If one of these tools has made your day easier, a tip would be welcome. You decide how much.',
+                hinweis: 'The button opens PayPal in a new window. Nothing is asked for or recorded here.',
+                knopf: 'Leave a tip via PayPal',
+                nein: 'Maybe later'
+            }
+        };
+
+        function poTrinkgeld() {
+            if (document.getElementById('po-trinkgeld-fenster')) return;
+            const t = PO_TRINKGELD_TEXTE[_poSpr] || PO_TRINKGELD_TEXTE.de;
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(t.titel) + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.frei) + '</p>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.arbeit) + '</p>'
+              +   '<p style="margin:0;color:var(--po-ink-3);font-size:11px">' + poEsc(t.hinweis) + '</p>'
+              + '</div>'
+              + '<div class="po-dialog-foot">'
+              +   '<button class="po-btn" data-zu>' + poEsc(t.nein) + '</button>'
+              +   '<a class="po-btn po-btn--primary" href="' + PO_TRINKGELD_LINK + '" target="_blank" rel="noopener noreferrer">'
+              +     poEsc(t.knopf) + '</a>'
+              + '</div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    /* Nach dem Sprung zu PayPal soll hier nicht noch ein Fenster offen
+                       stehenbleiben, auf das niemand mehr schaut. */
+                    b.querySelector('a.po-btn').onclick = () => setTimeout(schliessen, 150);
+                });
+            back.id = 'po-trinkgeld-fenster';
+        }
+
+        function _poKopfBauen() {
+            const leiste = document.querySelector('.po-head-actions');
+            if (!leiste || document.querySelector('.po-meta')) return;
+            const box = document.createElement('div');
+            box.className = 'po-meta';
+            box.innerHTML =
+                '<div class="po-sprach" role="group" aria-label="Sprache / Language">'
+              + '<button type="button" data-spr="de">DE</button>'
+              + '<button type="button" data-spr="en">EN</button></div>'
+              + '<button type="button" class="po-trinkgeld" title="Trinkgeld" aria-label="Trinkgeld">&#9829;</button>'
+              + '<button type="button" class="po-frage" title="Anleitung" aria-label="Anleitung">?</button>'
+              + '<div class="po-head-sep"></div>';
+            leiste.insertBefore(box, leiste.firstChild);
+            box.querySelectorAll('[data-spr]').forEach(b => { b.onclick = () => poSpracheSetzen(b.dataset.spr); });
+            box.querySelector('.po-frage').onclick = poHilfe;
+            box.querySelector('.po-trinkgeld').onclick = poTrinkgeld;
+            _poKopfMalen();
+        }
+
+        /* ---------- Die Anleitung ---------- */
+
+        /* Die Werkzeuge liegen im Ordner tools/, die Übersicht eine Ebene darüber.
+           Woran sich das erkennen lässt: nur ein Werkzeug trägt das Markenzeichen als
+           Rückverweis; auf der Übersicht selbst steht es als blosser Text. */
+        const _poSicherungPfad = () => document.querySelector('a.po-brand') ? 'Sicherung.html' : 'tools/Sicherung.html';
+
+        /* Die Rechner, von denen diese Seite etwas nachlädt — ohne Doppelte. */
+        function _poFremdquellen() {
+            return [...document.querySelectorAll('script[src], link[rel="stylesheet"][href]')]
+                .map(e => e.getAttribute('src') || e.getAttribute('href'))
+                .filter(u => /^https?:\/\//i.test(u || ''))
+                .map(u => { try { return new URL(u).hostname; } catch (e) { return null; } })
+                .filter((h, i, a) => h && a.indexOf(h) === i);
+        }
+
+        function poHilfe() {
+            if (document.getElementById('po-hilfe-fenster')) return;
+            const t = PO_HILFE_TEXTE[_poSpr];
+            const h = (typeof PO_HILFE !== 'undefined' && PO_HILFE && PO_HILFE[_poSpr]) ? PO_HILFE[_poSpr] : null;
+            const name = (document.querySelector('.po-tool-name') || {}).textContent || 'PocketOps';
+
+            const teile = [];
+            if (h && h.kurz) teile.push('<p style="margin:0 0 12px">' + h.kurz + '</p>');
+            if (h && h.schritte && h.schritte.length) {
+                teile.push('<div class="po-hilfe-titel">' + t.schritte + '</div>'
+                         + '<ol class="po-hilfe-liste">' + h.schritte.map(s => '<li>' + s + '</li>').join('') + '</ol>');
+            }
+            if (h && h.tipps && h.tipps.length) {
+                teile.push('<div class="po-hilfe-teil"><div class="po-hilfe-titel">' + t.tipps + '</div>'
+                         + '<ul class="po-hilfe-liste">' + h.tipps.map(s => '<li>' + s + '</li>').join('') + '</ul></div>');
+            }
+            teile.push('<div class="po-hilfe-teil">'
+                     + '<div class="po-hilfe-titel">' + t.sicherung + '</div>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungText + '</p>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungWarum + '</p>'
+                     + '<p style="margin:0"><a href="' + _poSicherungPfad() + '">' + t.mehr + '</a></p></div>');
+            /* Ein paar Werkzeuge holen sich eine Programmbibliothek aus dem Netz. Der
+               Hinweis liest das aus der Seite selbst aus, statt es pauschal zu
+               behaupten — so bleibt er richtig, auch wenn später eine Quelle dazukommt
+               oder wegfällt. */
+            const fremd = _poFremdquellen();
+            teile.push('<div class="po-hilfe-teil" style="color:var(--po-ink-3);font-size:11px">'
+                     + (fremd.length ? t.oertlichMitNetz.replace('{}', fremd.join(', ')) : t.oertlich)
+                     + '</div>');
+
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(name) + ' — ' + t.titel + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>' + teile.join('') + '</div>'
+              + '<div class="po-dialog-foot"><button class="po-btn po-btn--go" data-zu>' + t.schluss + '</button></div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    setTimeout(() => b.querySelector('[data-zu]').focus(), 30);
+                });
+            back.id = 'po-hilfe-fenster';
+            back.querySelector('.po-dialog').style.maxWidth = '560px';
+        }
+
+        function _poStart() {
+            document.documentElement.lang = _poSpr;
+            _poKopfBauen();
+            _poSprachbloecke();
+            if (_poSpr === 'en') {
+                _poStill = true;
+                try { _poAnwenden(document.documentElement); } finally { _poStill = false; }
+            }
+            _poBeobachten();
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F1') { e.preventDefault(); poHilfe(); }
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _poStart);
+        else _poStart();
+        /* PO-BASE:ENDE */
+
+        /* ======================================================================
+           DIAGRAMM
+
+           Alles wird selbst auf eine Leinwand gezeichnet, nichts liegt als HTML
+           oder SVG darüber. Darum ist das ausgegebene PNG dasselbe Bild wie auf
+           dem Schirm — dieselbe Hand zeichnet beides, nur mit anderem Maßstab.
+           ====================================================================== */
+
+        /* Zeichenfarben. Dieselben Werte wie in den Marken oben, hier aber als
+           feste Angaben: eine Leinwand kennt keine CSS-Variablen, und das Bild
+           soll auch dann stimmen, wenn es aus der Seite herausgelöst wird. */
+        const F = {
+            flaeche:  '#FFFFFF',
+            flaeche2: '#F8FAFC',
+            tinte:    '#1E293B',
+            tinte2:   '#475569',
+            tinte3:   '#94A3B8',
+            linie:    '#E2E8F0',
+            linie2:   '#CBD5E1'
+        };
+        const SCHRIFT = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+
+        /* Farben der Reihen. Geprüft mit dem Prüfskript der Visualisierungs-
+           Richtlinie (benachbarte Paare, heller Grund): Helligkeitsband,
+           Buntheit, Unterscheidbarkeit bei Farbfehlsichtigkeit und Kontrast
+           bestehen alle. Die Reihenfolge ist fest und wird nicht durchlaufen —
+           darum ist bei acht Reihen Schluss, statt Farben zu wiederholen. */
+        const REIHENFARBEN = ['#008A70', '#B02426', '#2E6FB8', '#C4841A', '#7A3FA8', '#3E8A2E', '#A32E8E', '#C2561F'];
+        const HOECHSTREIHEN = 8;
+        const HOECHSTZEILEN = 60;
+
+        const ARTEN = [
+            { id: 'balken',    name: 'Balken',         was: 'Werte nebeneinander vergleichen',
+              erklaerung: 'Balken vergleichen Größen. Sie beginnen immer bei Null — sonst täuscht die Länge.' },
+            { id: 'liegend',   name: 'Balken liegend', was: 'Platz für lange Beschriftungen',
+              erklaerung: 'Dasselbe wie Balken, nur quer. Die richtige Wahl, wenn die Beschriftungen lang sind.' },
+            { id: 'gestapelt', name: 'Gestapelt',      was: 'Anteile an einer Summe',
+              erklaerung: 'Zeigt die Summe und woraus sie besteht. Einzelne Teile lassen sich darin schlecht vergleichen — dafür lieber Balken nebeneinander.' },
+            { id: 'linie',     name: 'Linie',          was: 'Verlauf über die Zeit',
+              erklaerung: 'Für Verläufe. Die Achse beginnt hier nicht zwingend bei Null, damit kleine Bewegungen sichtbar bleiben.' },
+            { id: 'flaeche',   name: 'Fläche',         was: 'Verlauf mit Gewicht',
+              erklaerung: 'Eine Linie mit Füllung. Bei mehreren Reihen liegen die Flächen übereinander — ab drei wird es unübersichtlich.' },
+            { id: 'torte',     name: 'Torte',          was: 'Anteile am Ganzen',
+              erklaerung: 'Nur sinnvoll, wenn die Teile ein Ganzes ergeben, und nur bei wenigen Teilen. Verwendet die erste Reihe; Werte bis Null bleiben außen vor. Ab dem achten Stück wird der Rest zu „Übrige" zusammengefasst.' },
+            { id: 'ring',      name: 'Ring',           was: 'Anteile, Summe in der Mitte',
+              erklaerung: 'Wie die Torte, mit der Summe in der Mitte. Verwendet die erste Reihe; Werte bis Null bleiben außen vor. Ab dem achten Stück wird der Rest zu „Übrige" zusammengefasst.' }
+        ];
+
+        const SINNBILD = {
+            balken:    '<svg viewBox="0 0 42 26" aria-hidden="true"><rect x="3"  y="13" width="7" height="11" rx="2" fill="currentColor"/><rect x="13" y="7"  width="7" height="17" rx="2" fill="currentColor" opacity=".62"/><rect x="23" y="10" width="7" height="14" rx="2" fill="currentColor"/><rect x="33" y="3"  width="7" height="21" rx="2" fill="currentColor" opacity=".62"/></svg>',
+            liegend:   '<svg viewBox="0 0 42 26" aria-hidden="true"><rect x="2" y="3"  width="24" height="5" rx="2" fill="currentColor"/><rect x="2" y="10" width="36" height="5" rx="2" fill="currentColor" opacity=".62"/><rect x="2" y="17" width="16" height="5" rx="2" fill="currentColor"/></svg>',
+            gestapelt: '<svg viewBox="0 0 42 26" aria-hidden="true"><rect x="5"  y="14" width="9" height="10" rx="2" fill="currentColor"/><rect x="5"  y="6"  width="9" height="6"  rx="2" fill="currentColor" opacity=".45"/><rect x="19" y="11" width="9" height="13" rx="2" fill="currentColor"/><rect x="19" y="4"  width="9" height="5"  rx="2" fill="currentColor" opacity=".45"/></svg>',
+            linie:     '<svg viewBox="0 0 42 26" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20 12 12 21 16 30 6 39 9"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="30" cy="6" r="2" fill="currentColor"/></svg>',
+            flaeche:   '<svg viewBox="0 0 42 26" aria-hidden="true"><path d="M3 20 12 12 21 16 30 6 39 9v14H3Z" fill="currentColor" opacity=".3"/><path d="M3 20 12 12 21 16 30 6 39 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+            torte:     '<svg viewBox="0 0 42 26" aria-hidden="true"><circle cx="21" cy="13" r="11" fill="currentColor" opacity=".35"/><path d="M21 13V2a11 11 0 0 1 9.5 16.5Z" fill="currentColor"/></svg>',
+            ring:      '<svg viewBox="0 0 42 26" aria-hidden="true"><circle cx="21" cy="13" r="9" fill="none" stroke="currentColor" stroke-width="5" opacity=".35"/><path d="M21 4a9 9 0 0 1 7.8 13.5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>'
+        };
+
+        const VORGABE = {
+            art: 'balken',
+            titel: 'Umsatz je Quartal',
+            einheit: 'T€',
+            zeigeWerte: true,
+            raster: true,
+            tabelleMit: false,
+            kategorien: ['Q1', 'Q2', 'Q3', 'Q4'],
+            reihen: [
+                { name: '2025', werte: [120, 145, 138, 170] },
+                { name: '2026', werte: [132, 151, 160, 186] }
+            ]
+        };
+
+        let d = null;
+
+        /* ---------- Zahlen lesen und schreiben ---------- */
+
+        const NF = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 });
+
+        /* Nimmt an, was in einer Tabellenkalkulation entsteht: Komma als
+           Dezimaltrennung, Punkt als Tausendertrennung, Prozentzeichen,
+           geschützte Leerzeichen. Was keine Zahl ist, wird null — eine Lücke,
+           kein Nullwert. */
+        function zahl(v) {
+            if (v === null || v === undefined) return null;
+            if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+            let s = String(v).trim();
+            if (!s) return null;
+            s = s.replace(/[% \s'€$]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+            const n = Number(s);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function fmt(v) { return v === null || v === undefined ? '–' : NF.format(v); }
+
+        function einheitAn(text) {
+            const e = (d.einheit || '').trim();
+            return e ? text + ' ' + e : text;
+        }
+
+        /* Achsenzahlen bekommen so viele Stellen, wie der Schritt braucht —
+           sonst steht an einer Achse mit Schritt 0,5 plötzlich "1" neben "1,5". */
+        function achsenFormat(schritt) {
+            const stellen = Math.min(3, Math.max(0, -Math.floor(Math.log10(Math.abs(schritt) || 1))));
+            const nf = new Intl.NumberFormat('de-DE', { minimumFractionDigits: stellen, maximumFractionDigits: stellen });
+            return v => nf.format(v);
+        }
+
+        /* ---------- Stand laden, prüfen, sichern ---------- */
+
+        function laden() {
+            try {
+                const roh = JSON.parse(localStorage.getItem('po_diagramm') || 'null');
+                if (roh && Array.isArray(roh.kategorien)) { uebernehmen(roh); return; }
+            } catch (e) { /* unbrauchbarer Stand wird verworfen */ }
+            uebernehmen(VORGABE);
+        }
+
+        /* Jede Reihe braucht genau so viele Werte wie es Zeilen gibt. Alles,
+           was von außen kommt — Datei wie Zwischenablage — läuft hier durch. */
+        function uebernehmen(roh) {
+            const art = ARTEN.some(a => a.id === roh.art) ? roh.art : 'balken';
+            const kategorien = (Array.isArray(roh.kategorien) ? roh.kategorien : [])
+                .slice(0, HOECHSTZEILEN).map(k => String(k == null ? '' : k));
+            const reihen = (Array.isArray(roh.reihen) ? roh.reihen : [])
+                .slice(0, HOECHSTREIHEN).map((r, i) => ({
+                    name: String(r && r.name != null && String(r.name).trim() ? r.name : 'Reihe ' + (i + 1)),
+                    werte: kategorien.map((_, k) => zahl(r && Array.isArray(r.werte) ? r.werte[k] : null))
+                }));
+            d = {
+                art,
+                titel: String(roh.titel == null ? '' : roh.titel).slice(0, 120),
+                einheit: String(roh.einheit == null ? '' : roh.einheit).slice(0, 12),
+                zeigeWerte: roh.zeigeWerte !== false,
+                raster: roh.raster !== false,
+                tabelleMit: roh.tabelleMit === true,
+                kategorien,
+                reihen
+            };
+            if (!d.kategorien.length) d.kategorien = ['', '', ''];
+            if (!d.reihen.length) d.reihen = [{ name: 'Reihe 1', werte: d.kategorien.map(() => null) }];
+        }
+
+        function sichern() {
+            try { localStorage.setItem('po_diagramm', JSON.stringify(d)); }
+            catch (e) { /* voller Speicher darf das Arbeiten nicht anhalten */ }
+        }
+
+        /* ---------- Was gezeichnet wird ---------- */
+
+        const istKreis   = () => d.art === 'torte' || d.art === 'ring';
+        const istLiegend = () => d.art === 'liegend';
+        const farbe      = i => REIHENFARBEN[i % REIHENFARBEN.length];
+
+        function hatWerte() {
+            return d.reihen.some(r => r.werte.some(v => v !== null));
+        }
+
+        /* Hell oder dunkel? Entscheidet, ob eine Zahl in einem gefüllten Balken
+           weiß oder dunkel geschrieben wird. */
+        function istDunkel(hex) {
+            const n = parseInt(hex.slice(1), 16);
+            const kanal = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+            const l = 0.2126 * kanal((n >> 16) & 255) + 0.7152 * kanal((n >> 8) & 255) + 0.0722 * kanal(n & 255);
+            return l < 0.42;
+        }
+
+        /* Für die Legende: bei einer einzigen Reihe trägt die Überschrift den
+           Namen, dann braucht es keine Legende. Torte und Ring beschriften
+           ihre Stücke unmittelbar — eine Legende daneben sagte dasselbe
+           zweimal, also entfällt sie dort. */
+        function legendeEintraege() {
+            if (istKreis()) return [];
+            const e = d.reihen.map((r, i) => ({ text: r.name, farbe: farbe(i) }));
+            return e.length >= 2 ? e : [];
+        }
+
+        /* Torte und Ring: höchstens acht Stücke, der Rest wird zu „Übrige"
+           zusammengefasst. Mehr Stücke hieße Farben wiederholen, und zwei
+           gleiche Farben in einem Kreis sind schlimmer als ein Sammelstück. */
+        function kreisStuecke() {
+            const erste = d.reihen[0];
+            const alle = d.kategorien.map((k, i) => ({
+                name: k || 'Ohne Namen', wert: erste ? erste.werte[i] : null, i
+            })).filter(s => s.wert !== null && s.wert > 0);
+            if (alle.length <= REIHENFARBEN.length) return alle;
+            const sortiert = alle.slice().sort((a, b) => b.wert - a.wert);
+            const vorn = sortiert.slice(0, REIHENFARBEN.length - 1);
+            const rest = sortiert.slice(REIHENFARBEN.length - 1);
+            // In der ursprünglichen Reihenfolge lassen, nur den Rest anhängen
+            const behalten = alle.filter(s => vorn.includes(s));
+            behalten.forEach((s, k) => s.farbNr = k);
+            behalten.push({
+                name: poT('Übrige (' + rest.length + ' Zeilen)'),
+                wert: rest.reduce((a, s) => a + s.wert, 0),
+                i: -1,
+                farbNr: REIHENFARBEN.length - 1
+            });
+            return behalten;
+        }
+
+        /* ---------- Hilfsmittel zum Zeichnen ---------- */
+
+        function rundRect(ctx, x, y, b, h, r) {
+            const ecken = Array.isArray(r) ? r : [r, r, r, r];
+            const m = Math.min(Math.abs(b), Math.abs(h)) / 2;
+            const [a1, a2, a3, a4] = ecken.map(v => Math.max(0, Math.min(v, m)));
+            ctx.beginPath();
+            ctx.moveTo(x + a1, y);
+            ctx.lineTo(x + b - a2, y);
+            ctx.quadraticCurveTo(x + b, y, x + b, y + a2);
+            ctx.lineTo(x + b, y + h - a3);
+            ctx.quadraticCurveTo(x + b, y + h, x + b - a3, y + h);
+            ctx.lineTo(x + a4, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - a4);
+            ctx.lineTo(x, y + a1);
+            ctx.quadraticCurveTo(x, y, x + a1, y);
+            ctx.closePath();
+        }
+
+        function kurz(ctx, text, maxB) {
+            if (ctx.measureText(text).width <= maxB) return text;
+            let s = text;
+            while (s.length > 1 && ctx.measureText(s + '…').width > maxB) s = s.slice(0, -1);
+            return s + '…';
+        }
+
+        /* Eine Achse mit runden Schritten. nullAn heißt: die Null muss dabei
+           sein — bei Balken ist das Pflicht, sonst lügt die Länge. */
+        function skala(min, max, nullAn) {
+            if (nullAn) { min = Math.min(0, min); max = Math.max(0, max); }
+            if (!Number.isFinite(min) || !Number.isFinite(max)) { min = 0; max = 1; }
+            if (min === max) {
+                if (min === 0) { max = 1; }
+                else if (min > 0) { min = 0; }
+                else { max = 0; }
+            }
+            const roh = (max - min) / 5;
+            const mag = Math.pow(10, Math.floor(Math.log10(roh || 1)));
+            const n = roh / mag;
+            const schritt = mag * (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10);
+            const unten = Math.floor(min / schritt) * schritt;
+            const oben = Math.ceil(max / schritt) * schritt;
+            return { min: unten, max: oben === unten ? unten + schritt : oben, schritt };
+        }
+
+        function stufen(sk) {
+            const out = [];
+            // Rundungsreste aufsammeln, damit kein Schritt verschluckt wird.
+            for (let i = 0; i <= Math.round((sk.max - sk.min) / sk.schritt) + 0.5; i++) {
+                const v = sk.min + i * sk.schritt;
+                if (v > sk.max + sk.schritt * 1e-6) break;
+                out.push(Math.abs(v) < sk.schritt * 1e-9 ? 0 : v);
+            }
+            return out;
+        }
+
+        function spanneWerte() {
+            let min = Infinity, max = -Infinity;
+            if (d.art === 'gestapelt') {
+                d.kategorien.forEach((_, i) => {
+                    let p = 0, n = 0;
+                    d.reihen.forEach(r => { const v = r.werte[i]; if (v === null) return; if (v >= 0) p += v; else n += v; });
+                    min = Math.min(min, n); max = Math.max(max, p);
+                });
+            } else {
+                d.reihen.forEach(r => r.werte.forEach(v => {
+                    if (v === null) return;
+                    min = Math.min(min, v); max = Math.max(max, v);
+                }));
+            }
+            if (!Number.isFinite(min)) { min = 0; max = 1; }
+            return { min, max };
+        }
+
+        /* ======================================================================
+           Das Bild. zeichne() malt in logischen Maßen; der Maßstab steckt in
+           der Verschiebung des Zeichenwerks. Schirm und PNG laufen durch
+           dieselbe Funktion.
+           ====================================================================== */
+
+        const PAD = 22;
+
+        function zeichne(ctx, B, H, opt = {}) {
+            const reg = opt.regionen || null;
+            ctx.save();
+            ctx.fillStyle = F.flaeche;
+            ctx.fillRect(0, 0, B, H);
+            ctx.textBaseline = 'alphabetic';
+            ctx.lineJoin = 'round';
+
+            let oben = PAD;
+            const titel = (d.titel || '').trim();
+            if (titel) {
+                ctx.font = '700 17px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte;
+                ctx.textAlign = 'left';
+                ctx.fillText(kurz(ctx, titel, B - 2 * PAD), PAD, oben + 13);
+                oben += 27;
+            }
+
+            const le = legendeEintraege();
+            if (le.length) oben = malLegende(ctx, PAD, oben, B - 2 * PAD, le) + 12;
+
+            // Die Einheit steht einmal an der Achse, nicht an jeder Zahl.
+            const einheit = (d.einheit || '').trim();
+            if (einheit && !istKreis() && hatWerte()) {
+                ctx.font = '10px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte3;
+                ctx.textAlign = 'left';
+                // Nur die Einheit, ohne „in": was der Nutzer schreibt, muss
+                // nicht in den Dativ passen („in Tage" wäre falsch).
+                ctx.fillText(einheit, PAD, oben + 8);
+                oben += 15;
+            }
+
+            const kasten = { x: PAD, y: oben, b: B - 2 * PAD, h: H - oben - PAD };
+
+            if (!hatWerte()) {
+                ctx.font = '13px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte3;
+                ctx.textAlign = 'center';
+                ctx.fillText(poT('Werte in die Tabelle eintragen — das Diagramm folgt sofort.'),
+                             B / 2, kasten.y + kasten.h / 2);
+                ctx.restore();
+                return;
+            }
+            if (kasten.h < 70 || kasten.b < 80) { ctx.restore(); return; }
+
+            if (istKreis()) malKreis(ctx, kasten, reg, opt);
+            else if (istLiegend()) malLiegend(ctx, kasten, reg, opt);
+            else malStehend(ctx, kasten, reg, opt);
+
+            ctx.restore();
+        }
+
+        function malLegende(ctx, x, y, maxB, eintraege) {
+            ctx.font = '12px ' + SCHRIFT;
+            ctx.textAlign = 'left';
+            const zeileH = 19, kasten = 11;
+            let zx = x, zy = y;
+            eintraege.forEach(e => {
+                const text = kurz(ctx, e.text || 'Ohne Namen', maxB - kasten - 6);
+                const breite = kasten + 6 + ctx.measureText(text).width;
+                if (zx > x && zx + breite > x + maxB) { zx = x; zy += zeileH; }
+                ctx.fillStyle = e.farbe;
+                rundRect(ctx, zx, zy + 2, kasten, kasten, 3);
+                ctx.fill();
+                ctx.fillStyle = F.tinte2;
+                ctx.fillText(text, zx + kasten + 6, zy + 11);
+                zx += breite + 18;
+            });
+            return zy + kasten + 3;
+        }
+
+        /* ---------- Balken, Stapel, Linie, Fläche ---------- */
+
+        function malStehend(ctx, kasten, reg, opt) {
+            const nullAn = d.art !== 'linie';
+            const sp = spanneWerte();
+            const sk = skala(sp.min, sp.max, nullAn);
+            const fAchse = achsenFormat(sk.schritt);
+            const marken = stufen(sk);
+
+            ctx.font = '11px ' + SCHRIFT;
+            const linksB = Math.max(...marken.map(v => ctx.measureText(fAchse(v)).width)) + 10;
+
+            const n = d.kategorien.length;
+            const breiteJe = (kasten.b - linksB) / Math.max(1, n);
+            const maxLab = Math.max(...d.kategorien.map(t => ctx.measureText(t || '').width), 0);
+            const drehen = maxLab > breiteJe - 8;
+            const untenH = drehen ? Math.min(92, Math.round(maxLab * 0.7) + 16) : 20;
+            // Luft über dem höchsten Balken, damit die angeschriebene Zahl
+            // nicht in die Legende ragt.
+            const obenLuft = d.zeigeWerte ? 14 : 2;
+
+            const p = { x: kasten.x + linksB, y: kasten.y + obenLuft, b: kasten.b - linksB, h: kasten.h - untenH - obenLuft };
+            if (p.h < 40) return;
+            const y = v => p.y + p.h * (1 - (v - sk.min) / (sk.max - sk.min));
+
+            // Hilfslinien und Achsenzahlen
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            marken.forEach(v => {
+                const yy = Math.round(y(v)) + 0.5;
+                if (d.raster || v === 0) {
+                    ctx.strokeStyle = v === 0 ? F.linie2 : F.linie;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(p.x, yy); ctx.lineTo(p.x + p.b, yy); ctx.stroke();
+                }
+                ctx.fillStyle = F.tinte3;
+                ctx.fillText(fAchse(v), p.x - 7, yy);
+            });
+            ctx.textBaseline = 'alphabetic';
+
+            // Beschriftungen unter den Gruppen
+            ctx.fillStyle = F.tinte2;
+            d.kategorien.forEach((t, i) => {
+                const mx = p.x + breiteJe * (i + 0.5);
+                const text = t || '';
+                if (!text) return;
+                if (drehen) {
+                    ctx.save();
+                    ctx.translate(mx, p.y + p.h + 10);
+                    ctx.rotate(-Math.PI * 40 / 180);
+                    ctx.textAlign = 'right';
+                    ctx.fillText(kurz(ctx, text, untenH / 0.7), 0, 0);
+                    ctx.restore();
+                } else {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(kurz(ctx, text, breiteJe - 6), mx, p.y + p.h + 15);
+                }
+            });
+
+            if (d.art === 'linie' || d.art === 'flaeche') malLinien(ctx, p, breiteJe, y, sk, reg, opt);
+            else if (d.art === 'gestapelt') malStapel(ctx, p, breiteJe, y, reg, opt);
+            else malBalken(ctx, p, breiteJe, y, reg, opt);
+        }
+
+        function malBalken(ctx, p, breiteJe, y, reg, opt) {
+            const m = d.reihen.length;
+            const innen = Math.min(breiteJe * 0.76, 52 * m);
+            const bw = Math.max(1.5, (innen - 2 * (m - 1)) / m);
+            const y0 = y(0);
+            ctx.textAlign = 'center';
+            d.kategorien.forEach((kat, i) => {
+                d.reihen.forEach((r, j) => {
+                    const v = r.werte[i];
+                    if (v === null) return;
+                    const x = p.x + breiteJe * i + (breiteJe - innen) / 2 + j * (bw + 2);
+                    const yv = y(v);
+                    const hoch = v >= 0;
+                    const oben = Math.min(yv, y0), hoehe = Math.max(1, Math.abs(yv - y0));
+                    const ecken = hoch ? [4, 4, 0, 0] : [0, 0, 4, 4];
+                    ctx.fillStyle = farbe(j);
+                    rundRect(ctx, x, oben, bw, hoehe, ecken);
+                    ctx.fill();
+                    const schl = 'b' + i + '-' + j;
+                    if (opt.hover === schl) {
+                        ctx.strokeStyle = F.tinte;
+                        ctx.lineWidth = 2;
+                        rundRect(ctx, x + 1, oben + 1, bw - 2, hoehe - 2, ecken);
+                        ctx.stroke();
+                    }
+                    if (reg) reg.push({ typ: 'rect', x, y: oben, b: bw, h: hoehe, schl, titel: kat || 'Ohne Namen', text: r.name + ': ' + einheitAn(fmt(v)) });
+                    if (d.zeigeWerte && bw >= 18) {
+                        ctx.font = '10px ' + SCHRIFT;
+                        ctx.fillStyle = F.tinte2;
+                        ctx.fillText(fmt(v), x + bw / 2, hoch ? oben - 5 : oben + hoehe + 11);
+                    }
+                });
+            });
+        }
+
+        function malStapel(ctx, p, breiteJe, y, reg, opt) {
+            const bw = Math.min(breiteJe * 0.6, 76);
+            ctx.textAlign = 'center';
+            d.kategorien.forEach((kat, i) => {
+                const x = p.x + breiteJe * i + (breiteJe - bw) / 2;
+                const pos = [], neg = [];
+                d.reihen.forEach((r, j) => {
+                    const v = r.werte[i];
+                    if (v === null || v === 0) return;
+                    (v > 0 ? pos : neg).push({ j, v, name: r.name });
+                });
+                let summe = 0;
+                [pos, neg].forEach(gruppe => {
+                    let lauf = 0;
+                    gruppe.forEach((s, k) => {
+                        const von = lauf, bis = lauf + s.v;
+                        lauf = bis;
+                        const y1 = y(von), y2 = y(bis);
+                        let oben = Math.min(y1, y2), hoehe = Math.abs(y1 - y2);
+                        // 2 px Luft zum nächsten Stück, damit die Grenze zu sehen ist
+                        const aussen = k === gruppe.length - 1;
+                        const nachAussen = s.v > 0;
+                        if (hoehe > 3) {
+                            if (nachAussen) { hoehe -= 2; }
+                            else { oben += 2; hoehe -= 2; }
+                        }
+                        const r4 = aussen ? (nachAussen ? [4, 4, 0, 0] : [0, 0, 4, 4]) : [0, 0, 0, 0];
+                        ctx.fillStyle = farbe(s.j);
+                        rundRect(ctx, x, oben, bw, Math.max(1, hoehe), r4);
+                        ctx.fill();
+                        const schl = 's' + i + '-' + s.j;
+                        if (opt.hover === schl) {
+                            ctx.strokeStyle = F.tinte;
+                            ctx.lineWidth = 2;
+                            rundRect(ctx, x + 1, oben + 1, bw - 2, Math.max(1, hoehe - 2), r4);
+                            ctx.stroke();
+                        }
+                        if (reg) reg.push({ typ: 'rect', x, y: oben, b: bw, h: Math.max(1, hoehe), schl, titel: kat || 'Ohne Namen', text: s.name + ': ' + einheitAn(fmt(s.v)) });
+                        if (d.zeigeWerte && hoehe >= 15 && bw >= 26) {
+                            ctx.font = '700 10px ' + SCHRIFT;
+                            ctx.fillStyle = istDunkel(farbe(s.j)) ? '#FFFFFF' : F.tinte;
+                            ctx.fillText(fmt(s.v), x + bw / 2, oben + hoehe / 2 + 3.5);
+                        }
+                        summe += s.v;
+                    });
+                });
+                if (d.zeigeWerte && pos.length + neg.length > 1) {
+                    const gesamt = pos.reduce((a, s) => a + s.v, 0);
+                    ctx.font = '700 10px ' + SCHRIFT;
+                    ctx.fillStyle = F.tinte2;
+                    if (gesamt > 0) ctx.fillText(fmt(gesamt), x + bw / 2, y(gesamt) - 7);
+                }
+            });
+        }
+
+        function malLinien(ctx, p, breiteJe, y, sk, reg, opt) {
+            const mx = i => p.x + breiteJe * (i + 0.5);
+            const grund = y(Math.max(sk.min, Math.min(0, sk.max)));
+            const marker = d.kategorien.length * d.reihen.length <= 70;
+
+            d.reihen.forEach((r, j) => {
+                // In Abschnitte zerlegen: eine Lücke ist eine Lücke, keine Null.
+                const teile = [];
+                let lauf = [];
+                r.werte.forEach((v, i) => {
+                    if (v === null) { if (lauf.length) teile.push(lauf); lauf = []; return; }
+                    lauf.push({ x: mx(i), y: y(v), v, i });
+                });
+                if (lauf.length) teile.push(lauf);
+
+                if (d.art === 'flaeche') {
+                    ctx.save();
+                    ctx.globalAlpha = 0.18;
+                    ctx.fillStyle = farbe(j);
+                    teile.forEach(t => {
+                        if (t.length < 2) return;
+                        ctx.beginPath();
+                        ctx.moveTo(t[0].x, grund);
+                        t.forEach(pt => ctx.lineTo(pt.x, pt.y));
+                        ctx.lineTo(t[t.length - 1].x, grund);
+                        ctx.closePath();
+                        ctx.fill();
+                    });
+                    ctx.restore();
+                }
+
+                ctx.strokeStyle = farbe(j);
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                teile.forEach(t => {
+                    ctx.beginPath();
+                    t.forEach((pt, k) => k ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y));
+                    if (t.length === 1) { ctx.arc(t[0].x, t[0].y, 0.6, 0, 2 * Math.PI); }
+                    ctx.stroke();
+                });
+
+                teile.forEach(t => t.forEach(pt => {
+                    const schl = 'l' + pt.i + '-' + j;
+                    const dick = opt.hover === schl;
+                    if (marker || dick) {
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, dick ? 5.5 : 4, 0, 2 * Math.PI);
+                        ctx.fillStyle = farbe(j);
+                        ctx.fill();
+                        ctx.strokeStyle = F.flaeche;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                    if (reg) reg.push({ typ: 'rect', x: pt.x - 9, y: pt.y - 9, b: 18, h: 18, schl, titel: d.kategorien[pt.i] || 'Ohne Namen', text: d.reihen[j].name + ': ' + einheitAn(fmt(pt.v)) });
+                }));
+
+                if (d.zeigeWerte && marker) {
+                    ctx.font = '10px ' + SCHRIFT;
+                    ctx.fillStyle = F.tinte2;
+                    ctx.textAlign = 'center';
+                    teile.forEach(t => t.forEach(pt => ctx.fillText(fmt(pt.v), pt.x, pt.y - 10)));
+                }
+            });
+        }
+
+        /* ---------- Balken liegend ---------- */
+
+        function malLiegend(ctx, kasten, reg, opt) {
+            const sp = spanneWerte();
+            const sk = skala(sp.min, sp.max, true);
+            const fAchse = achsenFormat(sk.schritt);
+            const marken = stufen(sk);
+
+            ctx.font = '11px ' + SCHRIFT;
+            const maxLab = Math.max(...d.kategorien.map(t => ctx.measureText(t || '').width), 0);
+            const linksB = Math.min(kasten.b * 0.38, maxLab + 10);
+            const untenH = 22;
+
+            /* Rechts muss Platz bleiben für zweierlei: die Zahl hinter dem
+               längsten Balken und die halbe letzte Achsenzahl, die sonst über
+               den Rand hinausliefe. */
+            ctx.font = '10px ' + SCHRIFT;
+            const wertB = d.zeigeWerte
+                ? Math.max(...d.reihen.flatMap(r => r.werte.filter(v => v !== null).map(v => ctx.measureText(fmt(v)).width)), 0) + 7
+                : 0;
+            ctx.font = '11px ' + SCHRIFT;
+            const letzteB = ctx.measureText(fAchse(marken[marken.length - 1])).width / 2 + 3;
+            const rechtsB = Math.min(kasten.b * 0.25, Math.max(wertB, letzteB));
+
+            const p = { x: kasten.x + linksB, y: kasten.y, b: kasten.b - linksB - rechtsB, h: kasten.h - untenH };
+            if (p.b < 60 || p.h < 40) return;
+            const x = v => p.x + p.b * (v - sk.min) / (sk.max - sk.min);
+
+            ctx.textAlign = 'center';
+            marken.forEach(v => {
+                const xx = Math.round(x(v)) + 0.5;
+                if (d.raster || v === 0) {
+                    ctx.strokeStyle = v === 0 ? F.linie2 : F.linie;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(xx, p.y); ctx.lineTo(xx, p.y + p.h); ctx.stroke();
+                }
+                ctx.fillStyle = F.tinte3;
+                ctx.fillText(fAchse(v), xx, p.y + p.h + 15);
+            });
+
+            const n = d.kategorien.length, m = d.reihen.length;
+            const hoeheJe = p.h / Math.max(1, n);
+            const innen = Math.min(hoeheJe * 0.76, 40 * m);
+            const bh = Math.max(1.5, (innen - 2 * (m - 1)) / m);
+            const x0 = x(0);
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            d.kategorien.forEach((kat, i) => {
+                const my = p.y + hoeheJe * (i + 0.5);
+                ctx.font = '11px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte2;
+                if (kat) ctx.fillText(kurz(ctx, kat, linksB - 8), p.x - 8, my);
+                d.reihen.forEach((r, j) => {
+                    const v = r.werte[i];
+                    if (v === null) return;
+                    const yy = p.y + hoeheJe * i + (hoeheJe - innen) / 2 + j * (bh + 2);
+                    const xv = x(v);
+                    const links = Math.min(xv, x0), breite = Math.max(1, Math.abs(xv - x0));
+                    const ecken = v >= 0 ? [0, 4, 4, 0] : [4, 0, 0, 4];
+                    ctx.fillStyle = farbe(j);
+                    rundRect(ctx, links, yy, breite, bh, ecken);
+                    ctx.fill();
+                    const schl = 'q' + i + '-' + j;
+                    if (opt.hover === schl) {
+                        ctx.strokeStyle = F.tinte;
+                        ctx.lineWidth = 2;
+                        rundRect(ctx, links + 1, yy + 1, breite - 2, bh - 2, ecken);
+                        ctx.stroke();
+                    }
+                    if (reg) reg.push({ typ: 'rect', x: links, y: yy, b: breite, h: bh, schl, titel: kat || 'Ohne Namen', text: r.name + ': ' + einheitAn(fmt(v)) });
+                    if (d.zeigeWerte && bh >= 11) {
+                        ctx.font = '10px ' + SCHRIFT;
+                        ctx.fillStyle = F.tinte2;
+                        ctx.textAlign = v >= 0 ? 'left' : 'right';
+                        ctx.fillText(fmt(v), v >= 0 ? links + breite + 5 : links - 5, yy + bh / 2);
+                        ctx.textAlign = 'right';
+                    }
+                });
+            });
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        /* ---------- Torte und Ring ---------- */
+
+        function malKreis(ctx, kasten, reg, opt) {
+            const stuecke = kreisStuecke();
+
+            if (!stuecke.length) {
+                ctx.font = '13px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte3;
+                ctx.textAlign = 'center';
+                ctx.fillText(poT('Für Torte und Ring braucht es Werte über Null.'), kasten.x + kasten.b / 2, kasten.y + kasten.h / 2);
+                return;
+            }
+            const summe = stuecke.reduce((a, s) => a + s.wert, 0);
+            const cx = kasten.x + kasten.b / 2;
+            const cy = kasten.y + kasten.h / 2;
+
+            /* Erst den Text bilden und messen, dann den Kreis danach bemessen:
+               so bleibt neben dem Kreis genau so viel Rand, wie die längste
+               Beschriftung braucht. */
+            ctx.font = '11px ' + SCHRIFT;
+            stuecke.forEach(s => {
+                const anteil = s.wert / summe;
+                s.anteil = anteil;
+                s.text = s.name + ' · ' + (anteil < 0.01 ? '<1' : Math.round(anteil * 100)) + ' %'
+                       + (d.zeigeWerte ? ' · ' + einheitAn(fmt(s.wert)) : '');
+            });
+            const langB = Math.max(...stuecke.map(s => ctx.measureText(s.text).width));
+            const platz = Math.min(kasten.b * 0.3, langB + 12);
+            const r = Math.max(30, Math.min((kasten.b - 2 * platz) / 2, kasten.h / 2 - 8));
+            const ri = d.art === 'ring' ? r * 0.58 : 0;
+
+            // Stücke. Ein 2 px breiter Spalt in Flächenfarbe trennt sie.
+            let a = -Math.PI / 2;
+            const lagen = [];
+            stuecke.forEach((s, k) => {
+                const winkel = (s.wert / summe) * 2 * Math.PI;
+                const a0 = a, a1 = a + winkel;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, a0, a1);
+                if (ri) ctx.arc(cx, cy, ri, a1, a0, true); else ctx.lineTo(cx, cy);
+                ctx.closePath();
+                ctx.fillStyle = farbe(s.farbNr != null ? s.farbNr : s.i);
+                ctx.fill();
+                if (stuecke.length > 1) {
+                    ctx.strokeStyle = F.flaeche;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                const schl = 't' + s.i;
+                if (opt.hover === schl) {
+                    ctx.strokeStyle = F.tinte;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                if (reg) reg.push({
+                    typ: 'bogen', cx, cy, r0: ri, r1: r, a0, a1, schl,
+                    titel: s.name,
+                    text: einheitAn(fmt(s.wert)) + ' · ' + NF.format(s.wert / summe * 100) + ' %'
+                });
+                lagen.push({ s, mitte: (a0 + a1) / 2, anteil: s.anteil });
+                a = a1;
+            });
+
+            if (ri) {
+                ctx.textAlign = 'center';
+                ctx.font = '700 18px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte;
+                ctx.fillText(kurz(ctx, einheitAn(fmt(summe)), ri * 1.8), cx, cy + 3);
+                ctx.font = '10px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte3;
+                ctx.fillText(poT('Summe'), cx, cy + 18);
+            }
+
+            // Beschriftungen außen. Links und rechts getrennt von oben nach
+            // unten auseinanderschieben, damit sich nichts überdeckt.
+            ctx.font = '11px ' + SCHRIFT;
+            const rechts = [], links = [];
+            lagen.forEach(l => {
+                if (l.anteil < 0.02) return;
+                const zx = cx + Math.cos(l.mitte) * (r + 9);
+                const zy = cy + Math.sin(l.mitte) * (r + 9);
+                (Math.cos(l.mitte) >= 0 ? rechts : links).push({ text: l.s.text, zx, zy });
+            });
+            [rechts, links].forEach(gruppe => {
+                gruppe.sort((a2, b2) => a2.zy - b2.zy);
+                for (let k = 1; k < gruppe.length; k++) {
+                    if (gruppe[k].zy - gruppe[k - 1].zy < 14) gruppe[k].zy = gruppe[k - 1].zy + 14;
+                }
+                const letzte = gruppe[gruppe.length - 1];
+                if (letzte && letzte.zy > kasten.y + kasten.h - 4) {
+                    const weg = letzte.zy - (kasten.y + kasten.h - 4);
+                    gruppe.forEach(g => g.zy -= weg);
+                }
+                gruppe.forEach(g => {
+                    const nachRechts = g.zx >= cx;
+                    // Der Platz ist, was bis zum Rand des Kastens übrig ist.
+                    const raum = nachRechts ? (kasten.x + kasten.b) - g.zx : g.zx - kasten.x;
+                    ctx.textAlign = nachRechts ? 'left' : 'right';
+                    ctx.fillStyle = F.tinte2;
+                    ctx.fillText(kurz(ctx, g.text, Math.max(30, raum)), g.zx, g.zy + 4);
+                });
+            });
+        }
+
+        /* ---------- Die Tabelle unter dem Bild ---------- */
+
+        const TAB = { kopf: 28, zeile: 23, luft: 18 };
+
+        function tabelleHoehe() {
+            return TAB.luft + TAB.kopf + d.kategorien.length * TAB.zeile + PAD;
+        }
+
+        function malTabelle(ctx, y0, B) {
+            const x = PAD, b = B - 2 * PAD;
+            const ersteB = Math.max(80, Math.min(b * 0.34, 260));
+            const restB = (b - ersteB) / Math.max(1, d.reihen.length);
+            let y = y0 + TAB.luft;
+
+            ctx.strokeStyle = F.linie;
+            ctx.lineWidth = 1;
+
+            // Kopfzeile
+            ctx.fillStyle = F.flaeche2;
+            ctx.fillRect(x, y, b, TAB.kopf);
+            ctx.font = '700 10px ' + SCHRIFT;
+            ctx.fillStyle = F.tinte2;
+            ctx.textAlign = 'left';
+            ctx.fillText(poT('BESCHRIFTUNG'), x + 8, y + 18);
+            d.reihen.forEach((r, j) => {
+                const sx = x + ersteB + restB * j;
+                // Ein Farbpunkt neben dem Namen: die Zuordnung hängt nicht an
+                // der Farbe allein, der Name steht daneben.
+                ctx.fillStyle = farbe(j);
+                rundRect(ctx, sx + 8, y + 10, 8, 8, 2);
+                ctx.fill();
+                ctx.fillStyle = F.tinte2;
+                ctx.textAlign = 'left';
+                ctx.fillText(kurz(ctx, r.name.toUpperCase(), restB - 28), sx + 20, y + 18);
+            });
+            y += TAB.kopf;
+
+            d.kategorien.forEach((kat, i) => {
+                if (i % 2 === 1) { ctx.fillStyle = F.flaeche2; ctx.fillRect(x, y, b, TAB.zeile); }
+                ctx.font = '11px ' + SCHRIFT;
+                ctx.fillStyle = F.tinte;
+                ctx.textAlign = 'left';
+                ctx.fillText(kurz(ctx, kat || '–', ersteB - 14), x + 8, y + 15);
+                d.reihen.forEach((r, j) => {
+                    const sx = x + ersteB + restB * j;
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = r.werte[i] === null ? F.tinte3 : F.tinte;
+                    ctx.fillText(kurz(ctx, fmt(r.werte[i]), restB - 16), sx + restB - 8, y + 15);
+                });
+                y += TAB.zeile;
+            });
+
+            // Linien zuletzt, damit sie über den Füllungen liegen
+            const unten = y;
+            ctx.strokeStyle = F.linie;
+            ctx.beginPath();
+            let zy = y0 + TAB.luft;
+            ctx.moveTo(x, Math.round(zy) + 0.5); ctx.lineTo(x + b, Math.round(zy) + 0.5);
+            zy += TAB.kopf;
+            for (let i = 0; i <= d.kategorien.length; i++) {
+                ctx.moveTo(x, Math.round(zy) + 0.5); ctx.lineTo(x + b, Math.round(zy) + 0.5);
+                zy += TAB.zeile;
+            }
+            for (let j = 0; j <= d.reihen.length; j++) {
+                const sx = Math.round(x + ersteB + restB * j) + 0.5;
+                ctx.moveTo(sx, Math.round(y0 + TAB.luft) + 0.5); ctx.lineTo(sx, Math.round(unten) + 0.5);
+            }
+            ctx.moveTo(Math.round(x) + 0.5, Math.round(y0 + TAB.luft) + 0.5);
+            ctx.lineTo(Math.round(x) + 0.5, Math.round(unten) + 0.5);
+            ctx.stroke();
+        }
+
+        /* ======================================================================
+           Auf den Schirm
+           ====================================================================== */
+
+        const leinwand = document.getElementById('dgCanvas');
+        const tip = document.getElementById('tip');
+        let regionen = [];
+        let hover = null;
+        let masse = { b: 760, h: 470 };
+
+        function masseRechnen() {
+            const box = document.getElementById('bildBox');
+            const b = Math.max(320, Math.min(1000, Math.floor(box.clientWidth || 760)));
+            const h = Math.max(300, Math.min(560, Math.round(b * 0.62)));
+            return { b, h };
+        }
+
+        function malen() {
+            masse = masseRechnen();
+            const dpr = Math.min(3, window.devicePixelRatio || 1);
+            leinwand.width = Math.round(masse.b * dpr);
+            leinwand.height = Math.round(masse.h * dpr);
+            leinwand.style.width = masse.b + 'px';
+            leinwand.style.height = masse.h + 'px';
+            const ctx = leinwand.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            regionen = [];
+            zeichne(ctx, masse.b, masse.h, { regionen, hover });
+            leinwand.setAttribute('aria-label', bildText());
+            hinweisBild();
+        }
+
+        function bildText() {
+            const art = ARTEN.find(a => a.id === d.art);
+            return (d.titel.trim() || 'Diagramm') + ' — ' + (art ? art.name : '') + ', '
+                 + d.reihen.length + (d.reihen.length === 1 ? ' Reihe' : ' Reihen') + ', '
+                 + d.kategorien.length + ' Zeilen. Die Werte stehen in der Tabelle darunter.';
+        }
+
+        function hinweisBild() {
+            const h = masse.h + (d.tabelleMit ? tabelleHoehe() : 0);
+            document.getElementById('bildHinweis').textContent =
+                'Bild: ' + (masse.b * 2) + ' × ' + Math.round(h * 2) + ' Punkte'
+                + (d.tabelleMit ? ' · mit Tabelle' : '');
+        }
+
+        function tabelleMitSchalten(an) {
+            d.tabelleMit = an;
+            sichern();
+            hinweisBild();
+        }
+
+        /* ---------- Zeigen, was unter dem Zeiger liegt ---------- */
+
+        function treffer(mx, my) {
+            // Von hinten nach vorn: das zuletzt Gezeichnete liegt oben.
+            for (let i = regionen.length - 1; i >= 0; i--) {
+                const r = regionen[i];
+                if (r.typ === 'rect') {
+                    if (mx >= r.x && mx <= r.x + r.b && my >= r.y && my <= r.y + r.h) return r;
+                } else if (r.typ === 'bogen') {
+                    const dx = mx - r.cx, dy = my - r.cy;
+                    const ab = Math.sqrt(dx * dx + dy * dy);
+                    if (ab < r.r0 || ab > r.r1) continue;
+                    let w = Math.atan2(dy, dx);
+                    // Auf denselben Umlauf bringen wie die gespeicherten Winkel
+                    while (w < r.a0) w += 2 * Math.PI;
+                    while (w > r.a0 + 2 * Math.PI) w -= 2 * Math.PI;
+                    if (w <= r.a1) return r;
+                }
+            }
+            return null;
+        }
+
+        leinwand.addEventListener('mousemove', e => {
+            const r = leinwand.getBoundingClientRect();
+            const t = treffer(e.clientX - r.left, e.clientY - r.top);
+            const schl = t ? t.schl : null;
+            if (schl !== hover) { hover = schl; malen(); }
+            if (!t) { tip.style.display = 'none'; return; }
+            tip.innerHTML = '<i>' + poEsc(t.titel) + '</i>' + poEsc(t.text);
+            tip.style.display = 'block';
+            const box = document.getElementById('bildBox').getBoundingClientRect();
+            const bx = e.clientX - box.left + 14;
+            const by = e.clientY - box.top - 10;
+            tip.style.left = Math.min(bx, box.width - tip.offsetWidth - 4) + 'px';
+            tip.style.top = Math.max(0, by) + 'px';
+        });
+        leinwand.addEventListener('mouseleave', () => {
+            tip.style.display = 'none';
+            if (hover !== null) { hover = null; malen(); }
+        });
+
+        let zeitgeber = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(zeitgeber);
+            zeitgeber = setTimeout(malen, 120);
+        });
+
+        /* ======================================================================
+           Bedienteile
+           ====================================================================== */
+
+        function artenBauen() {
+            document.getElementById('arten').innerHTML = ARTEN.map(a => `
+                <button class="dg-art" type="button" aria-pressed="${a.id === d.art}" onclick="artWaehlen('${a.id}')">
+                    ${SINNBILD[a.id]}
+                    <b>${poEsc(a.name)}</b>
+                    <span>${poEsc(a.was)}</span>
+                </button>`).join('');
+            const a = ARTEN.find(x => x.id === d.art);
+            document.getElementById('artErklaerung').textContent = a ? a.erklaerung : '';
+            document.getElementById('artHinweis').textContent = a ? a.name : '';
+        }
+
+        function artWaehlen(id) {
+            if (!ARTEN.some(a => a.id === id)) return;
+            d.art = id;
+            artenBauen();
+            felderBauen();
+            malen();
+            sichern();
+        }
+
+        function felderBauen() {
+            const kopf = document.getElementById('dgKopf');
+            kopf.innerHTML = '<th>Beschriftung</th>' + d.reihen.map((r, j) => `
+                <th>
+                    <div class="po-row" style="gap:5px;flex-wrap:nowrap">
+                        <span class="dg-punkt" style="background:${farbe(j)}" aria-hidden="true"></span>
+                        <input class="dg-feld" value="${poEsc(r.name)}" aria-label="Name der Reihe ${j + 1}"
+                               oninput="reiheNennen(${j}, this.value)">
+                        ${d.reihen.length > 1 ? `<button class="po-x po-no-print" title="Reihe entfernen" onclick="reiheWeg(${j})">✕</button>` : ''}
+                    </div>
+                </th>`).join('');
+
+            document.getElementById('dgKoerper').innerHTML = d.kategorien.map((k, i) => `
+                <tr>
+                    <td>
+                        <div class="po-row" style="gap:4px;flex-wrap:nowrap">
+                            <input class="dg-feld" id="kat-${i}" value="${poEsc(k)}" placeholder="Zeile ${i + 1}"
+                                   aria-label="Beschriftung Zeile ${i + 1}" oninput="katNennen(${i}, this.value)">
+                            ${d.kategorien.length > 1 ? `<button class="po-x po-no-print" title="Zeile entfernen" onclick="zeileWeg(${i})">✕</button>` : ''}
+                        </div>
+                    </td>
+                    ${d.reihen.map((r, j) => `
+                        <td><input class="dg-feld dg-feld--zahl" inputmode="decimal" value="${r.werte[i] === null ? '' : poEsc(String(r.werte[i]).replace('.', ','))}"
+                                   aria-label="${poEsc(r.name)} bei ${poEsc(k || 'Zeile ' + (i + 1))}"
+                                   oninput="wertSetzen(${i}, ${j}, this.value)"></td>`).join('')}
+                </tr>`).join('');
+
+            const h = [];
+            if (istKreis()) {
+                h.push('Torte und Ring zeigen die <b>erste Reihe</b>. Die weiteren bleiben erhalten und kommen bei jeder anderen Art wieder zum Vorschein.');
+                const stuecke = kreisStuecke();
+                const gesammelt = stuecke.find(s => s.i === -1);
+                if (gesammelt) h.push('Die ' + (HOECHSTREIHEN - 1) + ' größten Stücke stehen einzeln, der Rest als <b>' + poEsc(gesammelt.name) + '</b>.');
+            }
+            h.push('Leer gelassene Felder sind Lücken, keine Nullen: im Balken fehlt der Balken, in der Linie bricht sie auf.');
+            h.push('Komma oder Punkt als Dezimaltrennung — beides wird verstanden.');
+            if (d.reihen.length >= HOECHSTREIHEN) h.push('Acht Reihen sind die Grenze. Mehr Farben lassen sich nicht mehr sicher unterscheiden; dann besser zwei Diagramme.');
+            document.getElementById('datenHinweis').innerHTML = h.join(' ');
+        }
+
+        function katNennen(i, v) { d.kategorien[i] = v; malen(); sichern(); }
+        function reiheNennen(j, v) {
+            d.reihen[j].name = v;
+            const punkt = document.querySelectorAll('#dgKopf th .dg-punkt')[j];
+            if (punkt) punkt.title = v;
+            malen();
+            sichern();
+        }
+        function wertSetzen(i, j, v) { d.reihen[j].werte[i] = zahl(v); malen(); sichern(); }
+
+        function zeileDazu() {
+            if (d.kategorien.length >= HOECHSTZEILEN) { poToast('Mehr als ' + HOECHSTZEILEN + ' Zeilen nimmt das Werkzeug nicht.', 3600); return; }
+            d.kategorien.push('');
+            d.reihen.forEach(r => r.werte.push(null));
+            felderBauen();
+            malen();
+            sichern();
+            const feld = document.getElementById('kat-' + (d.kategorien.length - 1));
+            if (feld) feld.focus();
+        }
+
+        function reiheDazu() {
+            if (d.reihen.length >= HOECHSTREIHEN) {
+                poToast('Acht Reihen sind die Grenze — mehr Farben lassen sich nicht sicher unterscheiden.', 4200);
+                return;
+            }
+            d.reihen.push({ name: 'Reihe ' + (d.reihen.length + 1), werte: d.kategorien.map(() => null) });
+            felderBauen();
+            malen();
+            sichern();
+        }
+
+        async function zeileWeg(i) {
+            const name = (d.kategorien[i] || '').trim();
+            const hatZahlen = d.reihen.some(r => r.werte[i] !== null);
+            if (hatZahlen || name) {
+                const ja = await poConfirm('Die Zeile ' + (name ? '„' + name + '"' : (i + 1)) + ' und ihre Werte werden gelöscht.',
+                                           { titel: 'Zeile entfernen', ja: 'Ja, entfernen', gefahr: true });
+                if (!ja) return;
+            }
+            d.kategorien.splice(i, 1);
+            d.reihen.forEach(r => r.werte.splice(i, 1));
+            if (!d.kategorien.length) { d.kategorien = ['']; d.reihen.forEach(r => r.werte = [null]); }
+            felderBauen();
+            malen();
+            sichern();
+        }
+
+        async function reiheWeg(j) {
+            const r = d.reihen[j];
+            if (r.werte.some(v => v !== null)) {
+                const ja = await poConfirm('Die Reihe „' + r.name + '" und alle ihre Werte werden gelöscht.',
+                                           { titel: 'Reihe entfernen', ja: 'Ja, entfernen', gefahr: true });
+                if (!ja) return;
+            }
+            d.reihen.splice(j, 1);
+            if (!d.reihen.length) d.reihen = [{ name: 'Reihe 1', werte: d.kategorien.map(() => null) }];
+            felderBauen();
+            malen();
+            sichern();
+        }
+
+        /* ---------- Aus einer Tabellenkalkulation einfügen ---------- */
+
+        let kopfHandSchalter = false;
+
+        function einfuegenOeffnen() {
+            const box = document.getElementById('einfuegenBox');
+            box.style.display = 'flex';
+            const feld = document.getElementById('einfuegenText');
+            feld.value = '';
+            kopfHandSchalter = false;
+            document.getElementById('einfuegenKopf').checked = true;
+            setTimeout(() => feld.focus(), 30);
+            document.addEventListener('keydown', einfuegenTaste);
+        }
+        function einfuegenSchliessen() {
+            document.getElementById('einfuegenBox').style.display = 'none';
+            document.removeEventListener('keydown', einfuegenTaste);
+        }
+        function einfuegenTaste(e) { if (e.key === 'Escape') { e.preventDefault(); einfuegenSchliessen(); } }
+        document.getElementById('einfuegenBox').addEventListener('mousedown', e => {
+            if (e.target.id === 'einfuegenBox') einfuegenSchliessen();
+        });
+
+        /* Erkennt das Trennzeichen selbst: Tabulator kommt aus Excel, Semikolon
+           aus deutschen CSV-Dateien, Komma aus englischen. */
+        function gitterLesen(text) {
+            const zeilen = String(text).replace(/\r/g, '').split('\n').filter(z => z.trim() !== '');
+            if (!zeilen.length) return null;
+            const probe = zeilen.slice(0, 5).join('\n');
+            const anzahl = z => (probe.match(new RegExp('\\' + z, 'g')) || []).length;
+            const trenner = anzahl('\t') ? '\t' : (anzahl(';') >= anzahl(',') && anzahl(';') ? ';' : ',');
+            const gitter = zeilen.map(z => z.split(trenner).map(s => s.trim().replace(/^"(.*)"$/, '$1')));
+            const spalten = Math.max(...gitter.map(r => r.length));
+            if (spalten < 2) return null;
+            return { gitter, spalten };
+        }
+
+        /* Ob die erste Zeile eine Kopfzeile ist, lässt sich nicht immer
+           entscheiden: „Quartal · 2025 · 2026" sind Namen, „Q1 · 120 · 132"
+           sind Daten — beides beginnt links mit Text. Darum wird geraten und
+           das Geratene als Haken gezeigt, den der Nutzer umstellen kann.
+             · steht rechts irgendwo Text, ist es eine Kopfzeile
+             · sind es lauter Jahreszahlen und darunter stehen andere
+               Größenordnungen, ebenfalls
+             · sonst nicht. */
+        function kopfGeraten(gitter) {
+            const erste = gitter[0].slice(1).filter(s => s !== '');
+            if (!erste.length) return false;
+            if (erste.some(s => zahl(s) === null)) return true;
+            const jahre = erste.every(s => {
+                const n = zahl(s);
+                return Number.isInteger(n) && n >= 1900 && n <= 2100;
+            });
+            if (!jahre || gitter.length < 2) return false;
+            return gitter.slice(1).some(z => z.slice(1).some(s => {
+                const n = zahl(s);
+                return n !== null && (n < 1900 || n > 2100);
+            }));
+        }
+
+        function kopfRaten() {
+            if (kopfHandSchalter) return;
+            const g = gitterLesen(document.getElementById('einfuegenText').value);
+            document.getElementById('einfuegenKopf').checked = g ? kopfGeraten(g.gitter) : true;
+        }
+
+        function einfuegenUebernehmen() {
+            const g = gitterLesen(document.getElementById('einfuegenText').value);
+            if (!g) {
+                poToast('Darin stecken keine zwei Spalten. Beschriftung links, Werte rechts.', 4200);
+                return;
+            }
+            const { gitter, spalten } = g;
+            const erste = gitter[0];
+            const istKopf = document.getElementById('einfuegenKopf').checked;
+            const zeilen = istKopf ? gitter.slice(1) : gitter;
+            if (!zeilen.length) { poToast('Außer der Kopfzeile stand nichts darin.', 3600); return; }
+
+            const zuviel = zeilen.length > HOECHSTZEILEN || spalten - 1 > HOECHSTREIHEN;
+            const kategorien = zeilen.slice(0, HOECHSTZEILEN).map(r => String(r[0] || ''));
+            const reihen = [];
+            for (let c = 1; c < Math.min(spalten, HOECHSTREIHEN + 1); c++) {
+                reihen.push({
+                    name: istKopf && erste[c] ? erste[c] : 'Reihe ' + c,
+                    werte: kategorien.map((_, i) => zahl(zeilen[i][c]))
+                });
+            }
+            if (!reihen.some(r => r.werte.some(v => v !== null))) {
+                poToast('In den Spalten rechts stand keine Zahl.', 4000);
+                return;
+            }
+            uebernehmen({ ...d, kategorien, reihen });
+            einfuegenSchliessen();
+            artenBauen();
+            felderBauen();
+            malen();
+            sichern();
+            // Die Namen mitsagen: so fällt auf, wenn die Kopfzeile falsch
+            // geraten wurde.
+            poToast('Übernommen: ' + kategorien.length + ' Zeilen · Reihen: '
+                    + reihen.map(r => r.name).join(', ')
+                    + (zuviel ? ' — mehr war zu viel und blieb draußen' : ''), zuviel ? 5200 : 3400);
+        }
+
+        /* ======================================================================
+           Ausgeben: PNG in die Zwischenablage oder als Datei
+           ====================================================================== */
+
+        /* Dieselbe Zeichenfunktion wie auf dem Schirm, nur mit größerem Maßstab.
+           Darum steht im PNG Punkt für Punkt dasselbe Bild. */
+        function bildLeinwand(faktor = 2) {
+            const B = masse.b, H = masse.h;
+            const tabH = d.tabelleMit ? tabelleHoehe() : 0;
+            const c = document.createElement('canvas');
+            c.width = Math.round(B * faktor);
+            c.height = Math.round((H + tabH) * faktor);
+            const ctx = c.getContext('2d');
+            ctx.setTransform(faktor, 0, 0, faktor, 0, 0);
+            ctx.fillStyle = F.flaeche;
+            ctx.fillRect(0, 0, B, H + tabH);
+            zeichne(ctx, B, H, {});
+            if (tabH) malTabelle(ctx, H, B);
+            return c;
+        }
+
+        function dateiName() {
+            const t = (d.titel || '').trim() || 'Diagramm';
+            return t.replace(/[\\/:*?"<>|]/g, '-').slice(0, 60) + '.png';
+        }
+
+        async function kopieren() {
+            if (!hatWerte()) { poToast('Es ist noch nichts eingetragen.'); return; }
+            const c = bildLeinwand(2);
+            const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+            if (!blob) { poToast('Das Bild ließ sich nicht erzeugen.', 4000); return; }
+            try {
+                if (!navigator.clipboard || !window.ClipboardItem) throw new Error('ohne');
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                poToast('Kopiert · ' + c.width + ' × ' + c.height + (d.tabelleMit ? ' mit Tabelle' : '')
+                        + ' — mit Strg+V einfügen');
+            } catch (e) {
+                // Zwischenablage abgelehnt: dann wenigstens die Datei anbieten,
+                // statt den Nutzer ohne Ergebnis stehen zu lassen.
+                c.toBlob(b => {
+                    if (b) poDownload(dateiName(), b, 'image/png');
+                    poToast('Das Kopieren hat der Browser abgelehnt — das Bild wurde stattdessen gespeichert.', 5000);
+                }, 'image/png');
+            }
+        }
+
+        function pngSpeichern() {
+            if (!hatWerte()) { poToast('Es ist noch nichts eingetragen.'); return; }
+            const c = bildLeinwand(2);
+            c.toBlob(blob => {
+                if (!blob) { poToast('Das Bild ließ sich nicht erzeugen.', 4000); return; }
+                poDownload(dateiName(), blob, 'image/png');
+                poToast('Gespeichert · ' + c.width + ' × ' + c.height + (d.tabelleMit ? ' mit Tabelle' : ''));
+            }, 'image/png');
+        }
+
+        /* ---------- Stand als Datei ---------- */
+
+        function exportJSON() {
+            poDownload(((d.titel || 'diagramm').trim().replace(/[\\/:*?"<>|]/g, '-').slice(0, 60) || 'diagramm') + '.json',
+                       JSON.stringify(d, null, 2));
+            poToast('Diagramm gespeichert');
+        }
+
+        function importJSON(input) {
+            poReadFile(input, text => {
+                const roh = JSON.parse(text);
+                if (!roh || !Array.isArray(roh.kategorien) || !Array.isArray(roh.reihen)) {
+                    poToast('Die Datei enthält kein Diagramm.', 4000);
+                    return;
+                }
+                uebernehmen(roh);
+                aufbauen();
+                poToast('Geöffnet: ' + d.kategorien.length + ' Zeilen, ' + d.reihen.length
+                        + (d.reihen.length === 1 ? ' Reihe' : ' Reihen'));
+            });
+        }
+
+        async function resetAlles() {
+            const ja = await poConfirm('Beschriftungen, Reihen und alle Werte werden gelöscht. Das lässt sich nicht rückgängig machen.',
+                                       { titel: 'Diagramm zurücksetzen', ja: 'Ja, alles löschen', gefahr: true });
+            if (!ja) return;
+            uebernehmen({ art: d.art, titel: '', einheit: '', zeigeWerte: d.zeigeWerte, raster: d.raster, tabelleMit: d.tabelleMit,
+                          kategorien: ['', '', '', ''], reihen: [{ name: 'Reihe 1', werte: [] }] });
+            aufbauen();
+            poToast('Diagramm zurückgesetzt');
+        }
+
+        /* ---------- Hochfahren ---------- */
+
+        function aufbauen() {
+            document.getElementById('titel').value = d.titel;
+            document.getElementById('einheit').value = d.einheit;
+            document.getElementById('zeigeWerte').checked = d.zeigeWerte;
+            document.getElementById('raster').checked = d.raster;
+            document.getElementById('mitTabelle').checked = d.tabelleMit;
+            artenBauen();
+            felderBauen();
+            malen();
+            sichern();
+        }
+
+        // Die Leinwand kennt die Sprachumschaltung nicht von selbst.
+        const poNeuZeichnen = () => malen();
+
+        laden();
+        aufbauen();
+    </script>
+</body>
+</html>

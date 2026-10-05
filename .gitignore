@@ -1,0 +1,10 @@
+# Was das Betriebssystem danebenlegt
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editoren
+.vscode/
+.idea/
+*.swp
+*~

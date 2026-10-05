@@ -1,0 +1,485 @@
+/* ======================================================================
+   POCKETOPS · GEMEINSAME GESTALTUNG
+   Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+   den Block selbst, damit es als einzelne Datei läuft. Wird hier etwas
+   geändert, muss es in alle Werkzeuge nachgezogen werden.
+   ====================================================================== */
+/* Breite und Höhe schließen Innenabstand und Rahmen ein. Ohne das rechnet
+   der Browser sie obendrauf, und eine Angabe wie width:100% ragt über ihren
+   Platz hinaus. */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+    /* Markenfarben */
+    --po-accent:      #9E292B;
+    --po-accent-dark: #852224;
+    --po-teal:        #39756F;
+    --po-teal-dark:   #2F635E;
+    --po-slate:       #697896;
+    --po-frost:       #81BED7;
+    --po-frost-soft:  #D9F3FF;
+    --po-teal-soft:   #E8F5F1;
+    --po-slate-soft:  #E0E8F8;
+
+    /* Flächen */
+    --po-bg:          #F1F5F9;
+    --po-surface:     #FFFFFF;
+    --po-surface-2:   #F8FAFC;
+    --po-surface-3:   #E2E8F0;
+    --po-stage:       #CBD5E1;
+
+    /* Kopfzeile */
+    --po-chrome:      #0F172A;
+    --po-chrome-2:    #1E293B;
+    --po-chrome-line: #334155;
+    --po-on-chrome:   #F8FAFC;
+    --po-on-chrome-2: #94A3B8;
+
+    /* Text */
+    --po-ink:         #1E293B;
+    --po-ink-2:       #475569;
+    --po-ink-3:       #94A3B8;
+
+    /* Linien */
+    --po-line:        #E2E8F0;
+    --po-line-2:      #CBD5E1;
+
+    /* Zustände */
+    --po-ok:          #39756F;
+    --po-warn:        #D89B2B;
+    --po-bad:         #9E292B;
+
+    /* Maße */
+    --po-r-sm:   4px;
+    --po-r:      6px;
+    --po-r-lg:  10px;
+    --po-r-pill: 999px;
+    --po-head-h: 64px;
+    --po-shadow:    0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .10);
+    --po-shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, .25);
+    --po-font: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    --po-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+}
+
+/* ---------- Seitengerüst ---------- */
+.po-body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--po-bg);
+    color: var(--po-ink);
+    font-family: var(--po-font);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+}
+.po-main { flex: 1; overflow: auto; padding: 20px; }
+.po-wrap { max-width: 1280px; margin: 0 auto; }
+.po-wrap--wide { max-width: 1600px; margin: 0 auto; }
+.po-split { display: grid; gap: 16px; align-items: start; }
+.po-split--1-2 { grid-template-columns: minmax(280px, 1fr) 2fr; }
+.po-split--2-1 { grid-template-columns: 2fr minmax(280px, 1fr); }
+.po-split--1-1 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 1000px) {
+    .po-split--1-2, .po-split--2-1, .po-split--1-1 { grid-template-columns: 1fr; }
+}
+.po-stack > * + * { margin-top: 12px; }
+.po-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Kopfzeile und Marke ---------- */
+.po-head {
+    height: var(--po-head-h);
+    background: var(--po-chrome);
+    color: var(--po-on-chrome);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 20px;
+    flex-shrink: 0;
+    box-shadow: var(--po-shadow);
+    position: relative;
+    z-index: 20;
+}
+.po-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.po-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    border-radius: var(--po-r);
+    padding: 4px 6px;
+    margin-left: -6px;
+    transition: background-color .15s;
+}
+a.po-brand:hover { background: var(--po-chrome-2); }
+.po-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--po-r-lg);
+    background: linear-gradient(135deg, var(--po-accent), var(--po-teal));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+}
+.po-mark svg { width: 19px; height: 19px; display: block; }
+.po-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.po-line-name {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--po-on-chrome-2);
+}
+.po-tool-name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+.po-chip {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--po-on-chrome-2);
+    background: var(--po-chrome-2);
+    border: 1px solid var(--po-chrome-line);
+    border-radius: var(--po-r-pill);
+    padding: 3px 9px;
+    white-space: nowrap;
+}
+.po-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.po-head-sep { width: 1px; height: 24px; background: var(--po-chrome-line); flex-shrink: 0; }
+
+/* ---------- Sprache und Anleitung in der Kopfzeile ----------
+   Beides setzt po-base.js selbst in die Kopfzeile, links vor die
+   Aktionen des Werkzeugs: es gehört zur Reihe, nicht zum Werkzeug. */
+.po-meta { display: flex; align-items: center; gap: 8px; }
+.po-sprach {
+    display: inline-flex;
+    border: 1px solid var(--po-chrome-line);
+    border-radius: var(--po-r-pill);
+    overflow: hidden;
+    background: var(--po-chrome-2);
+}
+.po-sprach button {
+    font: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 5px 10px;
+    border: none;
+    background: transparent;
+    color: var(--po-on-chrome-2);
+    cursor: pointer;
+    transition: background-color .15s, color .15s;
+}
+.po-sprach button:hover { color: #fff; }
+.po-sprach button[aria-pressed="true"] { background: var(--po-accent); color: #fff; }
+.po-sprach button:focus-visible { outline: 2px solid var(--po-frost); outline-offset: -2px; }
+.po-frage {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: var(--po-r-pill);
+    border: 1px solid var(--po-chrome-line);
+    background: var(--po-chrome-2);
+    color: #E2E8F0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color .15s, color .15s;
+}
+.po-frage:hover { background: #2B3A4F; color: #fff; }
+.po-frage:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+/* Der Trinkgeldknopf steht neben dem Fragezeichen und ist genauso gebaut. Nur
+   das Herz trägt Farbe — auffallen soll er, drängeln nicht. */
+.po-trinkgeld {
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: var(--po-r-pill);
+    border: 1px solid var(--po-chrome-line);
+    background: var(--po-chrome-2);
+    color: #E79A9B;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color .15s, color .15s;
+}
+.po-trinkgeld:hover { background: #2B3A4F; color: #fff; }
+.po-trinkgeld:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+/* Ein Verweis, der wie ein Knopf aussieht, bringt die Unterstreichung mit. */
+a.po-btn { text-decoration: none; }
+
+/* ---------- Das Hilfefenster ---------- */
+.po-hilfe { max-height: 68vh; overflow: auto; }
+.po-hilfe p { line-height: 1.55; }
+.po-hilfe a { color: var(--po-teal); font-weight: 600; }
+.po-hilfe-titel {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--po-ink-3);
+    margin: 0 0 6px;
+}
+.po-hilfe-liste { margin: 0; padding-left: 20px; }
+.po-hilfe-liste li { margin-bottom: 5px; line-height: 1.5; }
+.po-hilfe-teil { border-top: 1px solid var(--po-line); margin-top: 14px; padding-top: 12px; }
+
+/* ---------- Schaltflächen ---------- */
+.po-btn {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: var(--po-r);
+    border: 1px solid var(--po-line-2);
+    background: var(--po-surface);
+    color: var(--po-ink-2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+.po-btn:hover { background: var(--po-surface-2); border-color: var(--po-slate); color: var(--po-ink); }
+.po-btn:active { transform: translateY(1px); }
+.po-btn:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+.po-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+.po-head .po-btn { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #E2E8F0; }
+.po-head .po-btn:hover { background: #2B3A4F; border-color: #475569; color: #fff; }
+
+.po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+.po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+.po-head .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+.po-head .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+
+.po-btn--go { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+.po-btn--go:hover { background: var(--po-teal-dark); border-color: var(--po-teal-dark); color: #fff; }
+
+.po-btn--danger { color: var(--po-bad); border-color: #FECACA; background: #FEF2F2; }
+.po-btn--danger:hover { background: #FEE2E2; border-color: #FCA5A5; color: #7F1D1D; }
+.po-head .po-btn--danger { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #FCA5A5; }
+.po-head .po-btn--danger:hover { background: #4C1D1D; border-color: #991B1B; color: #FEE2E2; }
+
+.po-btn--ghost { background: transparent; border-color: transparent; color: var(--po-ink-3); padding: 5px 7px; }
+.po-btn--ghost:hover { background: var(--po-surface-3); color: var(--po-ink); border-color: transparent; }
+
+.po-btn--sm { font-size: 11px; padding: 4px 8px; }
+.po-btn--block { width: 100%; justify-content: center; }
+
+/* kleines rundes Löschen-Kreuz in Listen und Tabellen */
+.po-x {
+    font: inherit;
+    font-size: 10px;
+    line-height: 1;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--po-r-pill);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--po-ink-3);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background-color .15s, color .15s;
+}
+.po-x:hover { background: #FEE2E2; color: var(--po-bad); }
+
+/* ---------- Panels und Abschnitte ---------- */
+.po-panel {
+    background: var(--po-surface);
+    border: 1px solid var(--po-line);
+    border-radius: var(--po-r-lg);
+    box-shadow: var(--po-shadow);
+}
+.po-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--po-surface-2);
+    border-bottom: 1px solid var(--po-line);
+    border-radius: var(--po-r-lg) var(--po-r-lg) 0 0;
+}
+.po-panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--po-ink-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.po-panel-body { padding: 14px; }
+.po-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--po-ink-3);
+    margin: 0 0 8px;
+}
+.po-hint {
+    font-size: 11px;
+    color: var(--po-ink-2);
+    background: var(--po-surface-2);
+    border: 1px solid var(--po-line);
+    border-radius: var(--po-r);
+    padding: 10px 12px;
+    line-height: 1.5;
+}
+
+/* ---------- Eingabefelder ---------- */
+.po-label { font-size: 11px; font-weight: 600; color: var(--po-ink-2); display: block; margin-bottom: 4px; }
+.po-input, .po-select, .po-textarea {
+    font: inherit;
+    font-size: 12px;
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid var(--po-line-2);
+    border-radius: var(--po-r);
+    background: var(--po-surface);
+    color: var(--po-ink);
+    box-sizing: border-box;
+}
+/* Ein Farbfeld füllt der Browser selbst aus. Ohne eigene Höhe fiele es
+   gegenüber den anderen Feldern zusammen, und der Innenabstand ließe den
+   Farbfleck zu klein wirken. */
+.po-input[type="color"] { height: 32px; padding: 3px; cursor: pointer; }
+.po-input:focus, .po-select:focus, .po-textarea:focus {
+    outline: none;
+    border-color: var(--po-frost);
+    box-shadow: 0 0 0 3px rgba(129, 190, 215, .25);
+}
+.po-textarea { min-height: 72px; resize: vertical; }
+.po-search { font-size: 13px; padding: 10px 14px; border-radius: var(--po-r-lg); }
+.po-num { width: 58px; text-align: center; padding: 5px 4px; }
+.po-field { display: flex; gap: 6px; align-items: center; }
+.po-field .po-input { flex: 1; min-width: 0; }
+
+.po-range { width: 100%; accent-color: var(--po-teal); }
+.po-range-value { font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+
+.po-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; font-weight: 600; color: var(--po-ink-2); cursor: pointer; }
+.po-check input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--po-teal); flex-shrink: 0; }
+
+/* ---------- Karten ---------- */
+.po-card {
+    background: var(--po-surface);
+    border: 1px solid var(--po-line);
+    border-radius: var(--po-r-lg);
+    box-shadow: var(--po-shadow);
+    padding: 14px;
+}
+.po-card--pick { cursor: pointer; transition: border-color .15s, background-color .15s; }
+.po-card--pick:hover { border-color: var(--po-frost); background: var(--po-surface-2); }
+
+/* ---------- Tabellen ---------- */
+.po-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.po-table th, .po-table td { padding: 8px 10px; border: 1px solid var(--po-line); text-align: left; }
+.po-table th {
+    background: var(--po-surface-2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--po-ink-2);
+    white-space: nowrap;
+}
+.po-table tbody tr:nth-child(even) { background: var(--po-surface-2); }
+.po-table--center th, .po-table--center td { text-align: center; }
+.po-table--center th:first-child, .po-table--center td:first-child { text-align: left; }
+
+/* ---------- Zustände ---------- */
+.po-badge {
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: var(--po-r-pill);
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    display: inline-block;
+}
+.po-badge--ok   { color: var(--po-ok);  background: var(--po-teal-soft); border-color: #BFE3DA; }
+.po-badge--warn { color: #92610F;       background: #FEF6E7;             border-color: #F5D9A0; }
+.po-badge--bad  { color: var(--po-bad); background: #FEF2F2;             border-color: #FECACA; }
+.po-badge--neutral { color: var(--po-ink-2); background: var(--po-surface-3); border-color: var(--po-line-2); }
+
+.po-empty { text-align: center; color: var(--po-ink-3); font-size: 12px; padding: 28px 16px; line-height: 1.6; }
+
+/* ---------- Hinweisfenster unten rechts ---------- */
+.po-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 200;
+    background: var(--po-chrome);
+    color: var(--po-on-chrome);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 11px 16px;
+    border-radius: var(--po-r-lg);
+    box-shadow: var(--po-shadow-lg);
+    max-width: 340px;
+    line-height: 1.45;
+}
+
+/* ---------- Dialog ---------- */
+.po-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.po-dialog {
+    background: var(--po-surface);
+    border-radius: var(--po-r-lg);
+    box-shadow: var(--po-shadow-lg);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+}
+.po-dialog-head { padding: 16px 18px 0; font-size: 15px; font-weight: 700; color: var(--po-ink); }
+.po-dialog-body { padding: 10px 18px 16px; font-size: 13px; color: var(--po-ink-2); line-height: 1.55; }
+.po-dialog-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    background: var(--po-surface-2);
+    border-top: 1px solid var(--po-line);
+}
+
+/* ---------- Bildlaufleisten ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--po-line-2); border-radius: var(--po-r-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--po-slate); }
+
+/* ---------- Druck ---------- */
+@media print {
+    .po-head, .po-toast, .po-backdrop, .po-no-print { display: none !important; }
+    .po-body { height: auto; overflow: visible; }
+    .po-main { overflow: visible; padding: 0; }
+    .po-panel { box-shadow: none; border-color: #ccc; }
+}

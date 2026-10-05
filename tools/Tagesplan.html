@@ -1,0 +1,2454 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tagesplan · PocketOps</title>
+  <!-- PO-ICON:ANFANG (Urfassung: _design/po-icon.svg · nachziehen mit _design/sync.mjs) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E %3Cdefs%3E %3ClinearGradient id='po' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E %3Cstop stop-color='%239E292B'/%3E %3Cstop offset='1' stop-color='%2339756F'/%3E %3C/linearGradient%3E %3C/defs%3E %3Crect width='32' height='32' rx='7.5' fill='url(%23po)'/%3E %3Cpath d='M11.4 11.6V9.8a2.2 2.2 0 0 1 2.2-2.2h4.8a2.2 2.2 0 0 1 2.2 2.2v1.8' fill='none' stroke='%23fff' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E %3Crect x='5' y='11.2' width='22' height='13.8' rx='2.6' fill='%23fff'/%3E %3Crect x='5' y='17.2' width='22' height='1.7' fill='url(%23po)'/%3E %3C/svg%3E">
+  <!-- PO-ICON:ENDE -->
+    <style>
+        /* PO-TOKENS:ANFANG (Urfassung: _design/po-tokens.css · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME GESTALTUNG
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft. Wird hier etwas
+           geändert, muss es in alle Werkzeuge nachgezogen werden.
+           ====================================================================== */
+        /* Breite und Höhe schließen Innenabstand und Rahmen ein. Ohne das rechnet
+           der Browser sie obendrauf, und eine Angabe wie width:100% ragt über ihren
+           Platz hinaus. */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            /* Markenfarben */
+            --po-accent:      #9E292B;
+            --po-accent-dark: #852224;
+            --po-teal:        #39756F;
+            --po-teal-dark:   #2F635E;
+            --po-slate:       #697896;
+            --po-frost:       #81BED7;
+            --po-frost-soft:  #D9F3FF;
+            --po-teal-soft:   #E8F5F1;
+            --po-slate-soft:  #E0E8F8;
+
+            /* Flächen */
+            --po-bg:          #F1F5F9;
+            --po-surface:     #FFFFFF;
+            --po-surface-2:   #F8FAFC;
+            --po-surface-3:   #E2E8F0;
+            --po-stage:       #CBD5E1;
+
+            /* Kopfzeile */
+            --po-chrome:      #0F172A;
+            --po-chrome-2:    #1E293B;
+            --po-chrome-line: #334155;
+            --po-on-chrome:   #F8FAFC;
+            --po-on-chrome-2: #94A3B8;
+
+            /* Text */
+            --po-ink:         #1E293B;
+            --po-ink-2:       #475569;
+            --po-ink-3:       #94A3B8;
+
+            /* Linien */
+            --po-line:        #E2E8F0;
+            --po-line-2:      #CBD5E1;
+
+            /* Zustände */
+            --po-ok:          #39756F;
+            --po-warn:        #D89B2B;
+            --po-bad:         #9E292B;
+
+            /* Maße */
+            --po-r-sm:   4px;
+            --po-r:      6px;
+            --po-r-lg:  10px;
+            --po-r-pill: 999px;
+            --po-head-h: 64px;
+            --po-shadow:    0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .10);
+            --po-shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, .25);
+            --po-font: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            --po-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+        }
+
+        /* ---------- Seitengerüst ---------- */
+        .po-body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--po-bg);
+            color: var(--po-ink);
+            font-family: var(--po-font);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .po-main { flex: 1; overflow: auto; padding: 20px; }
+        .po-wrap { max-width: 1280px; margin: 0 auto; }
+        .po-wrap--wide { max-width: 1600px; margin: 0 auto; }
+        .po-split { display: grid; gap: 16px; align-items: start; }
+        .po-split--1-2 { grid-template-columns: minmax(280px, 1fr) 2fr; }
+        .po-split--2-1 { grid-template-columns: 2fr minmax(280px, 1fr); }
+        .po-split--1-1 { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 1000px) {
+            .po-split--1-2, .po-split--2-1, .po-split--1-1 { grid-template-columns: 1fr; }
+        }
+        .po-stack > * + * { margin-top: 12px; }
+        .po-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* ---------- Kopfzeile und Marke ---------- */
+        .po-head {
+            height: var(--po-head-h);
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            box-shadow: var(--po-shadow);
+            position: relative;
+            z-index: 20;
+        }
+        .po-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .po-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--po-r);
+            padding: 4px 6px;
+            margin-left: -6px;
+            transition: background-color .15s;
+        }
+        a.po-brand:hover { background: var(--po-chrome-2); }
+        .po-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--po-r-lg);
+            background: linear-gradient(135deg, var(--po-accent), var(--po-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+        }
+        .po-mark svg { width: 19px; height: 19px; display: block; }
+        .po-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .po-line-name {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--po-on-chrome-2);
+        }
+        .po-tool-name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+        .po-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--po-on-chrome-2);
+            background: var(--po-chrome-2);
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            padding: 3px 9px;
+            white-space: nowrap;
+        }
+        .po-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .po-head-sep { width: 1px; height: 24px; background: var(--po-chrome-line); flex-shrink: 0; }
+
+        /* ---------- Sprache und Anleitung in der Kopfzeile ----------
+           Beides setzt po-base.js selbst in die Kopfzeile, links vor die
+           Aktionen des Werkzeugs: es gehört zur Reihe, nicht zum Werkzeug. */
+        .po-meta { display: flex; align-items: center; gap: 8px; }
+        .po-sprach {
+            display: inline-flex;
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            overflow: hidden;
+            background: var(--po-chrome-2);
+        }
+        .po-sprach button {
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            padding: 5px 10px;
+            border: none;
+            background: transparent;
+            color: var(--po-on-chrome-2);
+            cursor: pointer;
+            transition: background-color .15s, color .15s;
+        }
+        .po-sprach button:hover { color: #fff; }
+        .po-sprach button[aria-pressed="true"] { background: var(--po-accent); color: #fff; }
+        .po-sprach button:focus-visible { outline: 2px solid var(--po-frost); outline-offset: -2px; }
+        .po-frage {
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E2E8F0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-frage:hover { background: #2B3A4F; color: #fff; }
+        .po-frage:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Der Trinkgeldknopf steht neben dem Fragezeichen und ist genauso gebaut. Nur
+           das Herz trägt Farbe — auffallen soll er, drängeln nicht. */
+        .po-trinkgeld {
+            font: inherit;
+            font-size: 13px;
+            line-height: 1;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E79A9B;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-trinkgeld:hover { background: #2B3A4F; color: #fff; }
+        .po-trinkgeld:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Ein Verweis, der wie ein Knopf aussieht, bringt die Unterstreichung mit. */
+        a.po-btn { text-decoration: none; }
+
+        /* ---------- Das Hilfefenster ---------- */
+        .po-hilfe { max-height: 68vh; overflow: auto; }
+        .po-hilfe p { line-height: 1.55; }
+        .po-hilfe a { color: var(--po-teal); font-weight: 600; }
+        .po-hilfe-titel {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 6px;
+        }
+        .po-hilfe-liste { margin: 0; padding-left: 20px; }
+        .po-hilfe-liste li { margin-bottom: 5px; line-height: 1.5; }
+        .po-hilfe-teil { border-top: 1px solid var(--po-line); margin-top: 14px; padding-top: 12px; }
+
+        /* ---------- Schaltflächen ---------- */
+        .po-btn {
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--po-r);
+            border: 1px solid var(--po-line-2);
+            background: var(--po-surface);
+            color: var(--po-ink-2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .po-btn:hover { background: var(--po-surface-2); border-color: var(--po-slate); color: var(--po-ink); }
+        .po-btn:active { transform: translateY(1px); }
+        .po-btn:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+        .po-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+        .po-head .po-btn { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #E2E8F0; }
+        .po-head .po-btn:hover { background: #2B3A4F; border-color: #475569; color: #fff; }
+
+        .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+        .po-head .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-head .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+
+        .po-btn--go { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+        .po-btn--go:hover { background: var(--po-teal-dark); border-color: var(--po-teal-dark); color: #fff; }
+
+        .po-btn--danger { color: var(--po-bad); border-color: #FECACA; background: #FEF2F2; }
+        .po-btn--danger:hover { background: #FEE2E2; border-color: #FCA5A5; color: #7F1D1D; }
+        .po-head .po-btn--danger { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #FCA5A5; }
+        .po-head .po-btn--danger:hover { background: #4C1D1D; border-color: #991B1B; color: #FEE2E2; }
+
+        .po-btn--ghost { background: transparent; border-color: transparent; color: var(--po-ink-3); padding: 5px 7px; }
+        .po-btn--ghost:hover { background: var(--po-surface-3); color: var(--po-ink); border-color: transparent; }
+
+        .po-btn--sm { font-size: 11px; padding: 4px 8px; }
+        .po-btn--block { width: 100%; justify-content: center; }
+
+        /* kleines rundes Löschen-Kreuz in Listen und Tabellen */
+        .po-x {
+            font: inherit;
+            font-size: 10px;
+            line-height: 1;
+            width: 18px;
+            height: 18px;
+            border-radius: var(--po-r-pill);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--po-ink-3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background-color .15s, color .15s;
+        }
+        .po-x:hover { background: #FEE2E2; color: var(--po-bad); }
+
+        /* ---------- Panels und Abschnitte ---------- */
+        .po-panel {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+        }
+        .po-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--po-surface-2);
+            border-bottom: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg) var(--po-r-lg) 0 0;
+        }
+        .po-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--po-ink-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .po-panel-body { padding: 14px; }
+        .po-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 8px;
+        }
+        .po-hint {
+            font-size: 11px;
+            color: var(--po-ink-2);
+            background: var(--po-surface-2);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r);
+            padding: 10px 12px;
+            line-height: 1.5;
+        }
+
+        /* ---------- Eingabefelder ---------- */
+        .po-label { font-size: 11px; font-weight: 600; color: var(--po-ink-2); display: block; margin-bottom: 4px; }
+        .po-input, .po-select, .po-textarea {
+            font: inherit;
+            font-size: 12px;
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid var(--po-line-2);
+            border-radius: var(--po-r);
+            background: var(--po-surface);
+            color: var(--po-ink);
+            box-sizing: border-box;
+        }
+        /* Ein Farbfeld füllt der Browser selbst aus. Ohne eigene Höhe fiele es
+           gegenüber den anderen Feldern zusammen, und der Innenabstand ließe den
+           Farbfleck zu klein wirken. */
+        .po-input[type="color"] { height: 32px; padding: 3px; cursor: pointer; }
+        .po-input:focus, .po-select:focus, .po-textarea:focus {
+            outline: none;
+            border-color: var(--po-frost);
+            box-shadow: 0 0 0 3px rgba(129, 190, 215, .25);
+        }
+        .po-textarea { min-height: 72px; resize: vertical; }
+        .po-search { font-size: 13px; padding: 10px 14px; border-radius: var(--po-r-lg); }
+        .po-num { width: 58px; text-align: center; padding: 5px 4px; }
+        .po-field { display: flex; gap: 6px; align-items: center; }
+        .po-field .po-input { flex: 1; min-width: 0; }
+
+        .po-range { width: 100%; accent-color: var(--po-teal); }
+        .po-range-value { font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+
+        .po-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; font-weight: 600; color: var(--po-ink-2); cursor: pointer; }
+        .po-check input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--po-teal); flex-shrink: 0; }
+
+        /* ---------- Karten ---------- */
+        .po-card {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+            padding: 14px;
+        }
+        .po-card--pick { cursor: pointer; transition: border-color .15s, background-color .15s; }
+        .po-card--pick:hover { border-color: var(--po-frost); background: var(--po-surface-2); }
+
+        /* ---------- Tabellen ---------- */
+        .po-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .po-table th, .po-table td { padding: 8px 10px; border: 1px solid var(--po-line); text-align: left; }
+        .po-table th {
+            background: var(--po-surface-2);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--po-ink-2);
+            white-space: nowrap;
+        }
+        .po-table tbody tr:nth-child(even) { background: var(--po-surface-2); }
+        .po-table--center th, .po-table--center td { text-align: center; }
+        .po-table--center th:first-child, .po-table--center td:first-child { text-align: left; }
+
+        /* ---------- Zustände ---------- */
+        .po-badge {
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--po-r-pill);
+            padding: 2px 8px;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .po-badge--ok   { color: var(--po-ok);  background: var(--po-teal-soft); border-color: #BFE3DA; }
+        .po-badge--warn { color: #92610F;       background: #FEF6E7;             border-color: #F5D9A0; }
+        .po-badge--bad  { color: var(--po-bad); background: #FEF2F2;             border-color: #FECACA; }
+        .po-badge--neutral { color: var(--po-ink-2); background: var(--po-surface-3); border-color: var(--po-line-2); }
+
+        .po-empty { text-align: center; color: var(--po-ink-3); font-size: 12px; padding: 28px 16px; line-height: 1.6; }
+
+        /* ---------- Hinweisfenster unten rechts ---------- */
+        .po-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 200;
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 11px 16px;
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            max-width: 340px;
+            line-height: 1.45;
+        }
+
+        /* ---------- Dialog ---------- */
+        .po-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .55);
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .po-dialog {
+            background: var(--po-surface);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+        .po-dialog-head { padding: 16px 18px 0; font-size: 15px; font-weight: 700; color: var(--po-ink); }
+        .po-dialog-body { padding: 10px 18px 16px; font-size: 13px; color: var(--po-ink-2); line-height: 1.55; }
+        .po-dialog-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--po-surface-2);
+            border-top: 1px solid var(--po-line);
+        }
+
+        /* ---------- Bildlaufleisten ---------- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--po-line-2); border-radius: var(--po-r-pill); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--po-slate); }
+
+        /* ---------- Druck ---------- */
+        @media print {
+            .po-head, .po-toast, .po-backdrop, .po-no-print { display: none !important; }
+            .po-body { height: auto; overflow: visible; }
+            .po-main { overflow: visible; padding: 0; }
+            .po-panel { box-shadow: none; border-color: #ccc; }
+        }
+        /* PO-TOKENS:ENDE */
+
+        /* ---------- nur für dieses Werkzeug ---------- */
+        .tp-flaeche { flex: 1; display: grid; grid-template-columns: 286px 1fr; overflow: hidden; }
+
+        /* --- Uhr im Kopf --- */
+        .tp-uhr {
+            display: none; align-items: center; gap: 10px; padding: 5px 7px 5px 12px;
+            background: var(--po-accent); border-radius: var(--po-r-pill); max-width: 360px;
+        }
+        .tp-uhr.an { display: flex; }
+        .tp-uhr-titel { font-size: 12px; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tp-uhr-zeit { font-family: var(--po-mono); font-size: 13px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+        .tp-uhr button {
+            font: inherit; font-size: 11px; font-weight: 700; padding: 4px 10px; flex-shrink: 0;
+            border: none; border-radius: var(--po-r-pill); background: rgba(255,255,255,.22); color: #fff; cursor: pointer;
+        }
+        .tp-uhr button:hover { background: rgba(255,255,255,.34); }
+
+        .tp-ansicht { display: flex; gap: 2px; background: var(--po-chrome-2); border: 1px solid var(--po-chrome-line); border-radius: var(--po-r); padding: 2px; }
+        .tp-ansicht button {
+            font: inherit; font-size: 11px; font-weight: 600; padding: 5px 11px; border: none;
+            background: transparent; color: var(--po-on-chrome-2); border-radius: var(--po-r-sm); cursor: pointer;
+        }
+        .tp-ansicht button.an { background: var(--po-chrome); color: #fff; }
+
+        /* --- Vorrat --- */
+        .tp-vorrat { display: flex; flex-direction: column; background: var(--po-surface); border-right: 1px solid var(--po-line); overflow: hidden; }
+        .tp-vorrat-kopf {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 10px 12px; border-bottom: 1px solid var(--po-line); flex-shrink: 0;
+        }
+        .tp-vorrat-liste { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+        .tp-vorrat-liste.ueber { background: var(--po-frost-soft); }
+
+        .tp-karte {
+            background: var(--po-surface); border: 1px solid var(--po-line); border-left: 3px solid var(--po-slate);
+            border-radius: var(--po-r); padding: 8px 10px; box-shadow: var(--po-shadow); cursor: grab; position: relative;
+        }
+        .tp-karte:active { cursor: grabbing; }
+        .tp-karte.zieht { opacity: .4; }
+        .tp-karte.fertig { opacity: .55; }
+        .tp-karte.fertig .tp-karte-titel { text-decoration: line-through; }
+        .tp-karte-titel { font-size: 12.5px; font-weight: 700; line-height: 1.35; padding-right: 46px; word-break: break-word; }
+        .tp-karte-text { font-size: 11px; color: var(--po-ink-2); line-height: 1.45; margin-top: 3px; white-space: pre-wrap; word-break: break-word; }
+        .tp-karte-fuss { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+        .tp-karte-werkzeuge { position: absolute; top: 5px; right: 5px; display: flex; gap: 1px; opacity: 0; transition: opacity .15s; }
+        .tp-karte:hover .tp-karte-werkzeuge { opacity: 1; }
+
+        .tp-etikett { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--po-r-pill); padding: 2px 7px; color: #fff; white-space: nowrap; }
+        .tp-dauer { font-size: 10.5px; color: var(--po-ink-3); font-variant-numeric: tabular-nums; }
+
+        .tp-start {
+            font: inherit; font-size: 10px; font-weight: 700; padding: 2px 7px; cursor: pointer;
+            border: 1px solid #BFE3DA; background: var(--po-teal-soft); color: var(--po-teal); border-radius: var(--po-r-pill);
+            margin-left: auto; white-space: nowrap;
+        }
+        .tp-start:hover { background: var(--po-teal); color: #fff; border-color: var(--po-teal); }
+
+        /* --- Raster --- */
+        .tp-raster-bereich { display: flex; flex-direction: column; overflow: hidden; background: var(--po-bg); }
+        .tp-tagleiste {
+            display: grid; flex-shrink: 0; background: var(--po-surface);
+            border-bottom: 1px solid var(--po-line); padding-right: 10px;
+        }
+        .tp-tagkopf { padding: 9px 6px; text-align: center; border-left: 1px solid var(--po-line); }
+        .tp-tagkopf:first-child { border-left: none; }
+        .tp-tagname { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--po-ink-3); }
+        .tp-tagzahl { font-size: 17px; font-weight: 700; color: var(--po-ink); line-height: 1.2; }
+        .tp-tagkopf.heute .tp-tagname, .tp-tagkopf.heute .tp-tagzahl { color: var(--po-accent); }
+        .tp-tagsumme { font-size: 10px; color: var(--po-ink-3); font-variant-numeric: tabular-nums; }
+
+        .tp-rollen { flex: 1; overflow-y: auto; }
+        .tp-raster { display: grid; position: relative; padding-right: 10px; }
+        .tp-stunden { position: relative; border-right: 1px solid var(--po-line); }
+        .tp-stunde {
+            position: absolute; left: 0; right: 0; text-align: right; padding-right: 7px;
+            font-size: 10px; color: var(--po-ink-3); font-variant-numeric: tabular-nums; transform: translateY(-6px);
+        }
+        .tp-spalte { position: relative; border-left: 1px solid var(--po-line); background: var(--po-surface); }
+        .tp-spalte.wochenende { background: var(--po-surface-2); }
+        .tp-spalte.ueber { background: var(--po-frost-soft); }
+        .tp-linie { position: absolute; left: 0; right: 0; border-top: 1px solid var(--po-line); pointer-events: none; }
+        .tp-linie.halb { border-top-style: dotted; }
+        .tp-jetzt { position: absolute; left: 0; right: 0; border-top: 2px solid var(--po-accent); z-index: 6; pointer-events: none; }
+        .tp-jetzt::before { content: ''; position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--po-accent); }
+
+        .tp-termin {
+            position: absolute; border-radius: var(--po-r-sm); padding: 2px 6px; overflow: hidden;
+            background: repeating-linear-gradient(135deg, #E2E8F0, #E2E8F0 6px, #EDF1F6 6px, #EDF1F6 12px);
+            border: 1px solid var(--po-line-2); color: var(--po-ink-2);
+            font-size: 10.5px; line-height: 1.3; z-index: 2; pointer-events: none;
+        }
+        .tp-termin b { font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .tp-block {
+            position: absolute; border-radius: var(--po-r); padding: 4px 7px; overflow: hidden;
+            background: var(--po-surface); border: 1px solid var(--po-line); border-left: 3px solid var(--po-slate);
+            box-shadow: var(--po-shadow); font-size: 11px; line-height: 1.3; cursor: grab; z-index: 4;
+            touch-action: none;
+        }
+        .tp-block:active { cursor: grabbing; }
+        .tp-block.zieht { opacity: .65; z-index: 20; box-shadow: var(--po-shadow-lg); }
+        .tp-block.fertig { opacity: .6; }
+        .tp-block.fertig .tp-block-titel { text-decoration: line-through; }
+        .tp-block-titel { font-weight: 700; color: var(--po-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tp-block-zeit { font-size: 9.5px; color: var(--po-ink-3); font-variant-numeric: tabular-nums; }
+        .tp-block-griff { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; cursor: ns-resize; }
+        .tp-block.klein { padding: 0 6px; line-height: 15px; font-size: 10.5px; }
+        .tp-block.klein .tp-block-zeit { display: none; }
+        .tp-block.klein .tp-wdh, .tp-block.klein .tp-warn { top: 0; }
+        .tp-wdh { position: absolute; top: 3px; right: 4px; font-size: 9px; color: var(--po-ink-3); }
+        .tp-warn { position: absolute; top: 2px; right: 4px; font-size: 10px; color: var(--po-accent); }
+        .tp-block.kollision { border-top: 2px solid var(--po-accent); }
+        .tp-block.kollision .tp-block-titel, .tp-block.klein .tp-block-titel { padding-right: 13px; }
+
+        /* --- Zeiterfassung --- */
+        .tp-zeiten { flex: 1; overflow-y: auto; padding: 18px; }
+        .tp-zeiten-tag { max-width: 820px; margin: 0 auto 16px; }
+        .tp-zeiten-kopf {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+            padding: 0 2px 7px; border-bottom: 1px solid var(--po-line); margin-bottom: 2px;
+        }
+        .tp-zeiten-datum { font-size: 12px; font-weight: 700; color: var(--po-ink); }
+        .tp-zeiten-summe { font-family: var(--po-mono); font-size: 13px; font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+        .tp-zeile {
+            display: flex; align-items: center; gap: 10px; padding: 8px 2px;
+            border-bottom: 1px solid var(--po-line); font-size: 12px;
+        }
+        .tp-zeile:last-child { border-bottom: none; }
+        .tp-zeile-titel { flex: 1; min-width: 0; border: none; background: transparent; font: inherit; font-size: 12px; color: var(--po-ink); padding: 2px 4px; border-radius: var(--po-r-sm); }
+        .tp-zeile-titel:focus { outline: none; background: var(--po-surface-2); box-shadow: 0 0 0 2px rgba(129,190,215,.35); }
+        .tp-zeile-zeit { font-family: var(--po-mono); font-size: 11px; color: var(--po-ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .tp-zeile-dauer { font-family: var(--po-mono); font-size: 12px; font-weight: 700; color: var(--po-ink); font-variant-numeric: tabular-nums; width: 62px; text-align: right; }
+
+        /* --- Dialoge --- */
+        .tp-dialog-breit { max-width: 480px; }
+        .tp-feld { margin-bottom: 11px; }
+        .tp-zwei { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .tp-status-wahl { display: flex; gap: 5px; flex-wrap: wrap; }
+        .tp-status-wahl button {
+            font: inherit; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+            padding: 4px 9px; border-radius: var(--po-r-pill); border: 1px solid var(--po-line-2);
+            background: var(--po-surface); color: var(--po-ink-3); cursor: pointer;
+        }
+        .tp-status-wahl button.an { color: #fff; border-color: transparent; }
+        .tp-tage-wahl { display: flex; gap: 4px; }
+        .tp-tage-wahl button {
+            font: inherit; font-size: 11px; font-weight: 700; width: 32px; height: 28px;
+            border-radius: var(--po-r); border: 1px solid var(--po-line-2); background: var(--po-surface);
+            color: var(--po-ink-3); cursor: pointer;
+        }
+        .tp-tage-wahl button.an { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+
+        .tp-ueber-liste { max-height: 230px; overflow-y: auto; margin-top: 8px; }
+        .tp-ueber-zeile { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--po-line); font-size: 12px; }
+        .tp-ueber-zeile:last-child { border-bottom: none; }
+
+        .tp-schlepp {
+            position: fixed; z-index: 300; pointer-events: none; opacity: .9;
+            background: var(--po-surface); border: 1px solid var(--po-frost); border-left: 3px solid var(--po-teal);
+            border-radius: var(--po-r); padding: 5px 9px; font-size: 11px; font-weight: 700;
+            box-shadow: var(--po-shadow-lg); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        @media (max-width: 1000px) { .tp-flaeche { grid-template-columns: 220px 1fr; } }
+    </style>
+</head>
+<body class="po-body">
+
+    <header class="po-head">
+        <div class="po-head-left">
+            <a class="po-brand" href="../Start_PocketOps.html" title="Zur PocketOps-Übersicht">
+                <span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>
+                <span class="po-brand-text">
+                    <span class="po-line-name">PocketOps</span>
+                    <span class="po-tool-name">Tagesplan</span>
+                </span>
+            </a>
+            <div class="tp-uhr" id="uhr">
+                <span class="tp-uhr-titel" id="uhr-titel"></span>
+                <span class="tp-uhr-zeit" id="uhr-zeit">00:00:00</span>
+                <button onclick="uhrStoppen()">Stopp</button>
+            </div>
+        </div>
+        <div class="po-head-actions">
+            <div class="tp-ansicht" id="ansicht">
+                <button data-ansicht="tag">Tag</button>
+                <button data-ansicht="woche" class="an">Woche</button>
+                <button data-ansicht="zeiten">Zeiten</button>
+            </div>
+            <button class="po-btn" onclick="springe(-1)" title="Zurück">‹</button>
+            <button class="po-btn" onclick="springeHeute()">Heute</button>
+            <button class="po-btn" onclick="springe(1)" title="Vor">›</button>
+            <div class="po-head-sep"></div>
+            <button class="po-btn" onclick="einstellungen()" title="Arbeitszeit und Raster">Einstellungen</button>
+            <button class="po-btn" onclick="document.getElementById('ics-datei').click()" title="Termine aus einer ICS-Datei einlesen">Termine</button>
+            <input type="file" id="ics-datei" accept=".ics,text/calendar" style="display:none" onchange="icsLaden(this)">
+            <button class="po-btn" onclick="exportJSON()">Sichern</button>
+            <button class="po-btn" onclick="document.getElementById('import').click()">Öffnen</button>
+            <input type="file" id="import" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
+            <button class="po-btn po-btn--primary" onclick="aufgabeDialog()">Neue Aufgabe</button>
+        </div>
+    </header>
+
+    <div class="tp-flaeche">
+
+        <aside class="tp-vorrat">
+            <div class="tp-vorrat-kopf">
+                <span class="po-panel-title">Vorrat</span>
+                <span class="po-badge po-badge--neutral" id="vorrat-zahl">0</span>
+            </div>
+            <div class="po-panel-body" style="padding:9px 10px 0">
+                <input class="po-input" id="schnell" placeholder="Aufgabe eintippen und Enter" onkeydown="if(event.key==='Enter')schnellAnlegen()">
+            </div>
+            <div class="tp-vorrat-liste" id="vorrat"></div>
+            <div style="padding:9px 10px; border-top:1px solid var(--po-line); flex-shrink:0">
+                <button class="po-btn po-btn--block po-btn--sm" onclick="document.getElementById('kanban-datei').click()" title="Tickets aus einer gesicherten Kanban-Datei übernehmen">Aus Kanban übernehmen</button>
+                <input type="file" id="kanban-datei" accept=".json,application/json" style="display:none" onchange="kanbanLaden(this)">
+            </div>
+        </aside>
+
+        <main class="tp-raster-bereich">
+            <div class="tp-tagleiste" id="tagleiste"></div>
+            <div class="tp-rollen" id="rollen"><div class="tp-raster" id="raster"></div></div>
+            <div class="tp-zeiten" id="zeiten" style="display:none"></div>
+        </main>
+
+    </div>
+
+    <script>
+        /* PO-SPRACHE:ANFANG (Urfassung: _design/sprache/Tagesplan.js · nachziehen mit _design/sync.mjs) */
+        /* Tagesplan · Anleitung und Wörterbuch */
+
+        const PO_HILFE = {
+            de: {
+                kurz: 'Aufgaben in Zeitblöcke legen: links der Vorrat, rechts der Tag im Raster.',
+                schritte: [
+                    'Unten eine <b>neue Aufgabe</b> eintippen und mit Enter in den Vorrat legen.',
+                    'Die Aufgabe in den Tag ziehen — dorthin, wo du sie wirklich machen willst.',
+                    'Mit <b>Zeit</b> läuft eine Uhr auf der Aufgabe mit.'
+                ],
+                tipps: [
+                    'Termine kommen über eine <b>.ics</b>-Datei herein, die du in Outlook selbst speicherst — eine echte Anbindung gibt es bewusst nicht.',
+                    'Aus einer gesicherten Kanban-Datei lassen sich Tickets direkt übernehmen.',
+                    'Arbeitszeit und Rasterweite stehen in den Einstellungen.'
+                ]
+            },
+            en: {
+                kurz: 'Put tasks into time blocks: the backlog on the left, the day on a grid to the right.',
+                schritte: [
+                    'Type a <b>new task</b> at the bottom and press Enter to put it in the backlog.',
+                    'Drag the task into the day — to the time you really mean to do it.',
+                    '<b>Time</b> runs a clock on the task while you work on it.'
+                ],
+                tipps: [
+                    'Appointments come in through an <b>.ics</b> file that you save out of Outlook yourself — there is deliberately no live connection.',
+                    'Tickets can be taken straight out of a saved Kanban file.',
+                    'Working hours and the grid spacing are in the settings.'
+                ]
+            }
+        };
+
+        const PO_WB = {
+            'Tagesplan · PocketOps': 'Day plan · PocketOps',
+            'Tagesplan': 'Day plan',
+            'Aufgaben in Zeitblöcke legen': 'Put tasks into time blocks',
+            'Tag': 'Day',
+            'Woche': 'Week',
+            'Heute': 'Today',
+            'Zurück': 'Back',
+            'Vor': 'Forward',
+            'Vorrat': 'Backlog',
+            'Zeiten': 'Times',
+            'Termine': 'Appointments',
+            'Einstellungen': 'Settings',
+            'Arbeitszeit und Raster': 'Working hours and grid',
+            'Neue Aufgabe': 'New task',
+            'Aufgabe eintippen und Enter': 'Type a task and press Enter',
+            'Bearbeiten': 'Edit',
+            'Löschen': 'Delete',
+            'Sichern': 'Save',
+            'Stopp': 'Stop',
+            'Offen': 'Open',
+            'Wartet': 'Waiting',
+            'Dringend': 'Urgent',
+            '▶ Zeit': '▶ Time',
+            'Titel übernehmen und Zeit messen': 'Take the title and start timing',
+            'Termine aus einer ICS-Datei einlesen': 'Read appointments from an ICS file',
+            'Aus Kanban übernehmen': 'Take from Kanban',
+            'Tickets aus einer gesicherten Kanban-Datei übernehmen': 'Take tickets from a saved Kanban file',
+            '30 min': '30 min',
+            '1 h': '1 h',
+            '1 h 30 min': '1 h 30 min',
+
+            /* Wochentage */
+            'Mo': 'Mon', 'Di': 'Tue', 'Mi': 'Wed', 'Do': 'Thu', 'Fr': 'Fri', 'Sa': 'Sat', 'So': 'Sun'
+        };
+        /* PO-SPRACHE:ENDE */
+    </script>
+
+    <script>
+        /* PO-BASE:ANFANG (Urfassung: _design/po-base.js · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME BAUSTEINE
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft.
+
+           poToast(text)                  kurzer Hinweis unten rechts
+           poConfirm(frage, opt)          Rückfrage, liefert ein Versprechen
+           poAsk(titel, felder)           kleine Eingabemaske statt prompt()
+                                          Feld: { name, label, wert, typ, pflicht }
+                                          typ 'date', 'number', 'color' kommen vom
+                                          Browser; typ 'auswahl' braucht zusätzlich
+                                          optionen: [{ wert, text }] und wird zur Liste
+           poEsc(text)                    Text für HTML entschärfen
+           poDownload(name, text, typ)    Datei zum Herunterladen anbieten
+           poReadFile(input, fn)          gewählte Datei als Text lesen
+           ====================================================================== */
+
+        function poEsc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        let _poToastTimer = null;
+        function poToast(text, dauer = 2600) {
+            let t = document.getElementById('po-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'po-toast';
+                t.className = 'po-toast';
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.style.display = 'block';
+            clearTimeout(_poToastTimer);
+            _poToastTimer = setTimeout(() => { t.style.display = 'none'; }, dauer);
+        }
+
+        function _poModal(innerHtml, aufbau) {
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `<div class="po-dialog" role="dialog" aria-modal="true">${innerHtml}</div>`;
+            document.body.appendChild(back);
+            const schliessen = () => { document.removeEventListener('keydown', aufTaste); back.remove(); };
+            const aufTaste = e => { if (e.key === 'Escape') { e.preventDefault(); back.__abbruch && back.__abbruch(); } };
+            document.addEventListener('keydown', aufTaste);
+            back.addEventListener('mousedown', e => { if (e.target === back) back.__abbruch && back.__abbruch(); });
+            aufbau(back, schliessen);
+            return back;
+        }
+
+        function poConfirm(frage, { titel = 'Bitte bestätigen', ja = 'Ja, weiter', nein = 'Abbrechen', gefahr = false } = {}) {
+            return new Promise(res => {
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body">${poEsc(frage)}</div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>${poEsc(nein)}</button>
+                        <button class="po-btn ${gefahr ? 'po-btn--primary' : 'po-btn--go'}" data-ja>${poEsc(ja)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(false);
+                    back.querySelector('[data-nein]').onclick = () => fertig(false);
+                    back.querySelector('[data-ja]').onclick = () => fertig(true);
+                    setTimeout(() => back.querySelector('[data-ja]').focus(), 30);
+                });
+            });
+        }
+
+        /* felder: [{ name, label, wert, typ: 'text'|'number', min, max, pflicht }]
+           Ergebnis: Objekt mit den Werten, oder null bei Abbruch. */
+        function poAsk(titel, felder, { ok = 'Hinzufügen' } = {}) {
+            return new Promise(res => {
+                /* typ: 'auswahl' erwartet zusätzlich optionen: [{ wert, text }] und wird
+                   zur Liste. Alles andere geht als type an ein <input> — 'date', 'number'
+                   und 'color' kommen so vom Browser, ohne eigenes Zutun. */
+                const html = felder.map((f, i) => {
+                    const feld = f.typ === 'auswahl'
+                        ? `<select class="po-select" id="po-f-${i}">`
+                          + (f.optionen || []).map(o =>
+                                `<option value="${poEsc(o.wert)}"${String(o.wert) === String(f.wert) ? ' selected' : ''}>${poEsc(o.text)}</option>`
+                            ).join('')
+                          + `</select>`
+                        : `<input class="po-input" id="po-f-${i}" type="${f.typ || 'text'}"
+                               value="${poEsc(f.wert == null ? '' : f.wert)}"
+                               ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''}
+                               ${f.platzhalter ? `placeholder="${poEsc(f.platzhalter)}"` : ''}>`;
+                    return `
+                    <div style="margin-bottom:10px">
+                        <label class="po-label" for="po-f-${i}">${poEsc(f.label)}</label>
+                        ${feld}
+                    </div>`;
+                }).join('');
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body"><form id="po-ask-form">${html}</form></div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${poEsc(ok)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(null);
+                    back.querySelector('[data-nein]').onclick = () => fertig(null);
+                    const senden = () => {
+                        const out = {};
+                        let fehlt = null;
+                        felder.forEach((f, i) => {
+                            const el = back.querySelector('#po-f-' + i);
+                            let v = el.value.trim();
+                            if (f.typ === 'number') v = v === '' ? null : Number(v);
+                            if (f.pflicht !== false && (v === '' || v === null)) fehlt = fehlt || el;
+                            out[f.name] = v;
+                        });
+                        if (fehlt) { fehlt.focus(); fehlt.style.borderColor = 'var(--po-bad)'; return; }
+                        fertig(out);
+                    };
+                    back.querySelector('[data-ja]').onclick = senden;
+                    back.querySelector('#po-ask-form').onsubmit = e => { e.preventDefault(); senden(); };
+                    setTimeout(() => back.querySelector('#po-f-0') && back.querySelector('#po-f-0').focus(), 30);
+                });
+            });
+        }
+
+        function poDownload(name, inhalt, typ = 'application/json') {
+            const blob = new Blob([inhalt], { type: typ });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }
+
+        function poReadFile(input, fn) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const r = new FileReader();
+            const melden = e => poToast('Die Datei lässt sich nicht lesen: ' + (e && e.message ? e.message : e), 4200);
+            r.onerror = () => melden(new Error('Die Datei ließ sich nicht öffnen.'));
+            r.onload = ev => {
+                // Ein Rückruf mit async wirft nicht, er gibt ein abgelehntes Versprechen
+                // zurück. Beides muss hier ankommen, sonst bleibt ein Fehler stumm.
+                try {
+                    const p = fn(ev.target.result);
+                    if (p && typeof p.catch === 'function') p.catch(melden);
+                } catch (e) { melden(e); }
+            };
+            r.readAsText(f);
+        }
+
+        /* Markenzeichen für die Kopfzeile — in jedem Werkzeug gleich */
+        const PO_MARK = '<span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>';
+
+        /* ======================================================================
+           POCKETOPS · ZWEISPRACHIGKEIT
+
+           Die Werkzeuge sind auf Deutsch geschrieben — Beschriftungen, Hinweise,
+           Meldungen, alles. Englisch entsteht nicht aus einem zweiten Satz
+           Quelltext, sondern aus einem Wörterbuch: deutscher Satz → englischer
+           Satz. Ein Beobachter schreibt um, was auf der Seite steht, und merkt
+           sich am Knoten das Original — darum geht beim Zurückschalten nichts
+           verloren, und am deutschen Quelltext ändert sich nichts.
+
+           Je Werkzeug steht sein Wörterbuch in einem eigenen Block
+           (PO-SPRACHE, Urfassung: _design/sprache/<Datei>.js) vor diesem hier.
+           Gemeinsames — Kopfzeile, Dialoge, Meldungen aus dieser Datei — steht
+           unten in PO_WB_BASIS.
+
+           Platzhalter: '{}' steht für eine Stelle, die unverändert bleibt.
+               '{} von {} Fehlern'  →  '{} of {} mistakes'
+
+           Was nie übersetzt wird: was der Nutzer selbst geschrieben hat.
+           Eingabefelder, Textflächen, alles unter contenteditable und alles
+           unter data-po-roh bleibt unangetastet.
+           ====================================================================== */
+
+        /* Gemeinsame Einträge. Gelten in jedem Werkzeug. */
+        const PO_WB_BASIS = {
+            'Zur PocketOps-Übersicht': 'To the PocketOps overview',
+            'Trinkgeld': 'Tip jar',
+            'Speichern': 'Save',
+            'Öffnen': 'Open',
+            'Zurücksetzen': 'Reset',
+            'Abbrechen': 'Cancel',
+            'Ja, weiter': 'Yes, go ahead',
+            'Ja, löschen': 'Yes, delete',
+            'Ja, alles löschen': 'Yes, delete everything',
+            'Ja, entfernen': 'Yes, remove',
+            'Bitte bestätigen': 'Please confirm',
+            'Hinzufügen': 'Add',
+            'Drucken': 'Print',
+            'Kopieren': 'Copy',
+            'Anleitung': 'Help',
+            'Sprache / Language': 'Sprache / Language',
+            'Schließen': 'Close',
+            'Die Datei lässt sich nicht lesen: {}': 'The file cannot be read: {}',
+            'Die Datei ließ sich nicht öffnen.': 'The file could not be opened.',
+            'Es ist noch nichts gezählt.': 'Nothing has been counted yet.',
+            'Es ist nichts zu löschen.': 'There is nothing to delete.',
+            'Zähler zurücksetzen': 'Reset counters',
+            'Zähler zurückgesetzt': 'Counters reset',
+            'Gegen den Rechner': 'Against the computer'
+        };
+
+        /* Text der Hilfe selbst — in beiden Sprachen, nicht über das Wörterbuch. */
+        const PO_HILFE_TEXTE = {
+            de: {
+                titel: 'Kurzanleitung',
+                schritte: 'So geht es',
+                tipps: 'Gut zu wissen',
+                oertlich: 'Deine Arbeit bleibt auf diesem Rechner. Sie wird nirgendwohin geschickt.',
+                oertlichMitNetz: 'Deine Arbeit bleibt auf diesem Rechner und wird nirgendwohin geschickt. Dieses Werkzeug lädt beim Öffnen allerdings eine Programmbibliothek nach, von: {}. Der fremde Server erfährt dabei deine IP-Adresse. Woran du arbeitest, verlässt den Rechner auch dann nicht.',
+                sicherung: 'Sichern und Zurückholen',
+                sicherungText: 'Mit <b>Speichern</b> legt das Werkzeug deine Arbeit als Datei neben sich — eine <b>.json</b>-Datei. Das ist nichts Gefährliches: eine Textdatei, die du mit dem Editor öffnen und lesen kannst. Mit <b>Öffnen</b> holst du sie zurück, in dieses oder in ein anderes Fenster.',
+                sicherungWarum: 'Warum das wichtig ist: deine Arbeit liegt sonst nur im Browser. Räumt jemand den Browser auf, ist sie weg. Die gespeicherte Datei bleibt.',
+                mehr: 'Ausführlich: Sichern &amp; Zurückholen',
+                schluss: 'Verstanden'
+            },
+            en: {
+                titel: 'Quick guide',
+                schritte: 'How it works',
+                tipps: 'Worth knowing',
+                oertlich: 'Your work stays on this computer. It is not sent anywhere.',
+                oertlichMitNetz: 'Your work stays on this computer and is not sent anywhere. This tool does fetch a code library when it opens, from: {}. That server learns your IP address. What you are working on still never leaves the machine.',
+                sicherung: 'Saving and restoring',
+                sicherungText: '<b>Save</b> puts your work into a file next to the tool — a <b>.json</b> file. Nothing dangerous about it: a text file you can open and read in any editor. <b>Open</b> brings it back, into this window or another one.',
+                sicherungWarum: 'Why this matters: otherwise your work only lives inside the browser. If someone clears the browser, it is gone. The saved file stays.',
+                mehr: 'In full: Backups &amp; restoring',
+                schluss: 'Got it'
+            }
+        };
+
+        let _poSpr = 'de';
+        try { if (localStorage.getItem('po_sprache') === 'en') _poSpr = 'en'; } catch (e) { /* ohne Speicher eben Deutsch */ }
+
+        const poSprache = () => _poSpr;
+
+        /* ---------- Wörterbuch ---------- */
+
+        const _poNormal = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+        const _poEscRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        let _poExakt = null, _poMuster = null;
+
+        function _poWbBauen() {
+            if (_poExakt) return;
+            _poExakt = new Map();
+            _poMuster = [];
+            const quellen = [PO_WB_BASIS, (typeof PO_WB !== 'undefined' ? PO_WB : null)];
+            for (const q of quellen) {
+                if (!q) continue;
+                for (const de of Object.keys(q)) {
+                    const en = q[de];
+                    if (!en) continue;
+                    if (de.indexOf('{}') >= 0) {
+                        const teile = _poNormal(de).split('{}');
+                        _poMuster.push({ re: new RegExp('^' + teile.map(_poEscRe).join('([\\s\\S]*?)') + '$'), en });
+                    } else {
+                        _poExakt.set(_poNormal(de), en);
+                    }
+                }
+            }
+        }
+
+        /* Was das Wörterbuch nicht kennt, wird hier gesammelt. Beim Pflegen einer
+           Übersetzung zeigt poLuecken() im Browser, was noch fehlt. */
+        const _poLuecken = new Set();
+        function poLuecken() { return Array.from(_poLuecken).sort((a, b) => a.localeCompare(b, 'de')); }
+
+        /* Liefert die Übersetzung oder null, wenn das Wörterbuch nichts kennt. */
+        function _poNachschlagen(text) {
+            _poWbBauen();
+            const n = _poNormal(text);
+            if (!n) return null;
+            const treffer = _poExakt.get(n);
+            if (treffer !== undefined) return treffer;
+            for (const m of _poMuster) {
+                const t = n.match(m.re);
+                if (!t) continue;
+                let i = 0;
+                return m.en.replace(/\{\}/g, () => { i++; return t[i] === undefined ? '' : t[i]; });
+            }
+            if (_poLuecken.size < 2000) _poLuecken.add(n);
+            return null;
+        }
+
+        /* Für Text, der nicht im Seitengerüst steht, sondern gezeichnet wird —
+           auf einer Leinwand etwa. Gibt auf Deutsch den Text unverändert zurück. */
+        function poT(text) {
+            if (_poSpr !== 'en') return text;
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* Die englische Fassung, unabhängig von der eingestellten Sprache. Gebraucht
+           dort, wo beide Sprachen zugleich gelten müssen — etwa in einem Suchfeld,
+           das auch nach dem Umschalten noch finden soll. */
+        function poEn(text) {
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* ---------- Die Seite umschreiben ---------- */
+
+        const _PO_ATTR = ['placeholder', 'title', 'aria-label', 'alt'];
+        const _PO_TABU = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1, PRE: 1, CODE: 1, CANVAS: 1 };
+
+        function _poDarf(el) {
+            for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+                if (_PO_TABU[e.tagName]) return false;
+                if (e.isContentEditable) return false;
+                if (e.hasAttribute('data-po-roh')) return false;
+                if (e.hasAttribute('data-po-nur')) return false;   // steht schon in seiner Sprache
+            }
+            return true;
+        }
+
+        /* Längere Texte — eine ganze Seite Erklärung etwa — zerfielen im Wörterbuch
+           an jedem <b> in Stücke. Dafür gibt es den zweiten Weg: zwei Blöcke, einer
+           je Sprache, ausgezeichnet mit data-po-nur="de" bzw. "en". Es wird immer
+           nur einer gezeigt.
+           Bewusst über style.display statt über hidden: eine Klasse mit display:flex
+           gewänne sonst gegen hidden, und der Block stünde trotzdem da. */
+        function _poSprachbloecke() {
+            document.querySelectorAll('[data-po-nur]').forEach(el => {
+                el.style.display = (el.getAttribute('data-po-nur') === _poSpr) ? '' : 'none';
+            });
+        }
+
+        function _poTextKnoten(k) {
+            if (!k || !k.nodeValue || !k.nodeValue.trim()) return;
+            if (k.nodeValue === k.__poEn) return;                 // steht schon auf Englisch
+            if (!_poDarf(k.parentElement)) return;
+            const neu = _poNachschlagen(k.nodeValue);
+            if (neu === null) return;
+            k.__poDe = k.nodeValue;
+            k.nodeValue = k.nodeValue.match(/^\s*/)[0] + neu + k.nodeValue.match(/\s*$/)[0];
+            k.__poEn = k.nodeValue;
+        }
+
+        function _poMerkmal(el, name) {
+            if (!el || el.nodeType !== 1 || !el.hasAttribute(name)) return;
+            if (!_poDarf(el)) return;
+            const wert = el.getAttribute(name);
+            el.__poAttrEn = el.__poAttrEn || {};
+            el.__poAttrDe = el.__poAttrDe || {};
+            if (wert === el.__poAttrEn[name]) return;
+            const neu = _poNachschlagen(wert);
+            if (neu === null) return;
+            el.__poAttrDe[name] = wert;
+            el.setAttribute(name, neu);
+            el.__poAttrEn[name] = neu;
+        }
+
+        function _poAnwenden(wurzel) {
+            if (_poSpr !== 'en' || !wurzel) return;
+            if (wurzel.nodeType === 3) { _poTextKnoten(wurzel); return; }
+            if (wurzel.nodeType !== 1) return;
+            const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) _poTextKnoten(k);
+            const mit = [wurzel].concat(Array.from(wurzel.querySelectorAll('*')));
+            for (const el of mit) for (const a of _PO_ATTR) if (el.hasAttribute && el.hasAttribute(a)) _poMerkmal(el, a);
+        }
+
+        function _poZurueck() {
+            const lauf = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) {
+                if (k.__poDe !== undefined && k.nodeValue === k.__poEn) { k.nodeValue = k.__poDe; k.__poEn = undefined; }
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (!el.__poAttrDe) continue;
+                for (const a of Object.keys(el.__poAttrDe)) {
+                    if (el.getAttribute(a) === el.__poAttrEn[a]) el.setAttribute(a, el.__poAttrDe[a]);
+                }
+                el.__poAttrEn = {};
+            }
+        }
+
+        let _poStill = false;
+        let _poBeob = null;
+
+        function _poBeobachten() {
+            _poBeob = new MutationObserver(aenderungen => {
+                if (_poStill || _poSpr !== 'en') return;
+                _poStill = true;
+                try {
+                    for (const a of aenderungen) {
+                        if (a.type === 'childList') a.addedNodes.forEach(n => {
+                            _poAnwenden(n);
+                            if (n.nodeType === 1 && n.querySelector && (n.hasAttribute('data-po-nur') || n.querySelector('[data-po-nur]'))) _poSprachbloecke();
+                        });
+                        else if (a.type === 'characterData') _poTextKnoten(a.target);
+                        else if (a.type === 'attributes') _poMerkmal(a.target, a.attributeName);
+                    }
+                } finally {
+                    _poBeob.takeRecords();          // eigene Änderungen nicht noch einmal ansehen
+                    _poStill = false;
+                }
+            });
+            _poBeob.observe(document.documentElement, {
+                childList: true, subtree: true, characterData: true,
+                attributes: true, attributeFilter: _PO_ATTR
+            });
+        }
+
+        /* ---------- Umschalten ---------- */
+
+        function poSpracheSetzen(spr) {
+            const neu = spr === 'en' ? 'en' : 'de';
+            if (neu === _poSpr) return;
+            _poSpr = neu;
+            try { localStorage.setItem('po_sprache', neu); } catch (e) { /* dann eben nur für dieses Fenster */ }
+            document.documentElement.lang = neu;
+            /* Beide Fenster werden geschlossen statt übersetzt: ihr Inhalt steht als
+               data-po-roh und geht am Wörterbuch vorbei. Beim nächsten Öffnen baut er
+               sich in der neuen Sprache neu auf. Ohne das bliebe nach einem Wechsel
+               bei offenem Fenster die alte Sprache stehen. */
+            const hilfe = document.getElementById('po-hilfe-fenster');
+            if (hilfe) hilfe.remove();
+            const trinkgeld = document.getElementById('po-trinkgeld-fenster');
+            if (trinkgeld) trinkgeld.remove();
+            _poStill = true;
+            try {
+                if (neu === 'en') _poAnwenden(document.documentElement);
+                else _poZurueck();
+            } finally {
+                if (_poBeob) _poBeob.takeRecords();
+                _poStill = false;
+            }
+            _poSprachbloecke();
+            _poKopfMalen();
+            // Werkzeuge, die selbst zeichnen, müssen danach neu zeichnen.
+            if (typeof poNeuZeichnen === 'function') poNeuZeichnen();
+        }
+
+        function _poKopfMalen() {
+            document.querySelectorAll('.po-sprach button').forEach(b => {
+                b.setAttribute('aria-pressed', String(b.dataset.spr === _poSpr));
+            });
+        }
+
+        /* ---------- Trinkgeld ----------
+           PocketOps verschenkt sich. Der Knopf ist die einzige Stelle, an der das
+           Werkzeug etwas von sich aus möchte — entsprechend zurückhaltend.
+
+           Bewusst „Trinkgeld“ und nicht „Spende“: eine Spende im steuerlichen Sinn
+           kann nur eine anerkannt gemeinnützige Einrichtung entgegennehmen. Hier ist
+           es eine freiwillige Zuwendung an eine Privatperson.
+
+           Der Verweis geht an PayPal.me. Bewusst nicht an die Spendenseite mit der
+           E-Mail-Adresse als Kennung: die stünde damit im Quelltext jeder der
+           sechsundzwanzig Dateien und wäre, seit das Ganze öffentlich liegt, für
+           Adress-Sammler maschinell abgreifbar. Der PayPal.me-Name zeigt sie nicht.
+
+           Den Betrag gibt der Besucher selbst an — deshalb der blanke Name ohne
+           angehängte Zahl. Soll sich das ändern, ist hier die eine Zeile zu ändern
+           und _design/sync.mjs laufen zu lassen. */
+        const PO_TRINKGELD_LINK = 'https://paypal.me/JensHeitmann306';
+
+        const PO_TRINKGELD_TEXTE = {
+            de: {
+                titel: 'Trinkgeld',
+                frei: 'PocketOps ist frei. Nimm es, gib es weiter, bau es um — es kostet nichts und wird nichts kosten.',
+                arbeit: 'Darin steckt allerdings eine Menge Arbeit. Wenn dir eines der Werkzeuge den Tag leichter gemacht hat, freue ich mich über ein Trinkgeld. Wie viel, entscheidest du.',
+                hinweis: 'Der Knopf öffnet PayPal in einem neuen Fenster. Hier wird nichts abgefragt und nichts mitgeschnitten.',
+                knopf: 'Trinkgeld über PayPal',
+                nein: 'Vielleicht später'
+            },
+            en: {
+                titel: 'Tip jar',
+                frei: 'PocketOps is free. Take it, pass it on, rebuild it — it costs nothing and it never will.',
+                arbeit: 'There is a fair amount of work in it, though. If one of these tools has made your day easier, a tip would be welcome. You decide how much.',
+                hinweis: 'The button opens PayPal in a new window. Nothing is asked for or recorded here.',
+                knopf: 'Leave a tip via PayPal',
+                nein: 'Maybe later'
+            }
+        };
+
+        function poTrinkgeld() {
+            if (document.getElementById('po-trinkgeld-fenster')) return;
+            const t = PO_TRINKGELD_TEXTE[_poSpr] || PO_TRINKGELD_TEXTE.de;
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(t.titel) + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.frei) + '</p>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.arbeit) + '</p>'
+              +   '<p style="margin:0;color:var(--po-ink-3);font-size:11px">' + poEsc(t.hinweis) + '</p>'
+              + '</div>'
+              + '<div class="po-dialog-foot">'
+              +   '<button class="po-btn" data-zu>' + poEsc(t.nein) + '</button>'
+              +   '<a class="po-btn po-btn--primary" href="' + PO_TRINKGELD_LINK + '" target="_blank" rel="noopener noreferrer">'
+              +     poEsc(t.knopf) + '</a>'
+              + '</div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    /* Nach dem Sprung zu PayPal soll hier nicht noch ein Fenster offen
+                       stehenbleiben, auf das niemand mehr schaut. */
+                    b.querySelector('a.po-btn').onclick = () => setTimeout(schliessen, 150);
+                });
+            back.id = 'po-trinkgeld-fenster';
+        }
+
+        function _poKopfBauen() {
+            const leiste = document.querySelector('.po-head-actions');
+            if (!leiste || document.querySelector('.po-meta')) return;
+            const box = document.createElement('div');
+            box.className = 'po-meta';
+            box.innerHTML =
+                '<div class="po-sprach" role="group" aria-label="Sprache / Language">'
+              + '<button type="button" data-spr="de">DE</button>'
+              + '<button type="button" data-spr="en">EN</button></div>'
+              + '<button type="button" class="po-trinkgeld" title="Trinkgeld" aria-label="Trinkgeld">&#9829;</button>'
+              + '<button type="button" class="po-frage" title="Anleitung" aria-label="Anleitung">?</button>'
+              + '<div class="po-head-sep"></div>';
+            leiste.insertBefore(box, leiste.firstChild);
+            box.querySelectorAll('[data-spr]').forEach(b => { b.onclick = () => poSpracheSetzen(b.dataset.spr); });
+            box.querySelector('.po-frage').onclick = poHilfe;
+            box.querySelector('.po-trinkgeld').onclick = poTrinkgeld;
+            _poKopfMalen();
+        }
+
+        /* ---------- Die Anleitung ---------- */
+
+        /* Die Werkzeuge liegen im Ordner tools/, die Übersicht eine Ebene darüber.
+           Woran sich das erkennen lässt: nur ein Werkzeug trägt das Markenzeichen als
+           Rückverweis; auf der Übersicht selbst steht es als blosser Text. */
+        const _poSicherungPfad = () => document.querySelector('a.po-brand') ? 'Sicherung.html' : 'tools/Sicherung.html';
+
+        /* Die Rechner, von denen diese Seite etwas nachlädt — ohne Doppelte. */
+        function _poFremdquellen() {
+            return [...document.querySelectorAll('script[src], link[rel="stylesheet"][href]')]
+                .map(e => e.getAttribute('src') || e.getAttribute('href'))
+                .filter(u => /^https?:\/\//i.test(u || ''))
+                .map(u => { try { return new URL(u).hostname; } catch (e) { return null; } })
+                .filter((h, i, a) => h && a.indexOf(h) === i);
+        }
+
+        function poHilfe() {
+            if (document.getElementById('po-hilfe-fenster')) return;
+            const t = PO_HILFE_TEXTE[_poSpr];
+            const h = (typeof PO_HILFE !== 'undefined' && PO_HILFE && PO_HILFE[_poSpr]) ? PO_HILFE[_poSpr] : null;
+            const name = (document.querySelector('.po-tool-name') || {}).textContent || 'PocketOps';
+
+            const teile = [];
+            if (h && h.kurz) teile.push('<p style="margin:0 0 12px">' + h.kurz + '</p>');
+            if (h && h.schritte && h.schritte.length) {
+                teile.push('<div class="po-hilfe-titel">' + t.schritte + '</div>'
+                         + '<ol class="po-hilfe-liste">' + h.schritte.map(s => '<li>' + s + '</li>').join('') + '</ol>');
+            }
+            if (h && h.tipps && h.tipps.length) {
+                teile.push('<div class="po-hilfe-teil"><div class="po-hilfe-titel">' + t.tipps + '</div>'
+                         + '<ul class="po-hilfe-liste">' + h.tipps.map(s => '<li>' + s + '</li>').join('') + '</ul></div>');
+            }
+            teile.push('<div class="po-hilfe-teil">'
+                     + '<div class="po-hilfe-titel">' + t.sicherung + '</div>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungText + '</p>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungWarum + '</p>'
+                     + '<p style="margin:0"><a href="' + _poSicherungPfad() + '">' + t.mehr + '</a></p></div>');
+            /* Ein paar Werkzeuge holen sich eine Programmbibliothek aus dem Netz. Der
+               Hinweis liest das aus der Seite selbst aus, statt es pauschal zu
+               behaupten — so bleibt er richtig, auch wenn später eine Quelle dazukommt
+               oder wegfällt. */
+            const fremd = _poFremdquellen();
+            teile.push('<div class="po-hilfe-teil" style="color:var(--po-ink-3);font-size:11px">'
+                     + (fremd.length ? t.oertlichMitNetz.replace('{}', fremd.join(', ')) : t.oertlich)
+                     + '</div>');
+
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(name) + ' — ' + t.titel + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>' + teile.join('') + '</div>'
+              + '<div class="po-dialog-foot"><button class="po-btn po-btn--go" data-zu>' + t.schluss + '</button></div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    setTimeout(() => b.querySelector('[data-zu]').focus(), 30);
+                });
+            back.id = 'po-hilfe-fenster';
+            back.querySelector('.po-dialog').style.maxWidth = '560px';
+        }
+
+        function _poStart() {
+            document.documentElement.lang = _poSpr;
+            _poKopfBauen();
+            _poSprachbloecke();
+            if (_poSpr === 'en') {
+                _poStill = true;
+                try { _poAnwenden(document.documentElement); } finally { _poStill = false; }
+            }
+            _poBeobachten();
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F1') { e.preventDefault(); poHilfe(); }
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _poStart);
+        else _poStart();
+        /* PO-BASE:ENDE */
+
+        /* ======================================================================
+           TAGESPLAN
+           Vorrat links, Zeitraster rechts. Aufgaben werden hinübergezogen und
+           belegen dort so viel Platz, wie sie dauern sollen.
+
+           Termine aus dem Firmenkalender kommen als ICS-Datei herein und liegen
+           grau und unveränderlich im Hintergrund. Es wird nichts angebunden und
+           nichts gesendet — der Nutzer legt die Datei selbst herüber.
+           ====================================================================== */
+
+        const SPEICHER = 'po_tagesplan';
+        const PX_STUNDE = 48;
+        const PX_MIN = PX_STUNDE / 60;
+
+        const STATUS = {
+            offen:    { name: 'Offen',     farbe: '#697896' },
+            laeuft:   { name: 'In Arbeit', farbe: '#81BED7' },
+            wartet:   { name: 'Wartet',    farbe: '#D89B2B' },
+            dringend: { name: 'Dringend',  farbe: '#9E292B' },
+            fertig:   { name: 'Erledigt',  farbe: '#39756F' }
+        };
+        const WOCHENTAGE = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+        const el = id => document.getElementById(id);
+        let zaehler = 0;
+        const neueId = p => p + Date.now().toString(36) + (++zaehler).toString(36);
+
+        let daten = {
+            version: 1,
+            aufgaben: [],
+            bloecke: [],
+            zeiten: [],
+            termine: [],
+            einst: { von: 7, bis: 19, raster: 15 }
+        };
+        let laufend = null;
+        let ansicht = 'woche';
+        let ankerTag = null;
+        let uhrTakt = null;
+
+        /* ---------- Datum und Zeit ---------- */
+
+        const zweiStellig = n => String(n).padStart(2, '0');
+        const dTag = d => d.getFullYear() + '-' + zweiStellig(d.getMonth() + 1) + '-' + zweiStellig(d.getDate());
+        const ausTag = s => { const [j, m, t] = String(s).split('-').map(Number); return new Date(j, m - 1, t); };
+        const heute = () => dTag(new Date());
+        const plusTage = (s, n) => { const d = ausTag(s); d.setDate(d.getDate() + n); return dTag(d); };
+        const wochenTag = s => (ausTag(s).getDay() + 6) % 7;          // 0 = Montag
+        const wochenStart = s => plusTage(s, -wochenTag(s));
+        const minText = m => zweiStellig(Math.floor(m / 60)) + ':' + zweiStellig(Math.round(m) % 60);
+        const dauerText = m => {
+            m = Math.round(m);
+            if (m < 60) return m + ' min';
+            const h = Math.floor(m / 60), r = m % 60;
+            return r ? h + ' h ' + r + ' min' : h + ' h';
+        };
+        const stdText = sek => {
+            const h = Math.floor(sek / 3600), m = Math.floor(sek % 3600 / 60), s = Math.floor(sek % 60);
+            return zweiStellig(h) + ':' + zweiStellig(m) + ':' + zweiStellig(s);
+        };
+        const datumLang = s => ausTag(s).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+
+        /* ---------- Speichern ---------- */
+
+        function sichern() {
+            try { localStorage.setItem(SPEICHER, JSON.stringify({ daten, laufend })); }
+            catch (e) { poToast('Der Stand ließ sich nicht sichern — der Browser-Speicher ist voll.', 5000); }
+        }
+
+        function pruefen(d) {
+            const z = (v, min, max, vor) => { const n = parseInt(v, 10); return isFinite(n) ? Math.min(max, Math.max(min, n)) : vor; };
+            const st = s => STATUS[s] ? s : 'offen';
+            const tag = s => /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : heute();
+            return {
+                version: 1,
+                aufgaben: (d.aufgaben || []).map(a => ({
+                    id: String(a.id || neueId('a')), titel: String(a.titel || 'Ohne Titel'),
+                    text: String(a.text || ''), status: st(a.status), dauer: z(a.dauer, 5, 1440, 60),
+                    angelegt: Number(a.angelegt) || Date.now()
+                })),
+                bloecke: (d.bloecke || []).map(b => ({
+                    id: String(b.id || neueId('b')), aufgabeId: b.aufgabeId ? String(b.aufgabeId) : null,
+                    titel: String(b.titel || 'Ohne Titel'), text: String(b.text || ''), status: st(b.status),
+                    datum: tag(b.datum), start: z(b.start, 0, 1439, 540), dauer: z(b.dauer, 5, 1440, 60),
+                    fertig: !!b.fertig,
+                    wdh: b.wdh && b.wdh.art ? {
+                        art: ['taeglich', 'woechentlich', 'wochentage'].includes(b.wdh.art) ? b.wdh.art : 'woechentlich',
+                        tage: Array.isArray(b.wdh.tage) ? b.wdh.tage.filter(t => t >= 0 && t <= 6) : [],
+                        bis: /^\d{4}-\d{2}-\d{2}$/.test(b.wdh.bis || '') ? b.wdh.bis : ''
+                    } : null,
+                    ausnahmen: Array.isArray(b.ausnahmen) ? b.ausnahmen.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)) : []
+                })),
+                zeiten: (d.zeiten || []).map(e => ({
+                    id: String(e.id || neueId('z')), titel: String(e.titel || 'Ohne Titel'),
+                    aufgabeId: e.aufgabeId ? String(e.aufgabeId) : null,
+                    datum: tag(e.datum), start: z(e.start, 0, 1439, 0), dauer: Math.max(0, Number(e.dauer) || 0)
+                })),
+                termine: (d.termine || []).map(t => ({
+                    id: String(t.id || neueId('t')), titel: String(t.titel || 'Termin'),
+                    datum: tag(t.datum), start: z(t.start, 0, 1439, 0), dauer: z(t.dauer, 5, 1440, 60),
+                    ganztags: !!t.ganztags
+                })),
+                einst: {
+                    von: z((d.einst || {}).von, 0, 22, 7),
+                    bis: z((d.einst || {}).bis, 1, 24, 19),
+                    raster: [5, 10, 15, 30].includes(Number((d.einst || {}).raster)) ? Number(d.einst.raster) : 15
+                }
+            };
+        }
+
+        /* ---------- Wiederholungen auflösen ---------- */
+
+        // Ein Block mit Wiederholung ist eine Regel. Für die sichtbaren Tage
+        // werden daraus einzelne Vorkommen erzeugt; der Block selbst bleibt die Regel.
+        function bloeckeAn(tag) {
+            const out = [];
+            daten.bloecke.forEach(b => {
+                if (!b.wdh) {
+                    if (b.datum === tag) out.push(Object.assign({}, b, { echt: true }));
+                    return;
+                }
+                if (tag < b.datum) return;
+                if (b.wdh.bis && tag > b.wdh.bis) return;
+                if ((b.ausnahmen || []).includes(tag)) return;
+                let passt = false;
+                if (b.wdh.art === 'taeglich') passt = true;
+                else if (b.wdh.art === 'woechentlich') passt = wochenTag(tag) === wochenTag(b.datum);
+                else if (b.wdh.art === 'wochentage') passt = (b.wdh.tage || []).includes(wochenTag(tag));
+                if (passt) out.push(Object.assign({}, b, { echt: tag === b.datum, tagDavon: tag }));
+            });
+            return out.sort((x, y) => x.start - y.start);
+        }
+
+        /* ---------- Überlappung nebeneinander legen ---------- */
+
+        function spuren(liste) {
+            const sortiert = liste.slice().sort((a, b) => a.start - b.start || b.dauer - a.dauer);
+            const gelegt = [];
+            sortiert.forEach(b => {
+                const kreuzt = gelegt.filter(g => b.start < g.start + g.dauer && g.start < b.start + b.dauer);
+                let spur = 0;
+                while (kreuzt.some(g => g.spur === spur)) spur++;
+                b.spur = spur;
+                gelegt.push(b);
+            });
+            // Jede Gruppe sich überschneidender Blöcke teilt sich die Breite
+            gelegt.forEach(b => {
+                const gruppe = gelegt.filter(g => b.start < g.start + g.dauer && g.start < b.start + b.dauer);
+                b.spuren = Math.max(...gruppe.map(g => g.spur)) + 1;
+            });
+            return gelegt;
+        }
+
+        /* ---------- Zeichnen ---------- */
+
+        const sichtbareTage = () => ansicht === 'tag' ? [ankerTag]
+            : Array.from({ length: 7 }, (_, i) => plusTage(wochenStart(ankerTag), i));
+
+        function render() {
+            el('ansicht').querySelectorAll('button').forEach(b => b.classList.toggle('an', b.dataset.ansicht === ansicht));
+            const zeigtZeiten = ansicht === 'zeiten';
+            el('tagleiste').style.display = zeigtZeiten ? 'none' : '';
+            el('rollen').style.display = zeigtZeiten ? 'none' : '';
+            el('zeiten').style.display = zeigtZeiten ? '' : 'none';
+            if (zeigtZeiten) renderZeiten(); else renderRaster();
+            renderVorrat();
+            sichern();
+        }
+
+        function renderVorrat() {
+            const liste = el('vorrat');
+            const verplant = new Set(daten.bloecke.map(b => b.aufgabeId).filter(Boolean));
+            const offen = daten.aufgaben.filter(a => !verplant.has(a.id));
+            el('vorrat-zahl').textContent = offen.length;
+            liste.innerHTML = offen.length ? offen.map(a => karte(a)).join('')
+                : '<div class="po-empty" style="padding:18px 8px">Nichts im Vorrat.<br>Oben eintippen und Enter.</div>';
+            vorratVerdrahten();
+        }
+
+        function karte(a) {
+            const s = STATUS[a.status];
+            return `<article class="tp-karte ${a.status === 'fertig' ? 'fertig' : ''}" draggable="true" data-aufgabe="${a.id}"
+                     style="border-left-color:${s.farbe}">
+                <div class="tp-karte-werkzeuge">
+                    <button class="po-x" title="Bearbeiten" onclick="event.stopPropagation(); aufgabeDialog('${a.id}')">✎</button>
+                    <button class="po-x" title="Löschen" onclick="event.stopPropagation(); aufgabeLoeschen('${a.id}')">✕</button>
+                </div>
+                <div class="tp-karte-titel">${poEsc(a.titel)}</div>
+                ${a.text ? `<div class="tp-karte-text">${poEsc(a.text)}</div>` : ''}
+                <div class="tp-karte-fuss">
+                    <span class="tp-etikett" style="background:${s.farbe}">${s.name}</span>
+                    <span class="tp-dauer">${dauerText(a.dauer)}</span>
+                    <button class="tp-start" onclick="event.stopPropagation(); uhrStarten('${a.id}')" title="Titel übernehmen und Zeit messen">▶ Zeit</button>
+                </div>
+            </article>`;
+        }
+
+        function renderRaster() {
+            const tage = sichtbareTage();
+            const { von, bis } = daten.einst;
+            const hoehe = (bis - von) * PX_STUNDE;
+            const spalten = '58px repeat(' + tage.length + ', 1fr)';
+
+            el('tagleiste').style.gridTemplateColumns = spalten;
+            el('tagleiste').innerHTML = '<div></div>' + tage.map(t => {
+                const summe = bloeckeAn(t).reduce((n, b) => n + b.dauer, 0);
+                const d = ausTag(t);
+                return `<div class="tp-tagkopf ${t === heute() ? 'heute' : ''}">
+                    <div class="tp-tagname">${WOCHENTAGE[wochenTag(t)]}</div>
+                    <div class="tp-tagzahl">${d.getDate()}.${zweiStellig(d.getMonth() + 1)}.</div>
+                    <div class="tp-tagsumme">${summe ? dauerText(summe) + ' verplant' : '—'}</div>
+                </div>`;
+            }).join('');
+
+            let stundenHtml = '';
+            for (let h = von; h <= bis; h++) {
+                stundenHtml += `<div class="tp-stunde" style="top:${(h - von) * PX_STUNDE}px">${zweiStellig(h)}:00</div>`;
+            }
+
+            const raster = el('raster');
+            raster.style.gridTemplateColumns = spalten;
+            raster.style.height = hoehe + 'px';
+            raster.innerHTML = `<div class="tp-stunden" style="height:${hoehe}px">${stundenHtml}</div>`
+                + tage.map(t => spalte(t, von, bis, hoehe)).join('');
+
+            rasterVerdrahten();
+            const jetzt = raster.querySelector('.tp-jetzt');
+            if (jetzt && !raster.dataset.gerollt) {
+                el('rollen').scrollTop = Math.max(0, jetzt.offsetTop - 120);
+                raster.dataset.gerollt = '1';
+            }
+        }
+
+        function spalte(tag, von, bis, hoehe) {
+            let html = '';
+            for (let h = von; h <= bis; h++) {
+                html += `<div class="tp-linie" style="top:${(h - von) * PX_STUNDE}px"></div>`;
+                if (h < bis) html += `<div class="tp-linie halb" style="top:${(h - von + 0.5) * PX_STUNDE}px"></div>`;
+            }
+
+            // Termine und Blöcke teilen sich die Spalte. Sonst deckt ein Block
+            // den Termin, mit dem er sich überschneidet, vollständig zu — und
+            // genau den will man ja sehen.
+            const termineTag = daten.termine.filter(t => t.datum === tag).map(t => Object.assign({}, t, {
+                typ: 'termin',
+                start: t.ganztags ? von * 60 : t.start,
+                dauer: t.ganztags ? 30 : t.dauer
+            }));
+            const bloeckeTag = bloeckeAn(tag).map(b => Object.assign({}, b, { typ: 'block' }));
+
+            spuren(termineTag.concat(bloeckeTag)).forEach(e => {
+                const oben = (e.start - von * 60) * PX_MIN;
+                const hoch = Math.max(17, e.dauer * PX_MIN);
+                const breite = 100 / e.spuren;
+                const lage = `top:${oben}px; height:${hoch - 2}px; left:calc(${e.spur * breite}% + 2px); width:calc(${breite}% - 4px)`;
+
+                if (e.typ === 'termin') {
+                    html += `<div class="tp-termin" style="${lage}" title="${poEsc(e.titel)}">
+                        <b>${poEsc(e.titel)}</b>${hoch > 30 && !e.ganztags ? minText(e.start) + '–' + minText(e.start + e.dauer) : ''}
+                    </div>`;
+                    return;
+                }
+
+                // Wer einen Block in eine Besprechung legt, soll das sehen
+                const stoert = termineTag.filter(t => !t.ganztags
+                    && e.start < t.start + t.dauer && t.start < e.start + e.dauer);
+                const st = STATUS[e.status];
+                html += `<div class="tp-block ${e.fertig ? 'fertig' : ''} ${hoch < 34 ? 'klein' : ''} ${stoert.length ? 'kollision' : ''}"
+                     data-block="${e.id}" data-tag="${tag}"
+                     style="${lage}; border-left-color:${st.farbe}"
+                     title="${poEsc(e.titel)} · ${minText(e.start)}–${minText(e.start + e.dauer)}">
+                    ${stoert.length
+                        ? '<span class="tp-warn" title="Überschneidet sich mit: ' + poEsc(stoert.map(t => t.titel).join(', ')) + '">⚠</span>'
+                        : (e.wdh ? '<span class="tp-wdh" title="Wiederholt sich">↻</span>' : '')}
+                    <div class="tp-block-titel">${poEsc(e.titel)}</div>
+                    <div class="tp-block-zeit">${minText(e.start)}–${minText(e.start + e.dauer)}</div>
+                    <div class="tp-block-griff"></div>
+                </div>`;
+            });
+
+            if (tag === heute()) {
+                const jetzt = new Date().getHours() * 60 + new Date().getMinutes();
+                if (jetzt >= von * 60 && jetzt <= bis * 60) {
+                    html += `<div class="tp-jetzt" style="top:${(jetzt - von * 60) * PX_MIN}px"></div>`;
+                }
+            }
+
+            const we = wochenTag(tag) >= 5;
+            return `<div class="tp-spalte ${we ? 'wochenende' : ''}" data-tag="${tag}" style="height:${hoehe}px">${html}</div>`;
+        }
+
+        function renderZeiten() {
+            const nachTag = {};
+            daten.zeiten.forEach(e => { (nachTag[e.datum] = nachTag[e.datum] || []).push(e); });
+            const tage = Object.keys(nachTag).sort().reverse();
+            const gesamt = daten.zeiten.reduce((n, e) => n + e.dauer, 0);
+
+            el('zeiten').innerHTML = tage.length ? `
+                <div class="tp-zeiten-tag" style="margin-bottom:20px">
+                    <div class="po-row">
+                        <span class="po-badge po-badge--ok">Gesamt ${stdText(gesamt)}</span>
+                        <span class="po-badge po-badge--neutral">${daten.zeiten.length} Einträge</span>
+                        <span style="flex:1"></span>
+                        <button class="po-btn po-btn--sm" onclick="zeitenCsv()">Als CSV speichern</button>
+                        <button class="po-btn po-btn--sm po-btn--danger" onclick="zeitenLeeren()">Alle löschen</button>
+                    </div>
+                </div>` + tage.map(t => {
+                const eintraege = nachTag[t].slice().sort((a, b) => b.start - a.start);
+                const summe = eintraege.reduce((n, e) => n + e.dauer, 0);
+                return `<div class="tp-zeiten-tag">
+                    <div class="tp-zeiten-kopf">
+                        <span class="tp-zeiten-datum">${datumLang(t)}</span>
+                        <span class="tp-zeiten-summe">${stdText(summe)}</span>
+                    </div>
+                    ${eintraege.map(e => `<div class="tp-zeile">
+                        <input class="tp-zeile-titel" value="${poEsc(e.titel)}" onchange="zeitTitel('${e.id}', this.value)">
+                        <span class="tp-zeile-zeit">${minText(e.start)}–${minText(e.start + e.dauer / 60)}</span>
+                        <span class="tp-zeile-dauer">${stdText(e.dauer)}</span>
+                        <button class="po-x" title="Entfernen" onclick="zeitLoeschen('${e.id}')">✕</button>
+                    </div>`).join('')}
+                </div>`;
+            }).join('')
+                : '<div class="po-empty">Noch nichts gemessen.<br>Im Vorrat oder auf einem Block auf „▶ Zeit" tippen.</div>';
+        }
+
+        /* ---------- Ziehen: Vorrat ins Raster ---------- */
+
+        let gezogeneAufgabe = null;
+
+        function vorratVerdrahten() {
+            el('vorrat').querySelectorAll('.tp-karte').forEach(k => {
+                k.addEventListener('dragstart', e => {
+                    gezogeneAufgabe = k.dataset.aufgabe;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', gezogeneAufgabe);
+                    setTimeout(() => k.classList.add('zieht'), 0);
+                });
+                k.addEventListener('dragend', () => {
+                    gezogeneAufgabe = null;
+                    k.classList.remove('zieht');
+                    document.querySelectorAll('.tp-spalte').forEach(s => s.classList.remove('ueber'));
+                });
+            });
+        }
+
+        const aufsRaster = m => Math.round(m / daten.einst.raster) * daten.einst.raster;
+
+        function rasterVerdrahten() {
+            document.querySelectorAll('.tp-spalte').forEach(sp => {
+                sp.addEventListener('dragover', e => {
+                    if (!gezogeneAufgabe) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    sp.classList.add('ueber');
+                });
+                sp.addEventListener('dragleave', e => { if (!sp.contains(e.relatedTarget)) sp.classList.remove('ueber'); });
+                sp.addEventListener('drop', e => {
+                    e.preventDefault();
+                    sp.classList.remove('ueber');
+                    const id = gezogeneAufgabe || e.dataTransfer.getData('text/plain');
+                    if (!id) return;
+                    const a = daten.aufgaben.find(x => x.id === id);
+                    if (!a) return;
+                    const y = e.clientY - sp.getBoundingClientRect().top;
+                    const start = Math.max(0, Math.min(1439 - a.dauer, aufsRaster(daten.einst.von * 60 + y / PX_MIN)));
+                    daten.bloecke.push({
+                        id: neueId('b'), aufgabeId: a.id, titel: a.titel, text: a.text, status: a.status,
+                        datum: sp.dataset.tag, start, dauer: a.dauer, fertig: false, wdh: null, ausnahmen: []
+                    });
+                    render();
+                });
+                sp.addEventListener('dblclick', e => {
+                    if (e.target.closest('.tp-block')) return;
+                    const y = e.clientY - sp.getBoundingClientRect().top;
+                    blockDialog(null, sp.dataset.tag, aufsRaster(daten.einst.von * 60 + y / PX_MIN));
+                });
+            });
+            bloeckeVerdrahten();
+        }
+
+        /* ---------- Blöcke verschieben und in der Höhe ziehen ---------- */
+
+        function bloeckeVerdrahten() {
+            document.querySelectorAll('.tp-block').forEach(elB => {
+                elB.addEventListener('dblclick', e => {
+                    e.stopPropagation();
+                    blockDialog(elB.dataset.block, elB.dataset.tag);
+                });
+                elB.addEventListener('pointerdown', e => {
+                    if (e.button !== 0) return;
+                    const griff = e.target.closest('.tp-block-griff');
+                    e.preventDefault();
+                    const b = daten.bloecke.find(x => x.id === elB.dataset.block);
+                    if (!b) return;
+                    const tagDavon = elB.dataset.tag;
+                    const startY = e.clientY, startX = e.clientX;
+                    const startWert = b.start, startDauer = b.dauer;
+                    let bewegt = false;
+                    elB.setPointerCapture(e.pointerId);
+
+                    const spaltenUnter = x => {
+                        const sp = document.elementsFromPoint(x, startY + 1).find(n => n.classList && n.classList.contains('tp-spalte'));
+                        return sp ? sp.dataset.tag : null;
+                    };
+
+                    const bewegen = ev => {
+                        const dy = ev.clientY - startY;
+                        if (!bewegt && Math.abs(dy) < 3 && Math.abs(ev.clientX - startX) < 3) return;
+                        bewegt = true;
+                        elB.classList.add('zieht');
+                        if (griff) {
+                            b.dauer = Math.max(daten.einst.raster, Math.min(1440 - b.start, aufsRaster(startDauer + dy / PX_MIN)));
+                        } else {
+                            b.start = Math.max(0, Math.min(1440 - b.dauer, aufsRaster(startWert + dy / PX_MIN)));
+                            const ziel = spaltenUnter(ev.clientX);
+                            if (ziel && ziel !== (b.wdh ? b.datum : b.datum)) {
+                                if (b.wdh) { /* Regeln bleiben an ihrem Wochentag */ }
+                                else b.datum = ziel;
+                            }
+                        }
+                        renderRaster();
+                    };
+                    const beenden = () => {
+                        elB.removeEventListener('pointermove', bewegen);
+                        elB.removeEventListener('pointerup', beenden);
+                        elB.removeEventListener('pointercancel', beenden);
+                        if (bewegt) { render(); } else { elB.classList.remove('zieht'); }
+                    };
+                    elB.addEventListener('pointermove', bewegen);
+                    elB.addEventListener('pointerup', beenden);
+                    elB.addEventListener('pointercancel', beenden);
+                });
+            });
+        }
+
+        /* ---------- Aufgaben ---------- */
+
+        function schnellAnlegen() {
+            const f = el('schnell');
+            const titel = f.value.trim();
+            if (!titel) return;
+            daten.aufgaben.push({ id: neueId('a'), titel, text: '', status: 'offen', dauer: 60, angelegt: Date.now() });
+            f.value = '';
+            render();
+        }
+
+        function aufgabeDialog(id) {
+            const a = id ? daten.aufgaben.find(x => x.id === id) : null;
+            let status = a ? a.status : 'offen';
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.id = 'tp-dialog';
+            back.innerHTML = `
+                <div class="po-dialog tp-dialog-breit">
+                    <div class="po-dialog-head">${a ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}</div>
+                    <div class="po-dialog-body">
+                        <div class="tp-feld">
+                            <label class="po-label" for="tp-titel">Titel</label>
+                            <input class="po-input" id="tp-titel" value="${poEsc(a ? a.titel : '')}" placeholder="Worum geht es?">
+                        </div>
+                        <div class="tp-feld">
+                            <label class="po-label" for="tp-text">Beschreibung</label>
+                            <textarea class="po-textarea" id="tp-text" placeholder="Kontext, nächste Schritte">${poEsc(a ? a.text : '')}</textarea>
+                        </div>
+                        <div class="tp-zwei">
+                            <div>
+                                <label class="po-label">Status</label>
+                                <div class="tp-status-wahl" id="tp-status">
+                                    ${Object.entries(STATUS).map(([k, v]) => `<button data-s="${k}" class="${k === status ? 'an' : ''}"
+                                        style="${k === status ? 'background:' + v.farbe : ''}">${v.name}</button>`).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="po-label" for="tp-dauer">Geplante Dauer</label>
+                                <select class="po-select" id="tp-dauer">
+                                    ${[15, 30, 45, 60, 90, 120, 180, 240, 360, 480].map(m =>
+                                        `<option value="${m}" ${(a ? a.dauer : 60) === m ? 'selected' : ''}>${dauerText(m)}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${a ? 'Übernehmen' : 'Anlegen'}</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(back);
+            const zu = () => back.remove();
+            back.querySelector('[data-nein]').onclick = zu;
+            back.addEventListener('mousedown', e => { if (e.target === back) zu(); });
+            back.querySelectorAll('#tp-status button').forEach(b => b.onclick = () => {
+                status = b.dataset.s;
+                back.querySelectorAll('#tp-status button').forEach(x => {
+                    const an = x.dataset.s === status;
+                    x.classList.toggle('an', an);
+                    x.style.background = an ? STATUS[x.dataset.s].farbe : '';
+                });
+            });
+            const speichern = () => {
+                const titel = back.querySelector('#tp-titel').value.trim();
+                if (!titel) { back.querySelector('#tp-titel').focus(); back.querySelector('#tp-titel').style.borderColor = 'var(--po-bad)'; return; }
+                const text = back.querySelector('#tp-text').value.trim();
+                const dauer = Number(back.querySelector('#tp-dauer').value);
+                if (a) {
+                    Object.assign(a, { titel, text, status, dauer });
+                    daten.bloecke.filter(b => b.aufgabeId === a.id).forEach(b => Object.assign(b, { titel, text, status }));
+                } else {
+                    daten.aufgaben.push({ id: neueId('a'), titel, text, status, dauer, angelegt: Date.now() });
+                }
+                zu();
+                render();
+            };
+            back.querySelector('[data-ja]').onclick = speichern;
+            back.querySelector('#tp-titel').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); speichern(); } });
+            setTimeout(() => back.querySelector('#tp-titel').focus(), 30);
+        }
+
+        async function aufgabeLoeschen(id) {
+            const a = daten.aufgaben.find(x => x.id === id);
+            if (!a) return;
+            const ja = await poConfirm(`Die Aufgabe „${a.titel}" wird gelöscht. Gemessene Zeiten bleiben erhalten.`,
+                                       { titel: 'Aufgabe löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            daten.aufgaben = daten.aufgaben.filter(x => x.id !== id);
+            daten.bloecke = daten.bloecke.filter(b => b.aufgabeId !== id);
+            render();
+        }
+
+        /* ---------- Blöcke ---------- */
+
+        function blockDialog(id, tag, start) {
+            const b = id ? daten.bloecke.find(x => x.id === id) : null;
+            let status = b ? b.status : 'offen';
+            let wdhArt = b && b.wdh ? b.wdh.art : '';
+            let wdhTage = b && b.wdh ? (b.wdh.tage || []).slice() : [];
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.id = 'tp-dialog';
+            back.innerHTML = `
+                <div class="po-dialog tp-dialog-breit">
+                    <div class="po-dialog-head">${b ? 'Block bearbeiten' : 'Neuer Block'}</div>
+                    <div class="po-dialog-body">
+                        <div class="tp-feld">
+                            <label class="po-label" for="tp-btitel">Titel</label>
+                            <input class="po-input" id="tp-btitel" value="${poEsc(b ? b.titel : '')}" placeholder="Worum geht es?">
+                        </div>
+                        <div class="tp-feld">
+                            <label class="po-label" for="tp-btext">Beschreibung</label>
+                            <textarea class="po-textarea" id="tp-btext" style="min-height:52px">${poEsc(b ? b.text : '')}</textarea>
+                        </div>
+                        <div class="tp-zwei tp-feld">
+                            <div>
+                                <label class="po-label" for="tp-bdatum">Tag</label>
+                                <input class="po-input" type="date" id="tp-bdatum" value="${b ? b.datum : (tag || heute())}">
+                            </div>
+                            <div>
+                                <label class="po-label" for="tp-bzeit">Beginn</label>
+                                <input class="po-input" type="time" id="tp-bzeit" step="300" value="${minText(b ? b.start : (start != null ? start : 540))}">
+                            </div>
+                        </div>
+                        <div class="tp-zwei tp-feld">
+                            <div>
+                                <label class="po-label" for="tp-bdauer">Dauer</label>
+                                <select class="po-select" id="tp-bdauer">
+                                    ${[15, 30, 45, 60, 90, 120, 180, 240, 360, 480].map(m =>
+                                        `<option value="${m}" ${(b ? b.dauer : 60) === m ? 'selected' : ''}>${dauerText(m)}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="po-label" for="tp-bwdh">Wiederholung</label>
+                                <select class="po-select" id="tp-bwdh">
+                                    <option value="" ${!wdhArt ? 'selected' : ''}>einmalig</option>
+                                    <option value="taeglich" ${wdhArt === 'taeglich' ? 'selected' : ''}>jeden Tag</option>
+                                    <option value="woechentlich" ${wdhArt === 'woechentlich' ? 'selected' : ''}>jede Woche</option>
+                                    <option value="wochentage" ${wdhArt === 'wochentage' ? 'selected' : ''}>an bestimmten Tagen</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tp-feld" id="tp-tage-feld" style="display:${wdhArt === 'wochentage' ? '' : 'none'}">
+                            <label class="po-label">Wochentage</label>
+                            <div class="tp-tage-wahl" id="tp-tage">
+                                ${WOCHENTAGE.map((t, i) => `<button data-t="${i}" class="${wdhTage.includes(i) ? 'an' : ''}">${t}</button>`).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="po-label">Status</label>
+                            <div class="tp-status-wahl" id="tp-bstatus">
+                                ${Object.entries(STATUS).map(([k, v]) => `<button data-s="${k}" class="${k === status ? 'an' : ''}"
+                                    style="${k === status ? 'background:' + v.farbe : ''}">${v.name}</button>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="po-dialog-foot">
+                        ${b ? '<button class="po-btn po-btn--danger" data-weg>Löschen</button>' : ''}
+                        ${b ? `<button class="po-btn" data-zeit>▶ Zeit messen</button>` : ''}
+                        <span style="flex:1"></span>
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${b ? 'Übernehmen' : 'Anlegen'}</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(back);
+            const zu = () => back.remove();
+            back.querySelector('[data-nein]').onclick = zu;
+            back.addEventListener('mousedown', e => { if (e.target === back) zu(); });
+
+            back.querySelectorAll('#tp-bstatus button').forEach(x => x.onclick = () => {
+                status = x.dataset.s;
+                back.querySelectorAll('#tp-bstatus button').forEach(y => {
+                    const an = y.dataset.s === status;
+                    y.classList.toggle('an', an);
+                    y.style.background = an ? STATUS[y.dataset.s].farbe : '';
+                });
+            });
+            back.querySelectorAll('#tp-tage button').forEach(x => x.onclick = () => {
+                const t = Number(x.dataset.t);
+                wdhTage = wdhTage.includes(t) ? wdhTage.filter(y => y !== t) : wdhTage.concat([t]);
+                x.classList.toggle('an', wdhTage.includes(t));
+            });
+            back.querySelector('#tp-bwdh').onchange = e => {
+                wdhArt = e.target.value;
+                back.querySelector('#tp-tage-feld').style.display = wdhArt === 'wochentage' ? '' : 'none';
+            };
+            if (b) {
+                back.querySelector('[data-weg]').onclick = async () => { zu(); await blockLoeschen(b.id, tag); };
+                back.querySelector('[data-zeit]').onclick = () => { zu(); uhrStartenMitTitel(b.titel, b.aufgabeId); };
+            }
+
+            back.querySelector('[data-ja]').onclick = () => {
+                const titel = back.querySelector('#tp-btitel').value.trim();
+                if (!titel) { back.querySelector('#tp-btitel').focus(); return; }
+                const [sh, sm] = back.querySelector('#tp-bzeit').value.split(':').map(Number);
+                const neu = {
+                    titel,
+                    text: back.querySelector('#tp-btext').value.trim(),
+                    status,
+                    datum: back.querySelector('#tp-bdatum').value || heute(),
+                    start: (sh || 0) * 60 + (sm || 0),
+                    dauer: Number(back.querySelector('#tp-bdauer').value),
+                    wdh: wdhArt ? { art: wdhArt, tage: wdhTage, bis: '' } : null
+                };
+                if (b) Object.assign(b, neu);
+                else daten.bloecke.push(Object.assign({ id: neueId('b'), aufgabeId: null, fertig: false, ausnahmen: [] }, neu));
+                zu();
+                render();
+            };
+            setTimeout(() => back.querySelector('#tp-btitel').focus(), 30);
+        }
+
+        async function blockLoeschen(id, tag) {
+            const b = daten.bloecke.find(x => x.id === id);
+            if (!b) return;
+            if (b.wdh) {
+                const nurEinmal = await poConfirm(
+                    `„${b.titel}" wiederholt sich. Soll nur dieser eine Tag entfallen oder die ganze Reihe?`,
+                    { titel: 'Wiederholung', ja: 'Nur diesen Tag', nein: 'Ganze Reihe' });
+                if (nurEinmal) { b.ausnahmen.push(tag || b.datum); render(); return; }
+            }
+            daten.bloecke = daten.bloecke.filter(x => x.id !== id);
+            render();
+        }
+
+        /* ---------- Uhr und Zeiterfassung ---------- */
+
+        function uhrStarten(aufgabeId) {
+            const a = daten.aufgaben.find(x => x.id === aufgabeId);
+            if (a) uhrStartenMitTitel(a.titel, a.id);
+        }
+
+        function uhrStartenMitTitel(titel, aufgabeId) {
+            if (laufend) uhrStoppen(true);
+            laufend = { titel, aufgabeId: aufgabeId || null, seit: Date.now() };
+            uhrZeichnen();
+            sichern();
+            poToast('Zeitmessung läuft: ' + titel);
+        }
+
+        function uhrStoppen(stumm) {
+            if (!laufend) return;
+            const sek = Math.round((Date.now() - laufend.seit) / 1000);
+            const d = new Date(laufend.seit);
+            if (sek >= 5) {
+                daten.zeiten.push({
+                    id: neueId('z'), titel: laufend.titel, aufgabeId: laufend.aufgabeId,
+                    datum: dTag(d), start: d.getHours() * 60 + d.getMinutes(), dauer: sek
+                });
+                if (!stumm) poToast('Gemessen: ' + stdText(sek) + ' für „' + laufend.titel + '"', 4000);
+            } else if (!stumm) {
+                poToast('Unter fünf Sekunden — nicht eingetragen.');
+            }
+            laufend = null;
+            uhrZeichnen();
+            render();
+        }
+
+        function uhrZeichnen() {
+            const box = el('uhr');
+            box.classList.toggle('an', !!laufend);
+            clearInterval(uhrTakt);
+            if (!laufend) return;
+            el('uhr-titel').textContent = laufend.titel;
+            const takt = () => { el('uhr-zeit').textContent = stdText((Date.now() - laufend.seit) / 1000); };
+            takt();
+            uhrTakt = setInterval(takt, 1000);
+        }
+
+        function zeitTitel(id, wert) {
+            const e = daten.zeiten.find(x => x.id === id);
+            if (!e) return;
+            e.titel = String(wert || '').trim() || e.titel;
+            render();
+        }
+
+        async function zeitLoeschen(id) {
+            const e = daten.zeiten.find(x => x.id === id);
+            if (!e) return;
+            const ja = await poConfirm(`Der Eintrag „${e.titel}" über ${stdText(e.dauer)} wird gelöscht.`,
+                                       { titel: 'Eintrag löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            daten.zeiten = daten.zeiten.filter(x => x.id !== id);
+            render();
+        }
+
+        async function zeitenLeeren() {
+            if (!daten.zeiten.length) { poToast('Es ist nichts zu löschen.'); return; }
+            const ja = await poConfirm(`Alle ${daten.zeiten.length} Zeiteinträge werden gelöscht. Das lässt sich nicht rückgängig machen.`,
+                                       { titel: 'Zeiten löschen', ja: 'Ja, alles löschen', gefahr: true });
+            if (!ja) return;
+            daten.zeiten = [];
+            render();
+        }
+
+        function zeitenCsv() {
+            if (!daten.zeiten.length) { poToast('Es ist nichts auszugeben.'); return; }
+            const zahl = n => String(n).replace('.', ',');
+            const zeilen = ['Datum;Beginn;Ende;Dauer (hh:mm);Stunden;Aufgabe'];
+            daten.zeiten.slice().sort((a, b) => (a.datum + a.start).localeCompare ? 0 : 0);
+            daten.zeiten.slice()
+                .sort((a, b) => a.datum === b.datum ? a.start - b.start : a.datum.localeCompare(b.datum))
+                .forEach(e => {
+                    const ende = e.start + e.dauer / 60;
+                    zeilen.push([
+                        ausTag(e.datum).toLocaleDateString('de-DE'),
+                        minText(e.start), minText(ende),
+                        stdText(e.dauer).slice(0, 5),
+                        zahl((e.dauer / 3600).toFixed(2)),
+                        '"' + e.titel.replace(/"/g, '""') + '"'
+                    ].join(';'));
+                });
+            poDownload('zeiterfassung.csv', '﻿' + zeilen.join('\r\n'), 'text/csv');
+            poToast(`${daten.zeiten.length} Einträge als CSV gespeichert`);
+        }
+
+        /* ---------- Termine aus einer ICS-Datei ---------- */
+
+        function icsLaden(input) {
+            poReadFile(input, text => {
+                const gefunden = icsLesen(text);
+                if (!gefunden.length) { poToast('In der Datei stehen keine Termine.', 4000); return; }
+                // Eingelesene Termine ersetzen die vorherigen — sonst sammeln sich Dubletten
+                daten.termine = gefunden;
+                render();
+                poToast(`${gefunden.length} Termine eingelesen. Sie liegen grau im Hintergrund und lassen sich nicht verschieben.`, 5000);
+            });
+        }
+
+        function icsLesen(text) {
+            // Zeilenumbrüche nach dem Standard zusammenführen: Fortsetzung beginnt mit Leerzeichen
+            const zeilen = String(text).replace(/\r\n/g, '\n').replace(/\n[ \t]/g, '').split('\n');
+            const out = [];
+            let e = null;
+            const entschaerfen = s => String(s).replace(/\\n/gi, ' ').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
+
+            const zeitLesen = wert => {
+                const m = String(wert).match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?)?$/);
+                if (!m) return null;
+                const [, j, mo, t, h, mi, s, z] = m;
+                if (h === undefined) return { tag: `${j}-${mo}-${t}`, min: 0, ganztags: true };
+                if (z) {                       // Weltzeit in die hiesige umrechnen
+                    const d = new Date(Date.UTC(+j, +mo - 1, +t, +h, +mi, +s));
+                    return { tag: dTag(d), min: d.getHours() * 60 + d.getMinutes(), ganztags: false };
+                }
+                return { tag: `${j}-${mo}-${t}`, min: +h * 60 + +mi, ganztags: false };
+            };
+
+            zeilen.forEach(zeile => {
+                if (zeile.startsWith('BEGIN:VEVENT')) { e = {}; return; }
+                if (zeile.startsWith('END:VEVENT')) {
+                    if (e && e.start) {
+                        const dauer = e.ende && e.ende.tag === e.start.tag
+                            ? Math.max(15, e.ende.min - e.start.min)
+                            : (e.start.ganztags ? 1440 : 60);
+                        const grund = {
+                            titel: e.titel || 'Termin', datum: e.start.tag, start: e.start.min,
+                            dauer: Math.min(1440, dauer), ganztags: !!e.start.ganztags
+                        };
+                        out.push(Object.assign({ id: neueId('t') }, grund));
+                        if (e.rrule) wiederholungen(grund, e.rrule).forEach(x => out.push(Object.assign({ id: neueId('t') }, x)));
+                    }
+                    e = null;
+                    return;
+                }
+                if (!e) return;
+                const dp = zeile.indexOf(':');
+                if (dp < 0) return;
+                const kopf = zeile.slice(0, dp).toUpperCase();
+                const wert = zeile.slice(dp + 1).trim();
+                if (kopf.startsWith('SUMMARY')) e.titel = entschaerfen(wert).slice(0, 120);
+                else if (kopf.startsWith('DTSTART')) e.start = zeitLesen(wert);
+                else if (kopf.startsWith('DTEND')) e.ende = zeitLesen(wert);
+                else if (kopf.startsWith('RRULE')) e.rrule = wert;
+            });
+            return out.slice(0, 3000);
+        }
+
+        // Nur die gebräuchlichen Regeln: täglich, wöchentlich, an Wochentagen.
+        // Wer seltenere Muster nutzt, sieht diese Termine nicht — besser als falsche.
+        function wiederholungen(grund, rrule) {
+            const teile = {};
+            rrule.split(';').forEach(t => { const [k, v] = t.split('='); if (k) teile[k.toUpperCase()] = v; });
+            const freq = (teile.FREQ || '').toUpperCase();
+            if (!['DAILY', 'WEEKLY'].includes(freq)) return [];
+            const schritt = Math.max(1, parseInt(teile.INTERVAL, 10) || 1);
+            // COUNT zählt im Standard den ersten Termin mit, der hier schon steht
+            const anzahl = teile.COUNT ? Math.max(0, Math.min(400, (parseInt(teile.COUNT, 10) || 1) - 1)) : 400;
+            const bis = teile.UNTIL ? String(teile.UNTIL).slice(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '';
+            const karte = { MO: 0, TU: 1, WE: 2, TH: 3, FR: 4, SA: 5, SU: 6 };
+            const tage = (teile.BYDAY || '').split(',').map(x => karte[x.slice(-2).toUpperCase()]).filter(x => x !== undefined);
+            const grenze = plusTage(heute(), 400);
+
+            const out = [];
+            let tag = grund.datum, runden = 0;
+            while (out.length < anzahl && runden < 1200) {
+                runden++;
+                tag = plusTage(tag, freq === 'DAILY' ? schritt : 1);
+                if (tag > grenze || (bis && tag > bis)) break;
+                if (freq === 'WEEKLY') {
+                    if (tage.length) { if (!tage.includes(wochenTag(tag))) continue; }
+                    else if (wochenTag(tag) !== wochenTag(grund.datum)) continue;
+                    if (schritt > 1) {
+                        const wochen = Math.round((ausTag(wochenStart(tag)) - ausTag(wochenStart(grund.datum))) / 604800000);
+                        if (wochen % schritt !== 0) continue;
+                    }
+                }
+                out.push(Object.assign({}, grund, { datum: tag }));
+            }
+            return out;
+        }
+
+        /* ---------- Aus dem Kanban übernehmen ---------- */
+
+        function kanbanLaden(input) {
+            poReadFile(input, async text => {
+                const d = JSON.parse(text);
+                const liste = Array.isArray(d) ? d : (Array.isArray(d.tickets) ? d.tickets : null);
+                if (!liste) { poToast('Die Datei enthält kein Kanban-Brett.', 4000); return; }
+                const offen = liste.filter(t => t && t.title && t.status !== 'done');
+                if (!offen.length) { poToast('Im Brett steht nichts Offenes.', 4000); return; }
+                const vorhanden = new Set(daten.aufgaben.map(a => a.titel));
+                const neu = offen.filter(t => !vorhanden.has(String(t.title)));
+                const ja = await poConfirm(
+                    neu.length === offen.length
+                        ? `${neu.length} offene Tickets werden in den Vorrat übernommen.`
+                        : `${neu.length} von ${offen.length} offenen Tickets werden übernommen — ${offen.length - neu.length} stehen schon im Vorrat.`,
+                    { titel: 'Aus Kanban übernehmen', ja: 'Übernehmen' });
+                if (!ja) return;
+                neu.forEach(t => daten.aufgaben.push({
+                    id: neueId('a'), titel: String(t.title), text: String(t.description || ''),
+                    status: t.status === 'in-progress' ? 'laeuft' : 'offen', dauer: 60, angelegt: Date.now()
+                }));
+                render();
+                poToast(`${neu.length} Aufgaben übernommen`);
+            });
+        }
+
+        /* ---------- Unerledigtes mitnehmen ---------- */
+
+        async function uebertragPruefen() {
+            const h = heute();
+            const alt = daten.bloecke.filter(b => !b.wdh && !b.fertig && b.datum < h);
+            if (!alt.length) return;
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `
+                <div class="po-dialog tp-dialog-breit">
+                    <div class="po-dialog-head">${alt.length} Block${alt.length === 1 ? '' : 'e'} aus der Vergangenheit</div>
+                    <div class="po-dialog-body">
+                        Diese Blöcke liegen vor heute und sind nicht als erledigt vermerkt.
+                        <div class="tp-ueber-liste">
+                            ${alt.slice(0, 40).map(b => `<div class="tp-ueber-zeile">
+                                <span class="tp-etikett" style="background:${STATUS[b.status].farbe}">${STATUS[b.status].name}</span>
+                                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${poEsc(b.titel)}</span>
+                                <span class="tp-zeile-zeit">${ausTag(b.datum).toLocaleDateString('de-DE')}</span>
+                            </div>`).join('')}
+                            ${alt.length > 40 ? `<div class="tp-ueber-zeile" style="color:var(--po-ink-3)">… und ${alt.length - 40} weitere</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nichts>Liegen lassen</button>
+                        <button class="po-btn" data-vorrat>Zurück in den Vorrat</button>
+                        <button class="po-btn po-btn--go" data-heute>Auf heute schieben</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(back);
+            await new Promise(res => {
+                const fertig = () => { back.remove(); res(); };
+                back.querySelector('[data-nichts]').onclick = fertig;
+                back.querySelector('[data-heute]').onclick = () => {
+                    alt.forEach(b => { b.datum = h; });
+                    poToast(`${alt.length} Block${alt.length === 1 ? '' : 'e'} auf heute geschoben`);
+                    fertig();
+                };
+                back.querySelector('[data-vorrat]').onclick = () => {
+                    const vorhanden = new Set(daten.aufgaben.map(a => a.id));
+                    alt.forEach(b => {
+                        if (!b.aufgabeId || !vorhanden.has(b.aufgabeId)) {
+                            daten.aufgaben.push({ id: neueId('a'), titel: b.titel, text: b.text, status: b.status, dauer: b.dauer, angelegt: Date.now() });
+                        }
+                    });
+                    const weg = new Set(alt.map(b => b.id));
+                    daten.bloecke = daten.bloecke.filter(b => !weg.has(b.id));
+                    poToast(`${alt.length} zurück in den Vorrat`);
+                    fertig();
+                };
+            });
+            render();
+        }
+
+        /* ---------- Einstellungen ---------- */
+
+        function einstellungen() {
+            const e = daten.einst;
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `
+                <div class="po-dialog">
+                    <div class="po-dialog-head">Einstellungen</div>
+                    <div class="po-dialog-body">
+                        <div class="tp-zwei tp-feld">
+                            <div>
+                                <label class="po-label" for="tp-von">Tag beginnt</label>
+                                <select class="po-select" id="tp-von">${Array.from({ length: 23 }, (_, i) =>
+                                    `<option value="${i}" ${e.von === i ? 'selected' : ''}>${zweiStellig(i)}:00</option>`).join('')}</select>
+                            </div>
+                            <div>
+                                <label class="po-label" for="tp-bis">Tag endet</label>
+                                <select class="po-select" id="tp-bis">${Array.from({ length: 24 }, (_, i) => i + 1).map(i =>
+                                    `<option value="${i}" ${e.bis === i ? 'selected' : ''}>${zweiStellig(i)}:00</option>`).join('')}</select>
+                            </div>
+                        </div>
+                        <div class="tp-feld">
+                            <label class="po-label" for="tp-raster">Blöcke einrasten auf</label>
+                            <select class="po-select" id="tp-raster">${[5, 10, 15, 30].map(m =>
+                                `<option value="${m}" ${e.raster === m ? 'selected' : ''}>${m} Minuten</option>`).join('')}</select>
+                        </div>
+                        <div class="po-hint">Außerhalb der eingestellten Zeiten liegende Blöcke bleiben erhalten, sind aber nicht sichtbar. Zum Nachsehen die Zeiten weiter stellen.</div>
+                    </div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>Übernehmen</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(back);
+            const zu = () => back.remove();
+            back.querySelector('[data-nein]').onclick = zu;
+            back.addEventListener('mousedown', ev => { if (ev.target === back) zu(); });
+            back.querySelector('[data-ja]').onclick = () => {
+                const von = Number(back.querySelector('#tp-von').value);
+                const bis = Number(back.querySelector('#tp-bis').value);
+                if (bis <= von) { poToast('Das Ende muss nach dem Beginn liegen.'); return; }
+                daten.einst = { von, bis, raster: Number(back.querySelector('#tp-raster').value) };
+                zu();
+                el('raster').dataset.gerollt = '';
+                render();
+            };
+        }
+
+        /* ---------- Blättern ---------- */
+
+        function springe(n) {
+            if (ansicht === 'zeiten') return;
+            ankerTag = plusTage(ankerTag, ansicht === 'tag' ? n : n * 7);
+            render();
+        }
+        function springeHeute() { ankerTag = heute(); el('raster').dataset.gerollt = ''; render(); }
+
+        el('ansicht').addEventListener('click', e => {
+            const b = e.target.closest('button[data-ansicht]');
+            if (!b) return;
+            ansicht = b.dataset.ansicht;
+            render();
+        });
+
+        /* ---------- Sichern und Öffnen ---------- */
+
+        function exportJSON() {
+            poDownload('tagesplan.json', JSON.stringify({ format: 'pocketops-tagesplan', version: 1, gesichertAm: new Date().toISOString(), daten }, null, 1));
+            poToast(`Gesichert: ${daten.aufgaben.length} Aufgaben, ${daten.bloecke.length} Blöcke, ${daten.zeiten.length} Zeiteinträge`);
+        }
+
+        function importJSON(input) {
+            poReadFile(input, async text => {
+                const p = JSON.parse(text);
+                const d = p && p.daten ? p.daten : p;
+                if (!d || !Array.isArray(d.aufgaben)) { poToast('Die Datei enthält keinen Tagesplan.', 4000); return; }
+                const ja = await poConfirm('Der jetzige Stand wird vollständig ersetzt.',
+                                           { titel: 'Tagesplan öffnen', ja: 'Ja, ersetzen', gefahr: true });
+                if (!ja) return;
+                daten = pruefen(d);
+                render();
+                poToast(`Geöffnet: ${daten.aufgaben.length} Aufgaben, ${daten.bloecke.length} Blöcke`);
+            });
+        }
+
+        /* ---------- Tastatur ---------- */
+
+        document.addEventListener('keydown', e => {
+            if (document.querySelector('.po-backdrop') || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); springe(-1); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); springe(1); }
+            if (e.key.toLowerCase() === 't') { e.preventDefault(); springeHeute(); }
+            if (e.key.toLowerCase() === 'n') { e.preventDefault(); aufgabeDialog(); }
+            if (e.key === 'Escape' && laufend) { e.preventDefault(); uhrStoppen(); }
+        });
+
+        window.addEventListener('beforeunload', () => { if (laufend) sichern(); });
+
+        /* ---------- Start ---------- */
+
+        (async function start() {
+            try {
+                const g = JSON.parse(localStorage.getItem(SPEICHER) || 'null');
+                if (g && g.daten) {
+                    daten = pruefen(g.daten);
+                    if (g.laufend && g.laufend.seit) laufend = g.laufend;
+                }
+            } catch (e) { poToast('Der gespeicherte Stand war unbrauchbar und wurde verworfen.', 5000); }
+
+            if (!daten.aufgaben.length && !daten.bloecke.length) {
+                daten.aufgaben = [
+                    { id: neueId('a'), titel: 'Angebot durchsehen', text: 'Preise und Lieferzeiten gegenprüfen.', status: 'dringend', dauer: 60, angelegt: Date.now() },
+                    { id: neueId('a'), titel: 'Schnittstellenliste ergänzen', text: '', status: 'offen', dauer: 90, angelegt: Date.now() },
+                    { id: neueId('a'), titel: 'Rückmeldung Fachbereich', text: '', status: 'wartet', dauer: 30, angelegt: Date.now() }
+                ];
+            }
+
+            ankerTag = heute();
+            uhrZeichnen();
+            render();
+            await uebertragPruefen();
+        })();
+    </script>
+</body>
+</html>

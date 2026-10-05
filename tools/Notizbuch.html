@@ -1,0 +1,2199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notizbuch · PocketOps</title>
+  <!-- PO-ICON:ANFANG (Urfassung: _design/po-icon.svg · nachziehen mit _design/sync.mjs) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E %3Cdefs%3E %3ClinearGradient id='po' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E %3Cstop stop-color='%239E292B'/%3E %3Cstop offset='1' stop-color='%2339756F'/%3E %3C/linearGradient%3E %3C/defs%3E %3Crect width='32' height='32' rx='7.5' fill='url(%23po)'/%3E %3Cpath d='M11.4 11.6V9.8a2.2 2.2 0 0 1 2.2-2.2h4.8a2.2 2.2 0 0 1 2.2 2.2v1.8' fill='none' stroke='%23fff' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E %3Crect x='5' y='11.2' width='22' height='13.8' rx='2.6' fill='%23fff'/%3E %3Crect x='5' y='17.2' width='22' height='1.7' fill='url(%23po)'/%3E %3C/svg%3E">
+  <!-- PO-ICON:ENDE -->
+    <style>
+        /* PO-TOKENS:ANFANG (Urfassung: _design/po-tokens.css · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME GESTALTUNG
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft. Wird hier etwas
+           geändert, muss es in alle Werkzeuge nachgezogen werden.
+           ====================================================================== */
+        /* Breite und Höhe schließen Innenabstand und Rahmen ein. Ohne das rechnet
+           der Browser sie obendrauf, und eine Angabe wie width:100% ragt über ihren
+           Platz hinaus. */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            /* Markenfarben */
+            --po-accent:      #9E292B;
+            --po-accent-dark: #852224;
+            --po-teal:        #39756F;
+            --po-teal-dark:   #2F635E;
+            --po-slate:       #697896;
+            --po-frost:       #81BED7;
+            --po-frost-soft:  #D9F3FF;
+            --po-teal-soft:   #E8F5F1;
+            --po-slate-soft:  #E0E8F8;
+
+            /* Flächen */
+            --po-bg:          #F1F5F9;
+            --po-surface:     #FFFFFF;
+            --po-surface-2:   #F8FAFC;
+            --po-surface-3:   #E2E8F0;
+            --po-stage:       #CBD5E1;
+
+            /* Kopfzeile */
+            --po-chrome:      #0F172A;
+            --po-chrome-2:    #1E293B;
+            --po-chrome-line: #334155;
+            --po-on-chrome:   #F8FAFC;
+            --po-on-chrome-2: #94A3B8;
+
+            /* Text */
+            --po-ink:         #1E293B;
+            --po-ink-2:       #475569;
+            --po-ink-3:       #94A3B8;
+
+            /* Linien */
+            --po-line:        #E2E8F0;
+            --po-line-2:      #CBD5E1;
+
+            /* Zustände */
+            --po-ok:          #39756F;
+            --po-warn:        #D89B2B;
+            --po-bad:         #9E292B;
+
+            /* Maße */
+            --po-r-sm:   4px;
+            --po-r:      6px;
+            --po-r-lg:  10px;
+            --po-r-pill: 999px;
+            --po-head-h: 64px;
+            --po-shadow:    0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .10);
+            --po-shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, .25);
+            --po-font: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            --po-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+        }
+
+        /* ---------- Seitengerüst ---------- */
+        .po-body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--po-bg);
+            color: var(--po-ink);
+            font-family: var(--po-font);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .po-main { flex: 1; overflow: auto; padding: 20px; }
+        .po-wrap { max-width: 1280px; margin: 0 auto; }
+        .po-wrap--wide { max-width: 1600px; margin: 0 auto; }
+        .po-split { display: grid; gap: 16px; align-items: start; }
+        .po-split--1-2 { grid-template-columns: minmax(280px, 1fr) 2fr; }
+        .po-split--2-1 { grid-template-columns: 2fr minmax(280px, 1fr); }
+        .po-split--1-1 { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 1000px) {
+            .po-split--1-2, .po-split--2-1, .po-split--1-1 { grid-template-columns: 1fr; }
+        }
+        .po-stack > * + * { margin-top: 12px; }
+        .po-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* ---------- Kopfzeile und Marke ---------- */
+        .po-head {
+            height: var(--po-head-h);
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            box-shadow: var(--po-shadow);
+            position: relative;
+            z-index: 20;
+        }
+        .po-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .po-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--po-r);
+            padding: 4px 6px;
+            margin-left: -6px;
+            transition: background-color .15s;
+        }
+        a.po-brand:hover { background: var(--po-chrome-2); }
+        .po-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--po-r-lg);
+            background: linear-gradient(135deg, var(--po-accent), var(--po-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+        }
+        .po-mark svg { width: 19px; height: 19px; display: block; }
+        .po-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .po-line-name {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--po-on-chrome-2);
+        }
+        .po-tool-name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+        .po-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--po-on-chrome-2);
+            background: var(--po-chrome-2);
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            padding: 3px 9px;
+            white-space: nowrap;
+        }
+        .po-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .po-head-sep { width: 1px; height: 24px; background: var(--po-chrome-line); flex-shrink: 0; }
+
+        /* ---------- Sprache und Anleitung in der Kopfzeile ----------
+           Beides setzt po-base.js selbst in die Kopfzeile, links vor die
+           Aktionen des Werkzeugs: es gehört zur Reihe, nicht zum Werkzeug. */
+        .po-meta { display: flex; align-items: center; gap: 8px; }
+        .po-sprach {
+            display: inline-flex;
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            overflow: hidden;
+            background: var(--po-chrome-2);
+        }
+        .po-sprach button {
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            padding: 5px 10px;
+            border: none;
+            background: transparent;
+            color: var(--po-on-chrome-2);
+            cursor: pointer;
+            transition: background-color .15s, color .15s;
+        }
+        .po-sprach button:hover { color: #fff; }
+        .po-sprach button[aria-pressed="true"] { background: var(--po-accent); color: #fff; }
+        .po-sprach button:focus-visible { outline: 2px solid var(--po-frost); outline-offset: -2px; }
+        .po-frage {
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E2E8F0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-frage:hover { background: #2B3A4F; color: #fff; }
+        .po-frage:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Der Trinkgeldknopf steht neben dem Fragezeichen und ist genauso gebaut. Nur
+           das Herz trägt Farbe — auffallen soll er, drängeln nicht. */
+        .po-trinkgeld {
+            font: inherit;
+            font-size: 13px;
+            line-height: 1;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E79A9B;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-trinkgeld:hover { background: #2B3A4F; color: #fff; }
+        .po-trinkgeld:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Ein Verweis, der wie ein Knopf aussieht, bringt die Unterstreichung mit. */
+        a.po-btn { text-decoration: none; }
+
+        /* ---------- Das Hilfefenster ---------- */
+        .po-hilfe { max-height: 68vh; overflow: auto; }
+        .po-hilfe p { line-height: 1.55; }
+        .po-hilfe a { color: var(--po-teal); font-weight: 600; }
+        .po-hilfe-titel {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 6px;
+        }
+        .po-hilfe-liste { margin: 0; padding-left: 20px; }
+        .po-hilfe-liste li { margin-bottom: 5px; line-height: 1.5; }
+        .po-hilfe-teil { border-top: 1px solid var(--po-line); margin-top: 14px; padding-top: 12px; }
+
+        /* ---------- Schaltflächen ---------- */
+        .po-btn {
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--po-r);
+            border: 1px solid var(--po-line-2);
+            background: var(--po-surface);
+            color: var(--po-ink-2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .po-btn:hover { background: var(--po-surface-2); border-color: var(--po-slate); color: var(--po-ink); }
+        .po-btn:active { transform: translateY(1px); }
+        .po-btn:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+        .po-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+        .po-head .po-btn { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #E2E8F0; }
+        .po-head .po-btn:hover { background: #2B3A4F; border-color: #475569; color: #fff; }
+
+        .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+        .po-head .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-head .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+
+        .po-btn--go { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+        .po-btn--go:hover { background: var(--po-teal-dark); border-color: var(--po-teal-dark); color: #fff; }
+
+        .po-btn--danger { color: var(--po-bad); border-color: #FECACA; background: #FEF2F2; }
+        .po-btn--danger:hover { background: #FEE2E2; border-color: #FCA5A5; color: #7F1D1D; }
+        .po-head .po-btn--danger { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #FCA5A5; }
+        .po-head .po-btn--danger:hover { background: #4C1D1D; border-color: #991B1B; color: #FEE2E2; }
+
+        .po-btn--ghost { background: transparent; border-color: transparent; color: var(--po-ink-3); padding: 5px 7px; }
+        .po-btn--ghost:hover { background: var(--po-surface-3); color: var(--po-ink); border-color: transparent; }
+
+        .po-btn--sm { font-size: 11px; padding: 4px 8px; }
+        .po-btn--block { width: 100%; justify-content: center; }
+
+        /* kleines rundes Löschen-Kreuz in Listen und Tabellen */
+        .po-x {
+            font: inherit;
+            font-size: 10px;
+            line-height: 1;
+            width: 18px;
+            height: 18px;
+            border-radius: var(--po-r-pill);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--po-ink-3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background-color .15s, color .15s;
+        }
+        .po-x:hover { background: #FEE2E2; color: var(--po-bad); }
+
+        /* ---------- Panels und Abschnitte ---------- */
+        .po-panel {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+        }
+        .po-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--po-surface-2);
+            border-bottom: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg) var(--po-r-lg) 0 0;
+        }
+        .po-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--po-ink-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .po-panel-body { padding: 14px; }
+        .po-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 8px;
+        }
+        .po-hint {
+            font-size: 11px;
+            color: var(--po-ink-2);
+            background: var(--po-surface-2);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r);
+            padding: 10px 12px;
+            line-height: 1.5;
+        }
+
+        /* ---------- Eingabefelder ---------- */
+        .po-label { font-size: 11px; font-weight: 600; color: var(--po-ink-2); display: block; margin-bottom: 4px; }
+        .po-input, .po-select, .po-textarea {
+            font: inherit;
+            font-size: 12px;
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid var(--po-line-2);
+            border-radius: var(--po-r);
+            background: var(--po-surface);
+            color: var(--po-ink);
+            box-sizing: border-box;
+        }
+        /* Ein Farbfeld füllt der Browser selbst aus. Ohne eigene Höhe fiele es
+           gegenüber den anderen Feldern zusammen, und der Innenabstand ließe den
+           Farbfleck zu klein wirken. */
+        .po-input[type="color"] { height: 32px; padding: 3px; cursor: pointer; }
+        .po-input:focus, .po-select:focus, .po-textarea:focus {
+            outline: none;
+            border-color: var(--po-frost);
+            box-shadow: 0 0 0 3px rgba(129, 190, 215, .25);
+        }
+        .po-textarea { min-height: 72px; resize: vertical; }
+        .po-search { font-size: 13px; padding: 10px 14px; border-radius: var(--po-r-lg); }
+        .po-num { width: 58px; text-align: center; padding: 5px 4px; }
+        .po-field { display: flex; gap: 6px; align-items: center; }
+        .po-field .po-input { flex: 1; min-width: 0; }
+
+        .po-range { width: 100%; accent-color: var(--po-teal); }
+        .po-range-value { font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+
+        .po-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; font-weight: 600; color: var(--po-ink-2); cursor: pointer; }
+        .po-check input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--po-teal); flex-shrink: 0; }
+
+        /* ---------- Karten ---------- */
+        .po-card {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+            padding: 14px;
+        }
+        .po-card--pick { cursor: pointer; transition: border-color .15s, background-color .15s; }
+        .po-card--pick:hover { border-color: var(--po-frost); background: var(--po-surface-2); }
+
+        /* ---------- Tabellen ---------- */
+        .po-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .po-table th, .po-table td { padding: 8px 10px; border: 1px solid var(--po-line); text-align: left; }
+        .po-table th {
+            background: var(--po-surface-2);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--po-ink-2);
+            white-space: nowrap;
+        }
+        .po-table tbody tr:nth-child(even) { background: var(--po-surface-2); }
+        .po-table--center th, .po-table--center td { text-align: center; }
+        .po-table--center th:first-child, .po-table--center td:first-child { text-align: left; }
+
+        /* ---------- Zustände ---------- */
+        .po-badge {
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--po-r-pill);
+            padding: 2px 8px;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .po-badge--ok   { color: var(--po-ok);  background: var(--po-teal-soft); border-color: #BFE3DA; }
+        .po-badge--warn { color: #92610F;       background: #FEF6E7;             border-color: #F5D9A0; }
+        .po-badge--bad  { color: var(--po-bad); background: #FEF2F2;             border-color: #FECACA; }
+        .po-badge--neutral { color: var(--po-ink-2); background: var(--po-surface-3); border-color: var(--po-line-2); }
+
+        .po-empty { text-align: center; color: var(--po-ink-3); font-size: 12px; padding: 28px 16px; line-height: 1.6; }
+
+        /* ---------- Hinweisfenster unten rechts ---------- */
+        .po-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 200;
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 11px 16px;
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            max-width: 340px;
+            line-height: 1.45;
+        }
+
+        /* ---------- Dialog ---------- */
+        .po-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .55);
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .po-dialog {
+            background: var(--po-surface);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+        .po-dialog-head { padding: 16px 18px 0; font-size: 15px; font-weight: 700; color: var(--po-ink); }
+        .po-dialog-body { padding: 10px 18px 16px; font-size: 13px; color: var(--po-ink-2); line-height: 1.55; }
+        .po-dialog-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--po-surface-2);
+            border-top: 1px solid var(--po-line);
+        }
+
+        /* ---------- Bildlaufleisten ---------- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--po-line-2); border-radius: var(--po-r-pill); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--po-slate); }
+
+        /* ---------- Druck ---------- */
+        @media print {
+            .po-head, .po-toast, .po-backdrop, .po-no-print { display: none !important; }
+            .po-body { height: auto; overflow: visible; }
+            .po-main { overflow: visible; padding: 0; }
+            .po-panel { box-shadow: none; border-color: #ccc; }
+        }
+        /* PO-TOKENS:ENDE */
+
+        /* ---------- nur für dieses Werkzeug ---------- */
+        .nb-flaeche { flex: 1; display: grid; grid-template-columns: 236px 232px 1fr; overflow: hidden; }
+
+        .nb-spalte { display: flex; flex-direction: column; background: var(--po-surface); border-right: 1px solid var(--po-line); overflow: hidden; }
+        .nb-baum { background: var(--po-surface-2); }
+
+        .nb-teil { display: flex; flex-direction: column; min-height: 0; }
+        .nb-teil--buecher { flex: 0 0 auto; max-height: 45%; border-bottom: 1px solid var(--po-line); }
+        .nb-teil--kapitel { flex: 1; }
+
+        .nb-kopf {
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            padding: 9px 10px 9px 14px; flex-shrink: 0;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--po-ink-3);
+        }
+        .nb-plus {
+            font: inherit; font-size: 15px; line-height: 1; width: 22px; height: 22px;
+            border: 1px solid transparent; background: transparent; color: var(--po-ink-3);
+            border-radius: var(--po-r-sm); cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nb-plus:hover { background: var(--po-surface-3); color: var(--po-teal); }
+
+        .nb-liste { list-style: none; margin: 0; padding: 0 8px 10px; overflow-y: auto; flex: 1; min-height: 0; }
+        .nb-eintrag {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 8px; border-radius: var(--po-r); cursor: pointer;
+            font-size: 12.5px; color: var(--po-ink-2); line-height: 1.35;
+            border-left: 3px solid transparent;
+        }
+        .nb-eintrag:hover { background: var(--po-surface-3); }
+        .nb-eintrag.aktiv { background: var(--po-surface); color: var(--po-ink); font-weight: 700; box-shadow: var(--po-shadow); }
+        .nb-seiten .nb-eintrag.aktiv { background: var(--po-frost-soft); }
+        .nb-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .nb-zahl { font-size: 10px; color: var(--po-ink-3); font-variant-numeric: tabular-nums; font-weight: 400; }
+        .nb-werkzeuge { display: flex; gap: 1px; opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+        .nb-eintrag:hover .nb-werkzeuge, .nb-eintrag.aktiv .nb-werkzeuge { opacity: 1; }
+        .nb-umbenennen {
+            flex: 1; min-width: 0; font: inherit; font-size: 12.5px; font-weight: 700;
+            border: 1px solid var(--po-frost); border-radius: var(--po-r-sm);
+            padding: 2px 5px; background: var(--po-surface); color: var(--po-ink);
+        }
+        .nb-umbenennen:focus { outline: none; box-shadow: 0 0 0 2px rgba(129, 190, 215, .35); }
+        .nb-leer-klein { padding: 10px 14px; font-size: 11px; color: var(--po-ink-3); line-height: 1.5; }
+
+        /* Seitenspalte */
+        .nb-seiten .nb-eintrag { flex-direction: column; align-items: stretch; gap: 1px; border-left-color: transparent; }
+        .nb-seiten .nb-eintrag.aktiv { border-left-color: var(--po-frost); }
+        .nb-seiten-zeile { display: flex; align-items: center; gap: 6px; }
+        .nb-datum { font-size: 10px; color: var(--po-ink-3); font-weight: 400; }
+
+        /* Editor */
+        .nb-editor { display: flex; flex-direction: column; overflow: hidden; background: var(--po-bg); }
+        .nb-titelzeile { display: flex; align-items: center; gap: 10px; padding: 12px 24px 8px; background: var(--po-surface); flex-shrink: 0; }
+        .nb-titel {
+            flex: 1; min-width: 0; font: inherit; font-size: 20px; font-weight: 700; color: var(--po-ink);
+            border: none; background: transparent; padding: 3px 5px; border-radius: var(--po-r-sm);
+        }
+        .nb-titel:focus { outline: none; background: var(--po-surface-2); box-shadow: 0 0 0 2px rgba(129, 190, 215, .3); }
+        .nb-pfad { font-size: 10.5px; color: var(--po-ink-3); white-space: nowrap; }
+
+        .nb-leiste {
+            display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
+            padding: 6px 20px 8px; background: var(--po-surface);
+            border-bottom: 1px solid var(--po-line); flex-shrink: 0;
+        }
+        .nb-knopf {
+            font: inherit; font-size: 12px; min-width: 28px; height: 27px; padding: 0 7px;
+            border: 1px solid transparent; background: transparent; color: var(--po-ink-2);
+            border-radius: var(--po-r-sm); cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .nb-knopf:hover { background: var(--po-surface-3); color: var(--po-ink); }
+        .nb-knopf.an { background: var(--po-teal-soft); color: var(--po-teal); border-color: #BFE3DA; }
+        .nb-trenner { width: 1px; height: 18px; background: var(--po-line); margin: 0 5px; flex-shrink: 0; }
+
+        .nb-rollen { flex: 1; overflow-y: auto; padding: 20px; }
+        .nb-blatt {
+            max-width: 820px; margin: 0 auto; min-height: calc(100% - 2px);
+            background: var(--po-surface); border: 1px solid var(--po-line); border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow); padding: 28px 34px 60px;
+            font-size: 14px; line-height: 1.7; color: var(--po-ink); outline: none;
+        }
+        .nb-blatt:focus { border-color: var(--po-line-2); }
+        .nb-blatt > :first-child { margin-top: 0; }
+        .nb-blatt h1 { font-size: 1.55em; font-weight: 700; margin: 1.3em 0 .4em; line-height: 1.25; }
+        .nb-blatt h2 { font-size: 1.28em; font-weight: 700; margin: 1.3em 0 .4em; line-height: 1.3; }
+        .nb-blatt h3 { font-size: 1.1em;  font-weight: 700; margin: 1.2em 0 .35em; }
+        .nb-blatt p { margin: 0 0 .75em; }
+        .nb-blatt ul, .nb-blatt ol { margin: 0 0 .75em; padding-left: 1.6em; }
+        .nb-blatt li { margin-bottom: .25em; }
+        .nb-blatt blockquote {
+            margin: 0 0 .9em; padding: .45em .9em; border-left: 3px solid var(--po-frost);
+            background: var(--po-surface-2); color: var(--po-ink-2);
+        }
+        .nb-blatt pre {
+            background: var(--po-chrome); color: #E2E8F0; padding: 12px 15px;
+            border-radius: var(--po-r); overflow: auto; margin: 0 0 .9em;
+            font-family: var(--po-mono); font-size: .86em; line-height: 1.5; white-space: pre-wrap;
+        }
+        .nb-blatt a { color: var(--po-teal); }
+        .nb-blatt img { max-width: 100%; height: auto; border-radius: var(--po-r); margin: .3em 0; display: block; }
+        .nb-blatt img.gewaehlt { outline: 3px solid var(--po-frost); outline-offset: 2px; }
+        .nb-blatt hr { border: none; border-top: 1px solid var(--po-line); margin: 1.4em 0; }
+        .nb-blatt table { border-collapse: collapse; margin: 0 0 .9em; }
+        .nb-blatt td, .nb-blatt th { border: 1px solid var(--po-line); padding: 5px 9px; }
+
+        /* Aufgabenliste: der Haken ist eine Klasse, kein Eingabefeld — so bleibt er beim Sichern erhalten */
+        .nb-blatt ul.nb-aufgaben { list-style: none; padding-left: 1.75em; }
+        .nb-blatt ul.nb-aufgaben > li { position: relative; }
+        .nb-blatt ul.nb-aufgaben > li::before {
+            content: ''; position: absolute; left: -1.5em; top: .28em;
+            width: 15px; height: 15px; border: 1.5px solid var(--po-line-2);
+            border-radius: var(--po-r-sm); background: var(--po-surface); cursor: pointer;
+        }
+        .nb-blatt ul.nb-aufgaben > li.erledigt::before {
+            background: var(--po-teal); border-color: var(--po-teal);
+        }
+        .nb-blatt ul.nb-aufgaben > li.erledigt::after {
+            content: ''; position: absolute; left: -1.22em; top: .45em;
+            width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0;
+            transform: rotate(42deg); pointer-events: none;
+        }
+        .nb-blatt ul.nb-aufgaben > li.erledigt { color: var(--po-ink-3); text-decoration: line-through; }
+
+        .nb-blatt mark { background: #FDF3C7; padding: 0 2px; border-radius: 2px; }
+
+        .nb-nichts { display: none; flex: 1; align-items: center; justify-content: center; }
+        .nb-ohne-seite .nb-nichts { display: flex; }
+        .nb-ohne-seite .nb-titelzeile, .nb-ohne-seite .nb-leiste, .nb-ohne-seite .nb-rollen { display: none; }
+        .nb-gespeichert { font-size: 10px; color: var(--po-on-chrome-2); opacity: 0; transition: opacity .4s; white-space: nowrap; }
+        .nb-gespeichert.an { opacity: 1; }
+
+        /* Suche */
+        .nb-suchfeld { padding: 10px 12px; border-bottom: 1px solid var(--po-line); flex-shrink: 0; }
+        .nb-treffer { padding: 8px 10px; }
+        .nb-treffer-stelle { font-size: 10px; color: var(--po-ink-3); }
+        .nb-treffer-text { font-size: 11px; color: var(--po-ink-2); line-height: 1.45; margin-top: 2px; }
+        .nb-treffer-text b { background: #FDF3C7; font-weight: 700; }
+
+        @media (max-width: 1000px) {
+            .nb-flaeche { grid-template-columns: 190px 190px 1fr; }
+            .nb-blatt { padding: 22px 20px 50px; }
+        }
+        @media print {
+            .nb-spalte, .nb-leiste, .nb-pfad { display: none !important; }
+            .nb-flaeche { display: block; }
+            .nb-rollen { overflow: visible; padding: 0; }
+            .nb-blatt { border: none; box-shadow: none; max-width: none; padding: 0; }
+            .nb-titel { font-size: 24px; }
+        }
+    </style>
+</head>
+<body class="po-body">
+
+    <header class="po-head">
+        <div class="po-head-left">
+            <a class="po-brand" href="../Start_PocketOps.html" title="Zur PocketOps-Übersicht">
+                <span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>
+                <span class="po-brand-text">
+                    <span class="po-line-name">PocketOps</span>
+                    <span class="po-tool-name">Notizbuch</span>
+                </span>
+            </a>
+            <span class="po-chip">Bücher, Kapitel, Seiten</span>
+            <span class="nb-gespeichert" id="gespeichert">gespeichert</span>
+        </div>
+        <div class="po-head-actions">
+            <button class="po-btn" onclick="exportJSON()">Sichern</button>
+            <button class="po-btn" onclick="document.getElementById('import').click()">Öffnen</button>
+            <input type="file" id="import" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
+            <div class="po-head-sep"></div>
+            <button class="po-btn" onclick="window.print()">Seite drucken</button>
+            <button class="po-btn po-btn--primary" onclick="neueSeite()">Neue Seite</button>
+        </div>
+    </header>
+
+    <div class="nb-flaeche">
+
+        <aside class="nb-spalte nb-baum">
+            <div class="nb-teil nb-teil--buecher">
+                <div class="nb-kopf">
+                    <span>Notizbücher</span>
+                    <button class="nb-plus" title="Neues Notizbuch" onclick="neuesBuch()">+</button>
+                </div>
+                <ul class="nb-liste" id="buecher"></ul>
+            </div>
+            <div class="nb-teil nb-teil--kapitel">
+                <div class="nb-kopf">
+                    <span>Kapitel</span>
+                    <button class="nb-plus" title="Neues Kapitel" onclick="neuesKapitel()">+</button>
+                </div>
+                <ul class="nb-liste" id="kapitel"></ul>
+            </div>
+        </aside>
+
+        <aside class="nb-spalte nb-seiten">
+            <div class="nb-suchfeld">
+                <input class="po-input" id="suche" placeholder="Alles durchsuchen …" oninput="sucheLaeuft()">
+            </div>
+            <div class="nb-kopf" id="seiten-kopf">
+                <span>Seiten</span>
+                <button class="nb-plus" title="Neue Seite" onclick="neueSeite()">+</button>
+            </div>
+            <ul class="nb-liste" id="seiten"></ul>
+        </aside>
+
+        <main class="nb-editor" id="editor-bereich">
+            <div class="nb-titelzeile">
+                <input class="nb-titel" id="seiten-titel" placeholder="Titel der Seite" oninput="titelGeaendert(this.value)">
+                <span class="nb-pfad" id="pfad"></span>
+            </div>
+
+            <div class="nb-leiste" id="leiste">
+                <button class="nb-knopf" data-bef="bold" title="Fett (Strg+B)"><b>F</b></button>
+                <button class="nb-knopf" data-bef="italic" title="Kursiv (Strg+I)"><i>K</i></button>
+                <button class="nb-knopf" data-bef="underline" title="Unterstrichen (Strg+U)"><u>U</u></button>
+                <button class="nb-knopf" data-bef="strikeThrough" title="Durchgestrichen"><s>D</s></button>
+                <button class="nb-knopf" data-bef="hiliteColor" data-wert="#FDF3C7" title="Hervorheben"><span style="background:#FDF3C7;padding:0 3px;border-radius:2px">A</span></button>
+                <div class="nb-trenner"></div>
+                <button class="nb-knopf" data-block="h1" title="Überschrift 1">H1</button>
+                <button class="nb-knopf" data-block="h2" title="Überschrift 2">H2</button>
+                <button class="nb-knopf" data-block="h3" title="Überschrift 3">H3</button>
+                <button class="nb-knopf" data-block="p" title="Fließtext">T</button>
+                <div class="nb-trenner"></div>
+                <button class="nb-knopf" data-bef="insertUnorderedList" title="Aufzählung">•—</button>
+                <button class="nb-knopf" data-bef="insertOrderedList" title="Nummerierte Liste">1—</button>
+                <button class="nb-knopf" id="knopf-aufgaben" onclick="aufgabenliste()" title="Aufgabenliste">☐—</button>
+                <div class="nb-trenner"></div>
+                <button class="nb-knopf" data-block="blockquote" title="Zitat">❝</button>
+                <button class="nb-knopf" data-block="pre" title="Code">&lt;/&gt;</button>
+                <button class="nb-knopf" onclick="linkSetzen()" title="Verweis einfügen"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+                <button class="nb-knopf" onclick="document.getElementById('bild-datei').click()" title="Bild einfügen"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 16l-5-5-5.5 5.5L8 14l-5 5"/></svg></button>
+                <input type="file" id="bild-datei" accept="image/*" multiple style="display:none" onchange="bilderAusDatei(this)">
+                <button class="nb-knopf" onclick="befehl('insertHorizontalRule')" title="Trennlinie">—</button>
+                <div class="nb-trenner"></div>
+                <button class="nb-knopf" onclick="befehl('removeFormat')" title="Formatierung entfernen">✕F</button>
+            </div>
+
+            <div class="nb-nichts" id="nb-nichts"></div>
+
+            <div class="nb-rollen" id="rollen">
+                <div class="nb-blatt" id="inhalt" contenteditable="true" spellcheck="true"></div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        /* PO-SPRACHE:ANFANG (Urfassung: _design/sprache/Notizbuch.js · nachziehen mit _design/sync.mjs) */
+        /* Notizbuch · Anleitung und Wörterbuch */
+
+        const PO_HILFE = {
+            de: {
+                kurz: 'Notizen in drei Ebenen: Notizbuch, darin Kapitel, darin Seiten.',
+                schritte: [
+                    'Links ein <b>Neues Notizbuch</b> anlegen, darin ein <b>Neues Kapitel</b>, darin eine <b>Neue Seite</b>.',
+                    'Rechts schreiben. Die Leiste oben setzt Überschriften, Listen, fett und kursiv.',
+                    'Alles wird beim Tippen gesichert — oben steht, wann zuletzt.'
+                ],
+                tipps: [
+                    'Die Suche oben erfasst alle Notizbücher, Kapitel und Seiten auf einmal.',
+                    'Umbenennen geht über das Stiftzeichen neben dem Namen.',
+                    '<b>Sichern</b> legt alles als eine Datei ab — das ist die Sicherungskopie.'
+                ]
+            },
+            en: {
+                kurz: 'Notes on three levels: a notebook, chapters inside it, pages inside those.',
+                schritte: [
+                    'On the left add a <b>new notebook</b>, a <b>new chapter</b> in it, then a <b>new page</b>.',
+                    'Write on the right. The bar at the top sets headings, lists, bold and italic.',
+                    'Everything is saved as you type — the top line says when it last happened.'
+                ],
+                tipps: [
+                    'The search at the top covers all notebooks, chapters and pages at once.',
+                    'Renaming works through the pencil next to the name.',
+                    '<b>Save</b> puts everything into a single file — that is your backup.'
+                ]
+            }
+        };
+
+        const PO_WB = {
+            'Notizbuch · PocketOps': 'Notebook · PocketOps',
+            'Notizbuch': 'Notebook',
+            'Notizbücher': 'Notebooks',
+            'Bücher, Kapitel, Seiten': 'Books, chapters, pages',
+            'Neues Notizbuch': 'New notebook',
+            'Neues Kapitel': 'New chapter',
+            'Neue Seite': 'New page',
+            'Kapitel': 'Chapters',
+            'Seiten': 'Pages',
+            'Mein Notizbuch': 'My notebook',
+            'Allgemein': 'General',
+            'Willkommen': 'Welcome',
+            'Titel der Seite': 'Title of the page',
+            'Alles durchsuchen …': 'Search everything …',
+            'Umbenennen': 'Rename',
+            'Löschen': 'Delete',
+            'Sichern': 'Save',
+            'gespeichert': 'saved',
+            'Seite drucken': 'Print page',
+
+            /* Die Leiste über dem Text */
+            'Fett (Strg+B)': 'Bold (Ctrl+B)',
+            'Kursiv (Strg+I)': 'Italic (Ctrl+I)',
+            'Unterstrichen (Strg+U)': 'Underline (Ctrl+U)',
+            'Durchgestrichen': 'Strikethrough',
+            'Hervorheben': 'Highlight',
+            'Überschrift 1': 'Heading 1',
+            'Überschrift 2': 'Heading 2',
+            'Überschrift 3': 'Heading 3',
+            'Fließtext': 'Body text',
+            'Aufzählung': 'Bulleted list',
+            'Nummerierte Liste': 'Numbered list',
+            'Aufgabenliste': 'Task list',
+            'Zitat': 'Quote',
+            'Code': 'Code',
+            'Trennlinie': 'Divider',
+            'Verweis einfügen': 'Insert link',
+            'Bild einfügen': 'Insert image',
+            'Formatierung entfernen': 'Remove formatting'
+        };
+        /* PO-SPRACHE:ENDE */
+    </script>
+
+    <script>
+        /* PO-BASE:ANFANG (Urfassung: _design/po-base.js · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME BAUSTEINE
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft.
+
+           poToast(text)                  kurzer Hinweis unten rechts
+           poConfirm(frage, opt)          Rückfrage, liefert ein Versprechen
+           poAsk(titel, felder)           kleine Eingabemaske statt prompt()
+                                          Feld: { name, label, wert, typ, pflicht }
+                                          typ 'date', 'number', 'color' kommen vom
+                                          Browser; typ 'auswahl' braucht zusätzlich
+                                          optionen: [{ wert, text }] und wird zur Liste
+           poEsc(text)                    Text für HTML entschärfen
+           poDownload(name, text, typ)    Datei zum Herunterladen anbieten
+           poReadFile(input, fn)          gewählte Datei als Text lesen
+           ====================================================================== */
+
+        function poEsc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        let _poToastTimer = null;
+        function poToast(text, dauer = 2600) {
+            let t = document.getElementById('po-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'po-toast';
+                t.className = 'po-toast';
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.style.display = 'block';
+            clearTimeout(_poToastTimer);
+            _poToastTimer = setTimeout(() => { t.style.display = 'none'; }, dauer);
+        }
+
+        function _poModal(innerHtml, aufbau) {
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `<div class="po-dialog" role="dialog" aria-modal="true">${innerHtml}</div>`;
+            document.body.appendChild(back);
+            const schliessen = () => { document.removeEventListener('keydown', aufTaste); back.remove(); };
+            const aufTaste = e => { if (e.key === 'Escape') { e.preventDefault(); back.__abbruch && back.__abbruch(); } };
+            document.addEventListener('keydown', aufTaste);
+            back.addEventListener('mousedown', e => { if (e.target === back) back.__abbruch && back.__abbruch(); });
+            aufbau(back, schliessen);
+            return back;
+        }
+
+        function poConfirm(frage, { titel = 'Bitte bestätigen', ja = 'Ja, weiter', nein = 'Abbrechen', gefahr = false } = {}) {
+            return new Promise(res => {
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body">${poEsc(frage)}</div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>${poEsc(nein)}</button>
+                        <button class="po-btn ${gefahr ? 'po-btn--primary' : 'po-btn--go'}" data-ja>${poEsc(ja)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(false);
+                    back.querySelector('[data-nein]').onclick = () => fertig(false);
+                    back.querySelector('[data-ja]').onclick = () => fertig(true);
+                    setTimeout(() => back.querySelector('[data-ja]').focus(), 30);
+                });
+            });
+        }
+
+        /* felder: [{ name, label, wert, typ: 'text'|'number', min, max, pflicht }]
+           Ergebnis: Objekt mit den Werten, oder null bei Abbruch. */
+        function poAsk(titel, felder, { ok = 'Hinzufügen' } = {}) {
+            return new Promise(res => {
+                /* typ: 'auswahl' erwartet zusätzlich optionen: [{ wert, text }] und wird
+                   zur Liste. Alles andere geht als type an ein <input> — 'date', 'number'
+                   und 'color' kommen so vom Browser, ohne eigenes Zutun. */
+                const html = felder.map((f, i) => {
+                    const feld = f.typ === 'auswahl'
+                        ? `<select class="po-select" id="po-f-${i}">`
+                          + (f.optionen || []).map(o =>
+                                `<option value="${poEsc(o.wert)}"${String(o.wert) === String(f.wert) ? ' selected' : ''}>${poEsc(o.text)}</option>`
+                            ).join('')
+                          + `</select>`
+                        : `<input class="po-input" id="po-f-${i}" type="${f.typ || 'text'}"
+                               value="${poEsc(f.wert == null ? '' : f.wert)}"
+                               ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''}
+                               ${f.platzhalter ? `placeholder="${poEsc(f.platzhalter)}"` : ''}>`;
+                    return `
+                    <div style="margin-bottom:10px">
+                        <label class="po-label" for="po-f-${i}">${poEsc(f.label)}</label>
+                        ${feld}
+                    </div>`;
+                }).join('');
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body"><form id="po-ask-form">${html}</form></div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${poEsc(ok)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(null);
+                    back.querySelector('[data-nein]').onclick = () => fertig(null);
+                    const senden = () => {
+                        const out = {};
+                        let fehlt = null;
+                        felder.forEach((f, i) => {
+                            const el = back.querySelector('#po-f-' + i);
+                            let v = el.value.trim();
+                            if (f.typ === 'number') v = v === '' ? null : Number(v);
+                            if (f.pflicht !== false && (v === '' || v === null)) fehlt = fehlt || el;
+                            out[f.name] = v;
+                        });
+                        if (fehlt) { fehlt.focus(); fehlt.style.borderColor = 'var(--po-bad)'; return; }
+                        fertig(out);
+                    };
+                    back.querySelector('[data-ja]').onclick = senden;
+                    back.querySelector('#po-ask-form').onsubmit = e => { e.preventDefault(); senden(); };
+                    setTimeout(() => back.querySelector('#po-f-0') && back.querySelector('#po-f-0').focus(), 30);
+                });
+            });
+        }
+
+        function poDownload(name, inhalt, typ = 'application/json') {
+            const blob = new Blob([inhalt], { type: typ });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }
+
+        function poReadFile(input, fn) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const r = new FileReader();
+            const melden = e => poToast('Die Datei lässt sich nicht lesen: ' + (e && e.message ? e.message : e), 4200);
+            r.onerror = () => melden(new Error('Die Datei ließ sich nicht öffnen.'));
+            r.onload = ev => {
+                // Ein Rückruf mit async wirft nicht, er gibt ein abgelehntes Versprechen
+                // zurück. Beides muss hier ankommen, sonst bleibt ein Fehler stumm.
+                try {
+                    const p = fn(ev.target.result);
+                    if (p && typeof p.catch === 'function') p.catch(melden);
+                } catch (e) { melden(e); }
+            };
+            r.readAsText(f);
+        }
+
+        /* Markenzeichen für die Kopfzeile — in jedem Werkzeug gleich */
+        const PO_MARK = '<span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>';
+
+        /* ======================================================================
+           POCKETOPS · ZWEISPRACHIGKEIT
+
+           Die Werkzeuge sind auf Deutsch geschrieben — Beschriftungen, Hinweise,
+           Meldungen, alles. Englisch entsteht nicht aus einem zweiten Satz
+           Quelltext, sondern aus einem Wörterbuch: deutscher Satz → englischer
+           Satz. Ein Beobachter schreibt um, was auf der Seite steht, und merkt
+           sich am Knoten das Original — darum geht beim Zurückschalten nichts
+           verloren, und am deutschen Quelltext ändert sich nichts.
+
+           Je Werkzeug steht sein Wörterbuch in einem eigenen Block
+           (PO-SPRACHE, Urfassung: _design/sprache/<Datei>.js) vor diesem hier.
+           Gemeinsames — Kopfzeile, Dialoge, Meldungen aus dieser Datei — steht
+           unten in PO_WB_BASIS.
+
+           Platzhalter: '{}' steht für eine Stelle, die unverändert bleibt.
+               '{} von {} Fehlern'  →  '{} of {} mistakes'
+
+           Was nie übersetzt wird: was der Nutzer selbst geschrieben hat.
+           Eingabefelder, Textflächen, alles unter contenteditable und alles
+           unter data-po-roh bleibt unangetastet.
+           ====================================================================== */
+
+        /* Gemeinsame Einträge. Gelten in jedem Werkzeug. */
+        const PO_WB_BASIS = {
+            'Zur PocketOps-Übersicht': 'To the PocketOps overview',
+            'Trinkgeld': 'Tip jar',
+            'Speichern': 'Save',
+            'Öffnen': 'Open',
+            'Zurücksetzen': 'Reset',
+            'Abbrechen': 'Cancel',
+            'Ja, weiter': 'Yes, go ahead',
+            'Ja, löschen': 'Yes, delete',
+            'Ja, alles löschen': 'Yes, delete everything',
+            'Ja, entfernen': 'Yes, remove',
+            'Bitte bestätigen': 'Please confirm',
+            'Hinzufügen': 'Add',
+            'Drucken': 'Print',
+            'Kopieren': 'Copy',
+            'Anleitung': 'Help',
+            'Sprache / Language': 'Sprache / Language',
+            'Schließen': 'Close',
+            'Die Datei lässt sich nicht lesen: {}': 'The file cannot be read: {}',
+            'Die Datei ließ sich nicht öffnen.': 'The file could not be opened.',
+            'Es ist noch nichts gezählt.': 'Nothing has been counted yet.',
+            'Es ist nichts zu löschen.': 'There is nothing to delete.',
+            'Zähler zurücksetzen': 'Reset counters',
+            'Zähler zurückgesetzt': 'Counters reset',
+            'Gegen den Rechner': 'Against the computer'
+        };
+
+        /* Text der Hilfe selbst — in beiden Sprachen, nicht über das Wörterbuch. */
+        const PO_HILFE_TEXTE = {
+            de: {
+                titel: 'Kurzanleitung',
+                schritte: 'So geht es',
+                tipps: 'Gut zu wissen',
+                oertlich: 'Deine Arbeit bleibt auf diesem Rechner. Sie wird nirgendwohin geschickt.',
+                oertlichMitNetz: 'Deine Arbeit bleibt auf diesem Rechner und wird nirgendwohin geschickt. Dieses Werkzeug lädt beim Öffnen allerdings eine Programmbibliothek nach, von: {}. Der fremde Server erfährt dabei deine IP-Adresse. Woran du arbeitest, verlässt den Rechner auch dann nicht.',
+                sicherung: 'Sichern und Zurückholen',
+                sicherungText: 'Mit <b>Speichern</b> legt das Werkzeug deine Arbeit als Datei neben sich — eine <b>.json</b>-Datei. Das ist nichts Gefährliches: eine Textdatei, die du mit dem Editor öffnen und lesen kannst. Mit <b>Öffnen</b> holst du sie zurück, in dieses oder in ein anderes Fenster.',
+                sicherungWarum: 'Warum das wichtig ist: deine Arbeit liegt sonst nur im Browser. Räumt jemand den Browser auf, ist sie weg. Die gespeicherte Datei bleibt.',
+                mehr: 'Ausführlich: Sichern &amp; Zurückholen',
+                schluss: 'Verstanden'
+            },
+            en: {
+                titel: 'Quick guide',
+                schritte: 'How it works',
+                tipps: 'Worth knowing',
+                oertlich: 'Your work stays on this computer. It is not sent anywhere.',
+                oertlichMitNetz: 'Your work stays on this computer and is not sent anywhere. This tool does fetch a code library when it opens, from: {}. That server learns your IP address. What you are working on still never leaves the machine.',
+                sicherung: 'Saving and restoring',
+                sicherungText: '<b>Save</b> puts your work into a file next to the tool — a <b>.json</b> file. Nothing dangerous about it: a text file you can open and read in any editor. <b>Open</b> brings it back, into this window or another one.',
+                sicherungWarum: 'Why this matters: otherwise your work only lives inside the browser. If someone clears the browser, it is gone. The saved file stays.',
+                mehr: 'In full: Backups &amp; restoring',
+                schluss: 'Got it'
+            }
+        };
+
+        let _poSpr = 'de';
+        try { if (localStorage.getItem('po_sprache') === 'en') _poSpr = 'en'; } catch (e) { /* ohne Speicher eben Deutsch */ }
+
+        const poSprache = () => _poSpr;
+
+        /* ---------- Wörterbuch ---------- */
+
+        const _poNormal = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+        const _poEscRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        let _poExakt = null, _poMuster = null;
+
+        function _poWbBauen() {
+            if (_poExakt) return;
+            _poExakt = new Map();
+            _poMuster = [];
+            const quellen = [PO_WB_BASIS, (typeof PO_WB !== 'undefined' ? PO_WB : null)];
+            for (const q of quellen) {
+                if (!q) continue;
+                for (const de of Object.keys(q)) {
+                    const en = q[de];
+                    if (!en) continue;
+                    if (de.indexOf('{}') >= 0) {
+                        const teile = _poNormal(de).split('{}');
+                        _poMuster.push({ re: new RegExp('^' + teile.map(_poEscRe).join('([\\s\\S]*?)') + '$'), en });
+                    } else {
+                        _poExakt.set(_poNormal(de), en);
+                    }
+                }
+            }
+        }
+
+        /* Was das Wörterbuch nicht kennt, wird hier gesammelt. Beim Pflegen einer
+           Übersetzung zeigt poLuecken() im Browser, was noch fehlt. */
+        const _poLuecken = new Set();
+        function poLuecken() { return Array.from(_poLuecken).sort((a, b) => a.localeCompare(b, 'de')); }
+
+        /* Liefert die Übersetzung oder null, wenn das Wörterbuch nichts kennt. */
+        function _poNachschlagen(text) {
+            _poWbBauen();
+            const n = _poNormal(text);
+            if (!n) return null;
+            const treffer = _poExakt.get(n);
+            if (treffer !== undefined) return treffer;
+            for (const m of _poMuster) {
+                const t = n.match(m.re);
+                if (!t) continue;
+                let i = 0;
+                return m.en.replace(/\{\}/g, () => { i++; return t[i] === undefined ? '' : t[i]; });
+            }
+            if (_poLuecken.size < 2000) _poLuecken.add(n);
+            return null;
+        }
+
+        /* Für Text, der nicht im Seitengerüst steht, sondern gezeichnet wird —
+           auf einer Leinwand etwa. Gibt auf Deutsch den Text unverändert zurück. */
+        function poT(text) {
+            if (_poSpr !== 'en') return text;
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* Die englische Fassung, unabhängig von der eingestellten Sprache. Gebraucht
+           dort, wo beide Sprachen zugleich gelten müssen — etwa in einem Suchfeld,
+           das auch nach dem Umschalten noch finden soll. */
+        function poEn(text) {
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* ---------- Die Seite umschreiben ---------- */
+
+        const _PO_ATTR = ['placeholder', 'title', 'aria-label', 'alt'];
+        const _PO_TABU = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1, PRE: 1, CODE: 1, CANVAS: 1 };
+
+        function _poDarf(el) {
+            for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+                if (_PO_TABU[e.tagName]) return false;
+                if (e.isContentEditable) return false;
+                if (e.hasAttribute('data-po-roh')) return false;
+                if (e.hasAttribute('data-po-nur')) return false;   // steht schon in seiner Sprache
+            }
+            return true;
+        }
+
+        /* Längere Texte — eine ganze Seite Erklärung etwa — zerfielen im Wörterbuch
+           an jedem <b> in Stücke. Dafür gibt es den zweiten Weg: zwei Blöcke, einer
+           je Sprache, ausgezeichnet mit data-po-nur="de" bzw. "en". Es wird immer
+           nur einer gezeigt.
+           Bewusst über style.display statt über hidden: eine Klasse mit display:flex
+           gewänne sonst gegen hidden, und der Block stünde trotzdem da. */
+        function _poSprachbloecke() {
+            document.querySelectorAll('[data-po-nur]').forEach(el => {
+                el.style.display = (el.getAttribute('data-po-nur') === _poSpr) ? '' : 'none';
+            });
+        }
+
+        function _poTextKnoten(k) {
+            if (!k || !k.nodeValue || !k.nodeValue.trim()) return;
+            if (k.nodeValue === k.__poEn) return;                 // steht schon auf Englisch
+            if (!_poDarf(k.parentElement)) return;
+            const neu = _poNachschlagen(k.nodeValue);
+            if (neu === null) return;
+            k.__poDe = k.nodeValue;
+            k.nodeValue = k.nodeValue.match(/^\s*/)[0] + neu + k.nodeValue.match(/\s*$/)[0];
+            k.__poEn = k.nodeValue;
+        }
+
+        function _poMerkmal(el, name) {
+            if (!el || el.nodeType !== 1 || !el.hasAttribute(name)) return;
+            if (!_poDarf(el)) return;
+            const wert = el.getAttribute(name);
+            el.__poAttrEn = el.__poAttrEn || {};
+            el.__poAttrDe = el.__poAttrDe || {};
+            if (wert === el.__poAttrEn[name]) return;
+            const neu = _poNachschlagen(wert);
+            if (neu === null) return;
+            el.__poAttrDe[name] = wert;
+            el.setAttribute(name, neu);
+            el.__poAttrEn[name] = neu;
+        }
+
+        function _poAnwenden(wurzel) {
+            if (_poSpr !== 'en' || !wurzel) return;
+            if (wurzel.nodeType === 3) { _poTextKnoten(wurzel); return; }
+            if (wurzel.nodeType !== 1) return;
+            const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) _poTextKnoten(k);
+            const mit = [wurzel].concat(Array.from(wurzel.querySelectorAll('*')));
+            for (const el of mit) for (const a of _PO_ATTR) if (el.hasAttribute && el.hasAttribute(a)) _poMerkmal(el, a);
+        }
+
+        function _poZurueck() {
+            const lauf = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) {
+                if (k.__poDe !== undefined && k.nodeValue === k.__poEn) { k.nodeValue = k.__poDe; k.__poEn = undefined; }
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (!el.__poAttrDe) continue;
+                for (const a of Object.keys(el.__poAttrDe)) {
+                    if (el.getAttribute(a) === el.__poAttrEn[a]) el.setAttribute(a, el.__poAttrDe[a]);
+                }
+                el.__poAttrEn = {};
+            }
+        }
+
+        let _poStill = false;
+        let _poBeob = null;
+
+        function _poBeobachten() {
+            _poBeob = new MutationObserver(aenderungen => {
+                if (_poStill || _poSpr !== 'en') return;
+                _poStill = true;
+                try {
+                    for (const a of aenderungen) {
+                        if (a.type === 'childList') a.addedNodes.forEach(n => {
+                            _poAnwenden(n);
+                            if (n.nodeType === 1 && n.querySelector && (n.hasAttribute('data-po-nur') || n.querySelector('[data-po-nur]'))) _poSprachbloecke();
+                        });
+                        else if (a.type === 'characterData') _poTextKnoten(a.target);
+                        else if (a.type === 'attributes') _poMerkmal(a.target, a.attributeName);
+                    }
+                } finally {
+                    _poBeob.takeRecords();          // eigene Änderungen nicht noch einmal ansehen
+                    _poStill = false;
+                }
+            });
+            _poBeob.observe(document.documentElement, {
+                childList: true, subtree: true, characterData: true,
+                attributes: true, attributeFilter: _PO_ATTR
+            });
+        }
+
+        /* ---------- Umschalten ---------- */
+
+        function poSpracheSetzen(spr) {
+            const neu = spr === 'en' ? 'en' : 'de';
+            if (neu === _poSpr) return;
+            _poSpr = neu;
+            try { localStorage.setItem('po_sprache', neu); } catch (e) { /* dann eben nur für dieses Fenster */ }
+            document.documentElement.lang = neu;
+            /* Beide Fenster werden geschlossen statt übersetzt: ihr Inhalt steht als
+               data-po-roh und geht am Wörterbuch vorbei. Beim nächsten Öffnen baut er
+               sich in der neuen Sprache neu auf. Ohne das bliebe nach einem Wechsel
+               bei offenem Fenster die alte Sprache stehen. */
+            const hilfe = document.getElementById('po-hilfe-fenster');
+            if (hilfe) hilfe.remove();
+            const trinkgeld = document.getElementById('po-trinkgeld-fenster');
+            if (trinkgeld) trinkgeld.remove();
+            _poStill = true;
+            try {
+                if (neu === 'en') _poAnwenden(document.documentElement);
+                else _poZurueck();
+            } finally {
+                if (_poBeob) _poBeob.takeRecords();
+                _poStill = false;
+            }
+            _poSprachbloecke();
+            _poKopfMalen();
+            // Werkzeuge, die selbst zeichnen, müssen danach neu zeichnen.
+            if (typeof poNeuZeichnen === 'function') poNeuZeichnen();
+        }
+
+        function _poKopfMalen() {
+            document.querySelectorAll('.po-sprach button').forEach(b => {
+                b.setAttribute('aria-pressed', String(b.dataset.spr === _poSpr));
+            });
+        }
+
+        /* ---------- Trinkgeld ----------
+           PocketOps verschenkt sich. Der Knopf ist die einzige Stelle, an der das
+           Werkzeug etwas von sich aus möchte — entsprechend zurückhaltend.
+
+           Bewusst „Trinkgeld“ und nicht „Spende“: eine Spende im steuerlichen Sinn
+           kann nur eine anerkannt gemeinnützige Einrichtung entgegennehmen. Hier ist
+           es eine freiwillige Zuwendung an eine Privatperson.
+
+           Der Verweis geht an PayPal.me. Bewusst nicht an die Spendenseite mit der
+           E-Mail-Adresse als Kennung: die stünde damit im Quelltext jeder der
+           sechsundzwanzig Dateien und wäre, seit das Ganze öffentlich liegt, für
+           Adress-Sammler maschinell abgreifbar. Der PayPal.me-Name zeigt sie nicht.
+
+           Den Betrag gibt der Besucher selbst an — deshalb der blanke Name ohne
+           angehängte Zahl. Soll sich das ändern, ist hier die eine Zeile zu ändern
+           und _design/sync.mjs laufen zu lassen. */
+        const PO_TRINKGELD_LINK = 'https://paypal.me/JensHeitmann306';
+
+        const PO_TRINKGELD_TEXTE = {
+            de: {
+                titel: 'Trinkgeld',
+                frei: 'PocketOps ist frei. Nimm es, gib es weiter, bau es um — es kostet nichts und wird nichts kosten.',
+                arbeit: 'Darin steckt allerdings eine Menge Arbeit. Wenn dir eines der Werkzeuge den Tag leichter gemacht hat, freue ich mich über ein Trinkgeld. Wie viel, entscheidest du.',
+                hinweis: 'Der Knopf öffnet PayPal in einem neuen Fenster. Hier wird nichts abgefragt und nichts mitgeschnitten.',
+                knopf: 'Trinkgeld über PayPal',
+                nein: 'Vielleicht später'
+            },
+            en: {
+                titel: 'Tip jar',
+                frei: 'PocketOps is free. Take it, pass it on, rebuild it — it costs nothing and it never will.',
+                arbeit: 'There is a fair amount of work in it, though. If one of these tools has made your day easier, a tip would be welcome. You decide how much.',
+                hinweis: 'The button opens PayPal in a new window. Nothing is asked for or recorded here.',
+                knopf: 'Leave a tip via PayPal',
+                nein: 'Maybe later'
+            }
+        };
+
+        function poTrinkgeld() {
+            if (document.getElementById('po-trinkgeld-fenster')) return;
+            const t = PO_TRINKGELD_TEXTE[_poSpr] || PO_TRINKGELD_TEXTE.de;
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(t.titel) + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.frei) + '</p>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.arbeit) + '</p>'
+              +   '<p style="margin:0;color:var(--po-ink-3);font-size:11px">' + poEsc(t.hinweis) + '</p>'
+              + '</div>'
+              + '<div class="po-dialog-foot">'
+              +   '<button class="po-btn" data-zu>' + poEsc(t.nein) + '</button>'
+              +   '<a class="po-btn po-btn--primary" href="' + PO_TRINKGELD_LINK + '" target="_blank" rel="noopener noreferrer">'
+              +     poEsc(t.knopf) + '</a>'
+              + '</div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    /* Nach dem Sprung zu PayPal soll hier nicht noch ein Fenster offen
+                       stehenbleiben, auf das niemand mehr schaut. */
+                    b.querySelector('a.po-btn').onclick = () => setTimeout(schliessen, 150);
+                });
+            back.id = 'po-trinkgeld-fenster';
+        }
+
+        function _poKopfBauen() {
+            const leiste = document.querySelector('.po-head-actions');
+            if (!leiste || document.querySelector('.po-meta')) return;
+            const box = document.createElement('div');
+            box.className = 'po-meta';
+            box.innerHTML =
+                '<div class="po-sprach" role="group" aria-label="Sprache / Language">'
+              + '<button type="button" data-spr="de">DE</button>'
+              + '<button type="button" data-spr="en">EN</button></div>'
+              + '<button type="button" class="po-trinkgeld" title="Trinkgeld" aria-label="Trinkgeld">&#9829;</button>'
+              + '<button type="button" class="po-frage" title="Anleitung" aria-label="Anleitung">?</button>'
+              + '<div class="po-head-sep"></div>';
+            leiste.insertBefore(box, leiste.firstChild);
+            box.querySelectorAll('[data-spr]').forEach(b => { b.onclick = () => poSpracheSetzen(b.dataset.spr); });
+            box.querySelector('.po-frage').onclick = poHilfe;
+            box.querySelector('.po-trinkgeld').onclick = poTrinkgeld;
+            _poKopfMalen();
+        }
+
+        /* ---------- Die Anleitung ---------- */
+
+        /* Die Werkzeuge liegen im Ordner tools/, die Übersicht eine Ebene darüber.
+           Woran sich das erkennen lässt: nur ein Werkzeug trägt das Markenzeichen als
+           Rückverweis; auf der Übersicht selbst steht es als blosser Text. */
+        const _poSicherungPfad = () => document.querySelector('a.po-brand') ? 'Sicherung.html' : 'tools/Sicherung.html';
+
+        /* Die Rechner, von denen diese Seite etwas nachlädt — ohne Doppelte. */
+        function _poFremdquellen() {
+            return [...document.querySelectorAll('script[src], link[rel="stylesheet"][href]')]
+                .map(e => e.getAttribute('src') || e.getAttribute('href'))
+                .filter(u => /^https?:\/\//i.test(u || ''))
+                .map(u => { try { return new URL(u).hostname; } catch (e) { return null; } })
+                .filter((h, i, a) => h && a.indexOf(h) === i);
+        }
+
+        function poHilfe() {
+            if (document.getElementById('po-hilfe-fenster')) return;
+            const t = PO_HILFE_TEXTE[_poSpr];
+            const h = (typeof PO_HILFE !== 'undefined' && PO_HILFE && PO_HILFE[_poSpr]) ? PO_HILFE[_poSpr] : null;
+            const name = (document.querySelector('.po-tool-name') || {}).textContent || 'PocketOps';
+
+            const teile = [];
+            if (h && h.kurz) teile.push('<p style="margin:0 0 12px">' + h.kurz + '</p>');
+            if (h && h.schritte && h.schritte.length) {
+                teile.push('<div class="po-hilfe-titel">' + t.schritte + '</div>'
+                         + '<ol class="po-hilfe-liste">' + h.schritte.map(s => '<li>' + s + '</li>').join('') + '</ol>');
+            }
+            if (h && h.tipps && h.tipps.length) {
+                teile.push('<div class="po-hilfe-teil"><div class="po-hilfe-titel">' + t.tipps + '</div>'
+                         + '<ul class="po-hilfe-liste">' + h.tipps.map(s => '<li>' + s + '</li>').join('') + '</ul></div>');
+            }
+            teile.push('<div class="po-hilfe-teil">'
+                     + '<div class="po-hilfe-titel">' + t.sicherung + '</div>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungText + '</p>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungWarum + '</p>'
+                     + '<p style="margin:0"><a href="' + _poSicherungPfad() + '">' + t.mehr + '</a></p></div>');
+            /* Ein paar Werkzeuge holen sich eine Programmbibliothek aus dem Netz. Der
+               Hinweis liest das aus der Seite selbst aus, statt es pauschal zu
+               behaupten — so bleibt er richtig, auch wenn später eine Quelle dazukommt
+               oder wegfällt. */
+            const fremd = _poFremdquellen();
+            teile.push('<div class="po-hilfe-teil" style="color:var(--po-ink-3);font-size:11px">'
+                     + (fremd.length ? t.oertlichMitNetz.replace('{}', fremd.join(', ')) : t.oertlich)
+                     + '</div>');
+
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(name) + ' — ' + t.titel + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>' + teile.join('') + '</div>'
+              + '<div class="po-dialog-foot"><button class="po-btn po-btn--go" data-zu>' + t.schluss + '</button></div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    setTimeout(() => b.querySelector('[data-zu]').focus(), 30);
+                });
+            back.id = 'po-hilfe-fenster';
+            back.querySelector('.po-dialog').style.maxWidth = '560px';
+        }
+
+        function _poStart() {
+            document.documentElement.lang = _poSpr;
+            _poKopfBauen();
+            _poSprachbloecke();
+            if (_poSpr === 'en') {
+                _poStill = true;
+                try { _poAnwenden(document.documentElement); } finally { _poStill = false; }
+            }
+            _poBeobachten();
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F1') { e.preventDefault(); poHilfe(); }
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _poStart);
+        else _poStart();
+        /* PO-BASE:ENDE */
+
+        /* ======================================================================
+           NOTIZBUCH
+           Notizbuch → Kapitel → Seite. Text und Aufbau liegen in IndexedDB,
+           Bilder als eigene Einträge daneben. Nichts verlässt den Rechner.
+           ====================================================================== */
+
+        const DB_NAME = 'pocketops-notizbuch';
+        let db = null;
+        let daten = { version: 1, buecher: [] };
+        let wahl = { buch: null, kapitel: null, seite: null };
+        let bildUrls = new Map();          // Bild-Kennung → Objekt-URL
+        let sucheAktiv = false;
+
+        const el = id => document.getElementById(id);
+        let zaehler = 0;
+        const neueId = p => p + Date.now().toString(36) + (++zaehler).toString(36);
+
+        /* ---------- Speicher ---------- */
+
+        function dbOeffnen() {
+            return new Promise((res, rej) => {
+                const a = indexedDB.open(DB_NAME, 1);
+                a.onupgradeneeded = () => {
+                    const d = a.result;
+                    if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
+                    if (!d.objectStoreNames.contains('bilder')) d.createObjectStore('bilder', { keyPath: 'id' });
+                };
+                a.onsuccess = () => res(a.result);
+                a.onerror = () => rej(a.error);
+            });
+        }
+
+        function dbLauf(speicher, modus, fn) {
+            return new Promise((res, rej) => {
+                if (!db) return rej(new Error('kein Speicher'));
+                const tx = db.transaction(speicher, modus);
+                const anfrage = fn(tx.objectStore(speicher));
+                tx.oncomplete = () => res(anfrage && anfrage.result);
+                tx.onerror = () => rej(tx.error);
+            });
+        }
+
+        let sicherTimer = null;
+        function sichernSpaeter() {
+            clearTimeout(sicherTimer);
+            sicherTimer = setTimeout(sichernJetzt, 600);
+        }
+
+        async function sichernJetzt() {
+            clearTimeout(sicherTimer);
+            seiteUebernehmen();
+            if (!db) return;
+            try {
+                await dbLauf('kv', 'readwrite', s => s.put(JSON.parse(JSON.stringify(daten)), 'daten'));
+                const h = el('gespeichert');
+                h.classList.add('an');
+                setTimeout(() => h.classList.remove('an'), 1500);
+            } catch (e) {
+                poToast('Der Stand ließ sich nicht sichern: ' + e.message, 5000);
+            }
+        }
+
+        /* ---------- Zugriff auf den Baum ---------- */
+
+        const buchVon = id => daten.buecher.find(b => b.id === id) || null;
+        function kapitelVon(buchId, kapId) {
+            const b = buchVon(buchId);
+            return b ? (b.kapitel.find(k => k.id === kapId) || null) : null;
+        }
+        function seiteVon(buchId, kapId, seiteId) {
+            const k = kapitelVon(buchId, kapId);
+            return k ? (k.seiten.find(s => s.id === seiteId) || null) : null;
+        }
+        const aktuelleSeite = () => seiteVon(wahl.buch, wahl.kapitel, wahl.seite);
+
+        /* ---------- Anlegen ---------- */
+
+        function neuesBuch() {
+            const b = { id: neueId('b'), name: 'Neues Notizbuch', kapitel: [] };
+            daten.buecher.push(b);
+            wahl.buch = b.id;
+            neuesKapitel(true);
+            render();
+            umbenennenStarten('buch', b.id);
+        }
+
+        function neuesKapitel(stumm = false) {
+            if (!wahl.buch) { poToast('Lege zuerst ein Notizbuch an.'); return; }
+            const b = buchVon(wahl.buch);
+            const k = { id: neueId('k'), name: 'Neues Kapitel', seiten: [] };
+            b.kapitel.push(k);
+            wahl.kapitel = k.id;
+            const s = { id: neueId('s'), titel: 'Neue Seite', html: '', geaendert: Date.now() };
+            k.seiten.push(s);
+            wahl.seite = s.id;
+            if (!stumm) { render(); umbenennenStarten('kapitel', k.id); sichernSpaeter(); }
+        }
+
+        function neueSeite() {
+            if (!wahl.kapitel) { poToast('Lege zuerst ein Kapitel an.'); return; }
+            seiteUebernehmen();
+            const k = kapitelVon(wahl.buch, wahl.kapitel);
+            const s = { id: neueId('s'), titel: 'Neue Seite', html: '', geaendert: Date.now() };
+            k.seiten.unshift(s);
+            wahl.seite = s.id;
+            sucheLeeren();
+            render();
+            el('seiten-titel').focus();
+            el('seiten-titel').select();
+            sichernSpaeter();
+        }
+
+        /* ---------- Auswählen ---------- */
+
+        function waehleBuch(id) {
+            seiteUebernehmen();
+            wahl.buch = id;
+            const b = buchVon(id);
+            wahl.kapitel = b && b.kapitel[0] ? b.kapitel[0].id : null;
+            const k = kapitelVon(wahl.buch, wahl.kapitel);
+            wahl.seite = k && k.seiten[0] ? k.seiten[0].id : null;
+            sucheLeeren();
+            render();
+        }
+
+        function waehleKapitel(id) {
+            seiteUebernehmen();
+            wahl.kapitel = id;
+            const k = kapitelVon(wahl.buch, id);
+            wahl.seite = k && k.seiten[0] ? k.seiten[0].id : null;
+            sucheLeeren();
+            render();
+        }
+
+        function waehleSeite(id) {
+            seiteUebernehmen();
+            wahl.seite = id;
+            render();
+        }
+
+        function springeZu(buchId, kapId, seiteId) {
+            seiteUebernehmen();
+            wahl = { buch: buchId, kapitel: kapId, seite: seiteId };
+            sucheLeeren();
+            render();
+        }
+
+        /* ---------- Umbenennen und Löschen ---------- */
+
+        let benenntGerade = null;
+
+        function umbenennenStarten(art, id) {
+            benenntGerade = { art, id };
+            render();
+            const f = document.querySelector('.nb-umbenennen');
+            if (f) { f.focus(); f.select(); }
+        }
+
+        function umbenennenFertig(art, id, wert) {
+            if (!benenntGerade || benenntGerade.id !== id) return;   // blur nach dem Abbruch
+            benenntGerade = null;
+            const name = String(wert || '').trim();
+            if (name) {
+                if (art === 'buch') { const b = buchVon(id); if (b) b.name = name; }
+                else { const k = kapitelVon(wahl.buch, id); if (k) k.name = name; }
+            }
+            render();
+            sichernSpaeter();
+        }
+
+        async function loescheBuch(id) {
+            const b = buchVon(id);
+            if (!b) return;
+            const seiten = b.kapitel.reduce((n, k) => n + k.seiten.length, 0);
+            const ja = await poConfirm(
+                `Das Notizbuch „${b.name}" wird gelöscht, mit ${b.kapitel.length} Kapitel${b.kapitel.length === 1 ? '' : 'n'} und ${seiten} Seite${seiten === 1 ? '' : 'n'}. Das lässt sich nicht rückgängig machen.`,
+                { titel: 'Notizbuch löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            daten.buecher = daten.buecher.filter(x => x.id !== id);
+            if (wahl.buch === id) {
+                wahl.buch = daten.buecher[0] ? daten.buecher[0].id : null;
+                const nb = buchVon(wahl.buch);
+                wahl.kapitel = nb && nb.kapitel[0] ? nb.kapitel[0].id : null;
+                const nk = kapitelVon(wahl.buch, wahl.kapitel);
+                wahl.seite = nk && nk.seiten[0] ? nk.seiten[0].id : null;
+            }
+            render();
+            sichernJetzt();
+            bilderAufraeumen();
+        }
+
+        async function loescheKapitel(id) {
+            const k = kapitelVon(wahl.buch, id);
+            if (!k) return;
+            const ja = await poConfirm(
+                `Das Kapitel „${k.name}" wird gelöscht, mit ${k.seiten.length} Seite${k.seiten.length === 1 ? '' : 'n'}. Das lässt sich nicht rückgängig machen.`,
+                { titel: 'Kapitel löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            const b = buchVon(wahl.buch);
+            b.kapitel = b.kapitel.filter(x => x.id !== id);
+            if (wahl.kapitel === id) {
+                wahl.kapitel = b.kapitel[0] ? b.kapitel[0].id : null;
+                const nk = kapitelVon(wahl.buch, wahl.kapitel);
+                wahl.seite = nk && nk.seiten[0] ? nk.seiten[0].id : null;
+            }
+            render();
+            sichernJetzt();
+            bilderAufraeumen();
+        }
+
+        async function loescheSeite(id) {
+            const s = seiteVon(wahl.buch, wahl.kapitel, id);
+            if (!s) return;
+            const ja = await poConfirm(`Die Seite „${s.titel}" wird gelöscht. Das lässt sich nicht rückgängig machen.`,
+                                       { titel: 'Seite löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            const k = kapitelVon(wahl.buch, wahl.kapitel);
+            k.seiten = k.seiten.filter(x => x.id !== id);
+            if (wahl.seite === id) wahl.seite = k.seiten[0] ? k.seiten[0].id : null;
+            render();
+            sichernJetzt();
+            bilderAufraeumen();
+        }
+
+        /* ---------- Zeichnen ---------- */
+
+        let zeichnetGerade = false, nochmalZeichnen = false;
+
+        function render() {
+            if (zeichnetGerade) { nochmalZeichnen = true; return; }
+            zeichnetGerade = true;
+            try {
+                renderBuecher();
+                renderKapitel();
+                if (!sucheAktiv) renderSeiten();
+                renderEditor();
+            } finally {
+                zeichnetGerade = false;
+                if (nochmalZeichnen) { nochmalZeichnen = false; render(); }
+            }
+        }
+
+        function eintragWerkzeuge(umbenennenJs, loeschenJs) {
+            return `<span class="nb-werkzeuge">
+                <button class="po-x" title="Umbenennen" onclick="event.stopPropagation(); ${umbenennenJs}">✎</button>
+                <button class="po-x" title="Löschen" onclick="event.stopPropagation(); ${loeschenJs}">✕</button>
+            </span>`;
+        }
+
+        function renderBuecher() {
+            const liste = el('buecher');
+            if (!daten.buecher.length) {
+                liste.innerHTML = '<li class="nb-leer-klein">Noch kein Notizbuch. Oben auf + tippen.</li>';
+                return;
+            }
+            liste.innerHTML = daten.buecher.map(b => {
+                const aktiv = b.id === wahl.buch;
+                if (benenntGerade && benenntGerade.art === 'buch' && benenntGerade.id === b.id) {
+                    return `<li class="nb-eintrag aktiv"><input class="nb-umbenennen" value="${poEsc(b.name)}"
+                        onblur="umbenennenFertig('buch','${b.id}', this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur(); if(event.key==='Escape'){benenntGerade=null;render();}"></li>`;
+                }
+                const seiten = b.kapitel.reduce((n, k) => n + k.seiten.length, 0);
+                return `<li class="nb-eintrag ${aktiv ? 'aktiv' : ''}" onclick="waehleBuch('${b.id}')" ondblclick="umbenennenStarten('buch','${b.id}')">
+                    <span class="nb-text">${poEsc(b.name)}</span>
+                    <span class="nb-zahl">${seiten}</span>
+                    ${eintragWerkzeuge(`umbenennenStarten('buch','${b.id}')`, `loescheBuch('${b.id}')`)}
+                </li>`;
+            }).join('');
+        }
+
+        function renderKapitel() {
+            const liste = el('kapitel');
+            const b = buchVon(wahl.buch);
+            if (!b) { liste.innerHTML = ''; return; }
+            if (!b.kapitel.length) {
+                liste.innerHTML = '<li class="nb-leer-klein">Noch kein Kapitel in diesem Notizbuch.</li>';
+                return;
+            }
+            liste.innerHTML = b.kapitel.map(k => {
+                const aktiv = k.id === wahl.kapitel;
+                if (benenntGerade && benenntGerade.art === 'kapitel' && benenntGerade.id === k.id) {
+                    return `<li class="nb-eintrag aktiv"><input class="nb-umbenennen" value="${poEsc(k.name)}"
+                        onblur="umbenennenFertig('kapitel','${k.id}', this.value)"
+                        onkeydown="if(event.key==='Enter')this.blur(); if(event.key==='Escape'){benenntGerade=null;render();}"></li>`;
+                }
+                return `<li class="nb-eintrag ${aktiv ? 'aktiv' : ''}" onclick="waehleKapitel('${k.id}')" ondblclick="umbenennenStarten('kapitel','${k.id}')">
+                    <span class="nb-text">${poEsc(k.name)}</span>
+                    <span class="nb-zahl">${k.seiten.length}</span>
+                    ${eintragWerkzeuge(`umbenennenStarten('kapitel','${k.id}')`, `loescheKapitel('${k.id}')`)}
+                </li>`;
+            }).join('');
+        }
+
+        const datumKurz = t => new Date(t || Date.now()).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+
+        function renderSeiten() {
+            const liste = el('seiten');
+            el('seiten-kopf').style.display = '';
+            const k = kapitelVon(wahl.buch, wahl.kapitel);
+            if (!k) { liste.innerHTML = ''; return; }
+            if (!k.seiten.length) {
+                liste.innerHTML = '<li class="nb-leer-klein">Noch keine Seite in diesem Kapitel.</li>';
+                return;
+            }
+            liste.innerHTML = k.seiten.map(s => `
+                <li class="nb-eintrag ${s.id === wahl.seite ? 'aktiv' : ''}" onclick="waehleSeite('${s.id}')">
+                    <span class="nb-seiten-zeile">
+                        <span class="nb-text">${poEsc(s.titel || 'Ohne Titel')}</span>
+                        ${eintragWerkzeuge(`waehleSeite('${s.id}')`, `loescheSeite('${s.id}')`).replace('Umbenennen', 'Öffnen')}
+                    </span>
+                    <span class="nb-datum">${datumKurz(s.geaendert)}</span>
+                </li>`).join('');
+        }
+
+        function renderEditor() {
+            const s = aktuelleSeite();
+            const bereich = el('editor-bereich');
+            const nichts = el('nb-nichts');
+            if (!s) {
+                bereich.classList.add('nb-ohne-seite');
+                nichts.innerHTML = daten.buecher.length
+                    ? '<div class="po-empty">Keine Seite ausgewählt.<br>Links auf + tippen, um eine anzulegen.</div>'
+                    : '<div class="po-empty">Noch kein Notizbuch.<br>Oben links auf + tippen, um das erste anzulegen.</div>';
+                return;
+            }
+            bereich.classList.remove('nb-ohne-seite');
+            el('seiten-titel').value = s.titel || '';
+            const b = buchVon(wahl.buch), k = kapitelVon(wahl.buch, wahl.kapitel);
+            el('pfad').textContent = `${b ? b.name : ''} › ${k ? k.name : ''}`;
+            el('inhalt').innerHTML = s.html || '';
+            bilderAufloesen(el('inhalt'));
+            el('rollen').scrollTop = 0;
+        }
+
+        /* ---------- Inhalt übernehmen ---------- */
+
+        function titelGeaendert(wert) {
+            const s = aktuelleSeite();
+            if (!s) return;
+            s.titel = wert;
+            s.geaendert = Date.now();
+            if (!sucheAktiv) renderSeiten();
+            sichernSpaeter();
+        }
+
+        // Die Objekt-URLs der Bilder gelten nur in dieser Sitzung und dürfen
+        // nicht mitgespeichert werden — gesichert wird allein die Kennung.
+        function inhaltLesen() {
+            const kopie = el('inhalt').cloneNode(true);
+            kopie.querySelectorAll('img[data-bild]').forEach(i => i.removeAttribute('src'));
+            kopie.querySelectorAll('[contenteditable]').forEach(i => i.removeAttribute('contenteditable'));
+            kopie.querySelectorAll('img.gewaehlt').forEach(i => i.classList.remove('gewaehlt'));
+            return kopie.innerHTML;
+        }
+
+        function seiteUebernehmen() {
+            const s = aktuelleSeite();
+            if (!s || !el('inhalt')) return;
+            const neu = inhaltLesen();
+            if (neu !== s.html) { s.html = neu; s.geaendert = Date.now(); }
+        }
+
+        el('inhalt').addEventListener('input', () => {
+            const s = aktuelleSeite();
+            if (!s) return;
+            s.html = inhaltLesen();
+            s.geaendert = Date.now();
+            sichernSpaeter();
+        });
+
+        /* ---------- Formatieren ---------- */
+
+        try { document.execCommand('styleWithCSS', false, false); } catch (e) { /* ältere Browser */ }
+
+        function befehl(bef, wert = null) {
+            el('inhalt').focus();
+            document.execCommand(bef, false, wert);
+            leisteAktualisieren();
+            inhaltGeaendert();
+        }
+
+        function block(tag) {
+            el('inhalt').focus();
+            const istSchon = document.queryCommandValue('formatBlock').toLowerCase().replace(/[<>]/g, '') === tag;
+            document.execCommand('formatBlock', false, istSchon ? 'p' : tag);
+            leisteAktualisieren();
+            inhaltGeaendert();
+        }
+
+        function inhaltGeaendert() {
+            const s = aktuelleSeite();
+            if (!s) return;
+            s.html = inhaltLesen();
+            s.geaendert = Date.now();
+            sichernSpaeter();
+        }
+
+        el('leiste').addEventListener('mousedown', e => {
+            // Auswahl im Text darf beim Klick auf die Leiste nicht verloren gehen
+            if (e.target.closest('.nb-knopf')) e.preventDefault();
+        });
+
+        el('leiste').addEventListener('click', e => {
+            const k = e.target.closest('.nb-knopf');
+            if (!k) return;
+            if (k.dataset.bef) befehl(k.dataset.bef, k.dataset.wert || null);
+            else if (k.dataset.block) block(k.dataset.block);
+        });
+
+        function leisteAktualisieren() {
+            document.querySelectorAll('.nb-knopf[data-bef]').forEach(k => {
+                let an = false;
+                try { an = document.queryCommandState(k.dataset.bef); } catch (e) { /* nicht abfragbar */ }
+                k.classList.toggle('an', !!an);
+            });
+            let blockName = '';
+            try { blockName = (document.queryCommandValue('formatBlock') || '').toLowerCase().replace(/[<>]/g, ''); } catch (e) { /* nicht abfragbar */ }
+            document.querySelectorAll('.nb-knopf[data-block]').forEach(k => {
+                k.classList.toggle('an', k.dataset.block === blockName);
+            });
+            const sel = window.getSelection();
+            const inAufgabe = sel.rangeCount && sel.anchorNode &&
+                (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('ul.nb-aufgaben');
+            el('knopf-aufgaben').classList.toggle('an', !!inAufgabe);
+        }
+
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement === el('inhalt')) leisteAktualisieren();
+        });
+
+        // Aufgabenliste: aus einer gewöhnlichen Liste wird eine mit Haken und zurück
+        function aufgabenliste() {
+            el('inhalt').focus();
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const start = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+            const vorhanden = start.closest('ul.nb-aufgaben');
+            if (vorhanden) {
+                vorhanden.classList.remove('nb-aufgaben');
+                vorhanden.querySelectorAll('li').forEach(li => li.classList.remove('erledigt'));
+            } else {
+                const liste = start.closest('ul');
+                if (liste) liste.classList.add('nb-aufgaben');
+                else {
+                    document.execCommand('insertUnorderedList');
+                    const neu = (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('ul');
+                    if (neu) neu.classList.add('nb-aufgaben');
+                }
+            }
+            leisteAktualisieren();
+            inhaltGeaendert();
+        }
+
+        // Klick auf das Kästchen hakt ab — der Textbereich bleibt zum Schreiben
+        el('inhalt').addEventListener('click', e => {
+            const li = e.target.closest('ul.nb-aufgaben > li');
+            if (li && e.clientX < li.getBoundingClientRect().left) {
+                li.classList.toggle('erledigt');
+                inhaltGeaendert();
+                return;
+            }
+            document.querySelectorAll('.nb-blatt img.gewaehlt').forEach(i => i.classList.remove('gewaehlt'));
+            if (e.target.tagName === 'IMG') e.target.classList.add('gewaehlt');
+        });
+
+        async function linkSetzen() {
+            const sel = window.getSelection();
+            const text = sel.toString();
+            const a = await poAsk('Verweis einfügen', [
+                { name: 'url', label: 'Adresse', platzhalter: 'https://…' },
+                { name: 'text', label: 'Beschriftung', wert: text, pflicht: false }
+            ], { ok: 'Einfügen' });
+            if (!a || !a.url) return;
+            el('inhalt').focus();
+            if (text) document.execCommand('createLink', false, a.url);
+            else document.execCommand('insertHTML', false,
+                `<a href="${poEsc(a.url)}" target="_blank" rel="noopener">${poEsc(a.text || a.url)}</a>`);
+            inhaltGeaendert();
+        }
+
+        /* ---------- Bilder ---------- */
+
+        async function bildAblegen(blob) {
+            const id = neueId('img');
+            await dbLauf('bilder', 'readwrite', s => s.put({ id, blob, typ: blob.type, groesse: blob.size }));
+            return id;
+        }
+
+        function bildUrl(id, blob) {
+            if (bildUrls.has(id)) return bildUrls.get(id);
+            const url = URL.createObjectURL(blob);
+            bildUrls.set(id, url);
+            return url;
+        }
+
+        async function bilderAufloesen(wurzel) {
+            const offen = Array.from(wurzel.querySelectorAll('img[data-bild]:not([src])'));
+            for (const img of offen) {
+                const id = img.dataset.bild;
+                if (bildUrls.has(id)) { img.src = bildUrls.get(id); continue; }
+                try {
+                    const rec = await dbLauf('bilder', 'readonly', s => s.get(id));
+                    if (rec && rec.blob) img.src = bildUrl(id, rec.blob);
+                    else img.replaceWith(document.createTextNode('[Bild fehlt]'));
+                } catch (e) { /* Bild bleibt leer */ }
+            }
+        }
+
+        async function bildEinfuegen(blob) {
+            if (!db) { poToast('Ohne Browser-Speicher lassen sich keine Bilder ablegen.', 4500); return; }
+            if (blob.size > 12 * 1024 * 1024) { poToast('Das Bild ist größer als 12 MB.', 4000); return; }
+            const id = await bildAblegen(blob);
+            const url = bildUrl(id, blob);
+            el('inhalt').focus();
+            document.execCommand('insertHTML', false, `<img data-bild="${id}" src="${url}" alt="">`);
+            inhaltGeaendert();
+        }
+
+        function bilderAusDatei(input) {
+            const dateien = Array.from(input.files || []);
+            input.value = '';
+            dateien.filter(f => f.type.startsWith('image/')).forEach(bildEinfuegen);
+        }
+
+        el('inhalt').addEventListener('paste', async e => {
+            const items = Array.from(e.clipboardData.items || []);
+            const bild = items.find(i => i.type.startsWith('image/'));
+            if (bild) {
+                e.preventDefault();
+                const blob = bild.getAsFile();
+                if (blob) await bildEinfuegen(blob);
+                return;
+            }
+            // Eingefügtes HTML entschärfen, bevor es im Blatt landet
+            const html = e.clipboardData.getData('text/html');
+            if (html) {
+                e.preventDefault();
+                document.execCommand('insertHTML', false, htmlSaeubern(html));
+                inhaltGeaendert();
+            }
+        });
+
+        el('inhalt').addEventListener('dragover', e => e.preventDefault());
+        el('inhalt').addEventListener('drop', async e => {
+            const dateien = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/'));
+            if (!dateien.length) return;
+            e.preventDefault();
+            for (const f of dateien) await bildEinfuegen(f);
+        });
+
+        function htmlSaeubern(html) {
+            const d = document.createElement('div');
+            d.innerHTML = html;
+            d.querySelectorAll('script, style, iframe, object, embed, link, meta').forEach(n => n.remove());
+            d.querySelectorAll('*').forEach(n => {
+                Array.from(n.attributes).forEach(a => {
+                    const name = a.name.toLowerCase();
+                    const wert = (a.value || '').trim().toLowerCase();
+                    if (name.startsWith('on')) n.removeAttribute(a.name);
+                    else if ((name === 'href' || name === 'src') && wert.startsWith('javascript:')) n.removeAttribute(a.name);
+                    else if (name === 'srcdoc') n.removeAttribute(a.name);
+                });
+            });
+            return d.innerHTML;
+        }
+
+        // Bilder, die auf keiner Seite mehr vorkommen, aus dem Speicher nehmen
+        async function bilderAufraeumen() {
+            if (!db) return;
+            try {
+                const benutzt = new Set();
+                const re = /data-bild="([^"]+)"/g;
+                daten.buecher.forEach(b => b.kapitel.forEach(k => k.seiten.forEach(s => {
+                    let m; const h = s.html || '';
+                    while ((m = re.exec(h)) !== null) benutzt.add(m[1]);
+                })));
+                const alle = await dbLauf('bilder', 'readonly', s => s.getAllKeys());
+                const weg = (alle || []).filter(id => !benutzt.has(id));
+                if (!weg.length) return;
+                await dbLauf('bilder', 'readwrite', s => { weg.forEach(id => s.delete(id)); return null; });
+                weg.forEach(id => {
+                    if (bildUrls.has(id)) { URL.revokeObjectURL(bildUrls.get(id)); bildUrls.delete(id); }
+                });
+            } catch (e) { /* Aufräumen ist nur Kür */ }
+        }
+
+        /* ---------- Suche ---------- */
+
+        let suchTimer = null;
+        function sucheLaeuft() {
+            clearTimeout(suchTimer);
+            suchTimer = setTimeout(sucheZeigen, 180);
+        }
+
+        function sucheLeeren() {
+            el('suche').value = '';
+            sucheAktiv = false;
+        }
+
+        const nurText = html => {
+            const d = document.createElement('div');
+            d.innerHTML = html || '';
+            return (d.textContent || '').replace(/\s+/g, ' ').trim();
+        };
+
+        function sucheZeigen() {
+            const frage = el('suche').value.trim().toLowerCase();
+            const liste = el('seiten');
+            if (!frage) { sucheAktiv = false; renderSeiten(); return; }
+            sucheAktiv = true;
+            el('seiten-kopf').style.display = 'none';
+
+            const treffer = [];
+            daten.buecher.forEach(b => b.kapitel.forEach(k => k.seiten.forEach(s => {
+                const text = nurText(s.html);
+                const inTitel = (s.titel || '').toLowerCase().includes(frage);
+                const i = text.toLowerCase().indexOf(frage);
+                if (!inTitel && i < 0) return;
+                let auszug = '';
+                if (i >= 0) {
+                    const von = Math.max(0, i - 32);
+                    const roh = text.slice(von, i + frage.length + 48);
+                    auszug = (von > 0 ? '… ' : '') + poEsc(roh).replace(
+                        new RegExp(frage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), m => '<b>' + m + '</b>');
+                }
+                treffer.push({ b, k, s, auszug });
+            })));
+
+            liste.innerHTML = treffer.length
+                ? treffer.map(t => `
+                    <li class="nb-eintrag" style="flex-direction:column;align-items:stretch" onclick="springeZu('${t.b.id}','${t.k.id}','${t.s.id}')">
+                        <span class="nb-text" style="font-weight:700;color:var(--po-ink)">${poEsc(t.s.titel || 'Ohne Titel')}</span>
+                        <span class="nb-treffer-stelle">${poEsc(t.b.name)} › ${poEsc(t.k.name)}</span>
+                        ${t.auszug ? `<span class="nb-treffer-text">${t.auszug}</span>` : ''}
+                    </li>`).join('')
+                : '<li class="nb-leer-klein">Nichts gefunden.</li>';
+        }
+
+        /* ---------- Sichern und Öffnen als Datei ---------- */
+
+        function blobZuDataUrl(blob) {
+            return new Promise(res => {
+                const r = new FileReader();
+                r.onload = () => res(r.result);
+                r.readAsDataURL(blob);
+            });
+        }
+
+        function dataUrlZuBlob(url) {
+            const [kopf, rumpf] = String(url).split(',');
+            const typ = (kopf.match(/data:([^;]+)/) || [, 'image/png'])[1];
+            const roh = atob(rumpf);
+            const bytes = new Uint8Array(roh.length);
+            for (let i = 0; i < roh.length; i++) bytes[i] = roh.charCodeAt(i);
+            return new Blob([bytes], { type: typ });
+        }
+
+        async function exportJSON() {
+            await sichernJetzt();
+            try {
+                const benutzt = new Set();
+                const re = /data-bild="([^"]+)"/g;
+                daten.buecher.forEach(b => b.kapitel.forEach(k => k.seiten.forEach(s => {
+                    let m; const h = s.html || '';
+                    while ((m = re.exec(h)) !== null) benutzt.add(m[1]);
+                })));
+                const bilder = [];
+                for (const id of benutzt) {
+                    const rec = db ? await dbLauf('bilder', 'readonly', s => s.get(id)) : null;
+                    if (rec && rec.blob) bilder.push({ id, daten: await blobZuDataUrl(rec.blob) });
+                }
+                const paket = { format: 'pocketops-notizbuch', version: 1, gesichertAm: new Date().toISOString(), buecher: daten.buecher, bilder };
+                poDownload('notizbuch.json', JSON.stringify(paket));
+                poToast(`Gesichert: ${daten.buecher.length} Notizbücher, ${bilder.length} Bilder`);
+            } catch (e) {
+                poToast('Das Sichern ist fehlgeschlagen: ' + e.message, 5000);
+            }
+        }
+
+        function importJSON(input) {
+            poReadFile(input, async text => {
+                const p = JSON.parse(text);
+                if (!p || !Array.isArray(p.buecher)) { poToast('Die Datei enthält kein Notizbuch.', 4000); return; }
+                const ja = await poConfirm(
+                    `${p.buecher.length} Notizbücher werden geöffnet. Der jetzige Stand wird dabei ersetzt.`,
+                    { titel: 'Notizbuch öffnen', ja: 'Ja, ersetzen', gefahr: true });
+                if (!ja) return;
+                for (const bild of (p.bilder || [])) {
+                    try { await dbLauf('bilder', 'readwrite', s => s.put({ id: bild.id, blob: dataUrlZuBlob(bild.daten) })); }
+                    catch (e) { /* einzelnes Bild übersprungen */ }
+                }
+                bildUrls.forEach(u => URL.revokeObjectURL(u));
+                bildUrls.clear();
+                daten = { version: 1, buecher: pruefen(p.buecher) };
+                ersteWahl();
+                render();
+                await sichernJetzt();
+                poToast(`Geöffnet: ${daten.buecher.length} Notizbücher`);
+            });
+        }
+
+        /* ---------- Aufbau prüfen ---------- */
+
+        function pruefen(buecher) {
+            return (Array.isArray(buecher) ? buecher : []).map(b => ({
+                id: String(b.id || neueId('b')),
+                name: String(b.name || 'Notizbuch'),
+                kapitel: (Array.isArray(b.kapitel) ? b.kapitel : []).map(k => ({
+                    id: String(k.id || neueId('k')),
+                    name: String(k.name || 'Kapitel'),
+                    seiten: (Array.isArray(k.seiten) ? k.seiten : []).map(s => ({
+                        id: String(s.id || neueId('s')),
+                        titel: String(s.titel || 'Ohne Titel'),
+                        html: htmlSaeubern(String(s.html || '')),
+                        geaendert: Number(s.geaendert) || Date.now()
+                    }))
+                }))
+            }));
+        }
+
+        function ersteWahl() {
+            const b = daten.buecher[0] || null;
+            const k = b && b.kapitel[0] ? b.kapitel[0] : null;
+            const s = k && k.seiten[0] ? k.seiten[0] : null;
+            wahl = { buch: b ? b.id : null, kapitel: k ? k.id : null, seite: s ? s.id : null };
+        }
+
+        /* ---------- Tastatur ---------- */
+
+        document.addEventListener('keydown', e => {
+            const strg = e.ctrlKey || e.metaKey;
+            if (strg && e.key.toLowerCase() === 's') { e.preventDefault(); sichernJetzt(); }
+            if (strg && e.key.toLowerCase() === 'f') { e.preventDefault(); el('suche').focus(); el('suche').select(); }
+            if (strg && e.key === 'Enter') { e.preventDefault(); neueSeite(); }
+            if (e.key === 'Escape' && document.activeElement === el('suche')) { sucheLeeren(); render(); }
+        });
+
+        window.addEventListener('beforeunload', () => { seiteUebernehmen(); });
+
+        /* ---------- Start ---------- */
+
+        (async function start() {
+            try {
+                db = await dbOeffnen();
+                const gespeichert = await dbLauf('kv', 'readonly', s => s.get('daten'));
+                if (gespeichert && Array.isArray(gespeichert.buecher)) daten = { version: 1, buecher: pruefen(gespeichert.buecher) };
+            } catch (e) {
+                poToast('Der Browser-Speicher ist nicht verfügbar. Notizen bleiben nur bis zum Neuladen.', 6000);
+            }
+
+            if (!daten.buecher.length) {
+                daten.buecher = [{
+                    id: neueId('b'), name: 'Mein Notizbuch',
+                    kapitel: [{
+                        id: neueId('k'), name: 'Allgemein',
+                        seiten: [{
+                            id: neueId('s'), titel: 'Willkommen', geaendert: Date.now(),
+                            html: '<p>Links die <b>Notizbücher</b> und ihre <b>Kapitel</b>, daneben die <b>Seiten</b>, hier der Text.</p>'
+                                + '<ul class="nb-aufgaben"><li>Auf das Kästchen tippen hakt ab</li><li class="erledigt">So sieht erledigt aus</li></ul>'
+                                + '<p>Bilder lassen sich einfügen (Strg+V) oder in das Blatt ziehen. Ein Doppelklick auf einen Namen links benennt ihn um.</p>'
+                        }]
+                    }]
+                }];
+            }
+            ersteWahl();
+            render();
+            await bilderAufraeumen();
+        })();
+    </script>
+</body>
+</html>

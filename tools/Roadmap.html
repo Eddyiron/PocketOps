@@ -1,0 +1,2483 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap · PocketOps</title>
+  <!-- PO-ICON:ANFANG (Urfassung: _design/po-icon.svg · nachziehen mit _design/sync.mjs) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E %3Cdefs%3E %3ClinearGradient id='po' x1='0' y1='0' x2='32' y2='32' gradientUnits='userSpaceOnUse'%3E %3Cstop stop-color='%239E292B'/%3E %3Cstop offset='1' stop-color='%2339756F'/%3E %3C/linearGradient%3E %3C/defs%3E %3Crect width='32' height='32' rx='7.5' fill='url(%23po)'/%3E %3Cpath d='M11.4 11.6V9.8a2.2 2.2 0 0 1 2.2-2.2h4.8a2.2 2.2 0 0 1 2.2 2.2v1.8' fill='none' stroke='%23fff' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'/%3E %3Crect x='5' y='11.2' width='22' height='13.8' rx='2.6' fill='%23fff'/%3E %3Crect x='5' y='17.2' width='22' height='1.7' fill='url(%23po)'/%3E %3C/svg%3E">
+  <!-- PO-ICON:ENDE -->
+    <style>
+        /* PO-TOKENS:ANFANG (Urfassung: _design/po-tokens.css · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME GESTALTUNG
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft. Wird hier etwas
+           geändert, muss es in alle Werkzeuge nachgezogen werden.
+           ====================================================================== */
+        /* Breite und Höhe schließen Innenabstand und Rahmen ein. Ohne das rechnet
+           der Browser sie obendrauf, und eine Angabe wie width:100% ragt über ihren
+           Platz hinaus. */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            /* Markenfarben */
+            --po-accent:      #9E292B;
+            --po-accent-dark: #852224;
+            --po-teal:        #39756F;
+            --po-teal-dark:   #2F635E;
+            --po-slate:       #697896;
+            --po-frost:       #81BED7;
+            --po-frost-soft:  #D9F3FF;
+            --po-teal-soft:   #E8F5F1;
+            --po-slate-soft:  #E0E8F8;
+
+            /* Flächen */
+            --po-bg:          #F1F5F9;
+            --po-surface:     #FFFFFF;
+            --po-surface-2:   #F8FAFC;
+            --po-surface-3:   #E2E8F0;
+            --po-stage:       #CBD5E1;
+
+            /* Kopfzeile */
+            --po-chrome:      #0F172A;
+            --po-chrome-2:    #1E293B;
+            --po-chrome-line: #334155;
+            --po-on-chrome:   #F8FAFC;
+            --po-on-chrome-2: #94A3B8;
+
+            /* Text */
+            --po-ink:         #1E293B;
+            --po-ink-2:       #475569;
+            --po-ink-3:       #94A3B8;
+
+            /* Linien */
+            --po-line:        #E2E8F0;
+            --po-line-2:      #CBD5E1;
+
+            /* Zustände */
+            --po-ok:          #39756F;
+            --po-warn:        #D89B2B;
+            --po-bad:         #9E292B;
+
+            /* Maße */
+            --po-r-sm:   4px;
+            --po-r:      6px;
+            --po-r-lg:  10px;
+            --po-r-pill: 999px;
+            --po-head-h: 64px;
+            --po-shadow:    0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .10);
+            --po-shadow-lg: 0 10px 24px -8px rgba(15, 23, 42, .25);
+            --po-font: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+            --po-mono: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+        }
+
+        /* ---------- Seitengerüst ---------- */
+        .po-body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--po-bg);
+            color: var(--po-ink);
+            font-family: var(--po-font);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+        .po-main { flex: 1; overflow: auto; padding: 20px; }
+        .po-wrap { max-width: 1280px; margin: 0 auto; }
+        .po-wrap--wide { max-width: 1600px; margin: 0 auto; }
+        .po-split { display: grid; gap: 16px; align-items: start; }
+        .po-split--1-2 { grid-template-columns: minmax(280px, 1fr) 2fr; }
+        .po-split--2-1 { grid-template-columns: 2fr minmax(280px, 1fr); }
+        .po-split--1-1 { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 1000px) {
+            .po-split--1-2, .po-split--2-1, .po-split--1-1 { grid-template-columns: 1fr; }
+        }
+        .po-stack > * + * { margin-top: 12px; }
+        .po-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        /* ---------- Kopfzeile und Marke ---------- */
+        .po-head {
+            height: var(--po-head-h);
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 0 20px;
+            flex-shrink: 0;
+            box-shadow: var(--po-shadow);
+            position: relative;
+            z-index: 20;
+        }
+        .po-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .po-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--po-r);
+            padding: 4px 6px;
+            margin-left: -6px;
+            transition: background-color .15s;
+        }
+        a.po-brand:hover { background: var(--po-chrome-2); }
+        .po-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--po-r-lg);
+            background: linear-gradient(135deg, var(--po-accent), var(--po-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25);
+        }
+        .po-mark svg { width: 19px; height: 19px; display: block; }
+        .po-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+        .po-line-name {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--po-on-chrome-2);
+        }
+        .po-tool-name { font-size: 17px; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+        .po-chip {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--po-on-chrome-2);
+            background: var(--po-chrome-2);
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            padding: 3px 9px;
+            white-space: nowrap;
+        }
+        .po-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .po-head-sep { width: 1px; height: 24px; background: var(--po-chrome-line); flex-shrink: 0; }
+
+        /* ---------- Sprache und Anleitung in der Kopfzeile ----------
+           Beides setzt po-base.js selbst in die Kopfzeile, links vor die
+           Aktionen des Werkzeugs: es gehört zur Reihe, nicht zum Werkzeug. */
+        .po-meta { display: flex; align-items: center; gap: 8px; }
+        .po-sprach {
+            display: inline-flex;
+            border: 1px solid var(--po-chrome-line);
+            border-radius: var(--po-r-pill);
+            overflow: hidden;
+            background: var(--po-chrome-2);
+        }
+        .po-sprach button {
+            font: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            padding: 5px 10px;
+            border: none;
+            background: transparent;
+            color: var(--po-on-chrome-2);
+            cursor: pointer;
+            transition: background-color .15s, color .15s;
+        }
+        .po-sprach button:hover { color: #fff; }
+        .po-sprach button[aria-pressed="true"] { background: var(--po-accent); color: #fff; }
+        .po-sprach button:focus-visible { outline: 2px solid var(--po-frost); outline-offset: -2px; }
+        .po-frage {
+            font: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E2E8F0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-frage:hover { background: #2B3A4F; color: #fff; }
+        .po-frage:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Der Trinkgeldknopf steht neben dem Fragezeichen und ist genauso gebaut. Nur
+           das Herz trägt Farbe — auffallen soll er, drängeln nicht. */
+        .po-trinkgeld {
+            font: inherit;
+            font-size: 13px;
+            line-height: 1;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+            border-radius: var(--po-r-pill);
+            border: 1px solid var(--po-chrome-line);
+            background: var(--po-chrome-2);
+            color: #E79A9B;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color .15s, color .15s;
+        }
+        .po-trinkgeld:hover { background: #2B3A4F; color: #fff; }
+        .po-trinkgeld:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+
+        /* Ein Verweis, der wie ein Knopf aussieht, bringt die Unterstreichung mit. */
+        a.po-btn { text-decoration: none; }
+
+        /* ---------- Das Hilfefenster ---------- */
+        .po-hilfe { max-height: 68vh; overflow: auto; }
+        .po-hilfe p { line-height: 1.55; }
+        .po-hilfe a { color: var(--po-teal); font-weight: 600; }
+        .po-hilfe-titel {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 6px;
+        }
+        .po-hilfe-liste { margin: 0; padding-left: 20px; }
+        .po-hilfe-liste li { margin-bottom: 5px; line-height: 1.5; }
+        .po-hilfe-teil { border-top: 1px solid var(--po-line); margin-top: 14px; padding-top: 12px; }
+
+        /* ---------- Schaltflächen ---------- */
+        .po-btn {
+            font: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--po-r);
+            border: 1px solid var(--po-line-2);
+            background: var(--po-surface);
+            color: var(--po-ink-2);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+        .po-btn:hover { background: var(--po-surface-2); border-color: var(--po-slate); color: var(--po-ink); }
+        .po-btn:active { transform: translateY(1px); }
+        .po-btn:focus-visible { outline: 2px solid var(--po-frost); outline-offset: 1px; }
+        .po-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+        .po-head .po-btn { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #E2E8F0; }
+        .po-head .po-btn:hover { background: #2B3A4F; border-color: #475569; color: #fff; }
+
+        .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+        .po-head .po-btn--primary { background: var(--po-accent); border-color: var(--po-accent); color: #fff; }
+        .po-head .po-btn--primary:hover { background: var(--po-accent-dark); border-color: var(--po-accent-dark); color: #fff; }
+
+        .po-btn--go { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+        .po-btn--go:hover { background: var(--po-teal-dark); border-color: var(--po-teal-dark); color: #fff; }
+
+        .po-btn--danger { color: var(--po-bad); border-color: #FECACA; background: #FEF2F2; }
+        .po-btn--danger:hover { background: #FEE2E2; border-color: #FCA5A5; color: #7F1D1D; }
+        .po-head .po-btn--danger { background: var(--po-chrome-2); border-color: var(--po-chrome-line); color: #FCA5A5; }
+        .po-head .po-btn--danger:hover { background: #4C1D1D; border-color: #991B1B; color: #FEE2E2; }
+
+        .po-btn--ghost { background: transparent; border-color: transparent; color: var(--po-ink-3); padding: 5px 7px; }
+        .po-btn--ghost:hover { background: var(--po-surface-3); color: var(--po-ink); border-color: transparent; }
+
+        .po-btn--sm { font-size: 11px; padding: 4px 8px; }
+        .po-btn--block { width: 100%; justify-content: center; }
+
+        /* kleines rundes Löschen-Kreuz in Listen und Tabellen */
+        .po-x {
+            font: inherit;
+            font-size: 10px;
+            line-height: 1;
+            width: 18px;
+            height: 18px;
+            border-radius: var(--po-r-pill);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--po-ink-3);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background-color .15s, color .15s;
+        }
+        .po-x:hover { background: #FEE2E2; color: var(--po-bad); }
+
+        /* ---------- Panels und Abschnitte ---------- */
+        .po-panel {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+        }
+        .po-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--po-surface-2);
+            border-bottom: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg) var(--po-r-lg) 0 0;
+        }
+        .po-panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--po-ink-2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .po-panel-body { padding: 14px; }
+        .po-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--po-ink-3);
+            margin: 0 0 8px;
+        }
+        .po-hint {
+            font-size: 11px;
+            color: var(--po-ink-2);
+            background: var(--po-surface-2);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r);
+            padding: 10px 12px;
+            line-height: 1.5;
+        }
+
+        /* ---------- Eingabefelder ---------- */
+        .po-label { font-size: 11px; font-weight: 600; color: var(--po-ink-2); display: block; margin-bottom: 4px; }
+        .po-input, .po-select, .po-textarea {
+            font: inherit;
+            font-size: 12px;
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid var(--po-line-2);
+            border-radius: var(--po-r);
+            background: var(--po-surface);
+            color: var(--po-ink);
+            box-sizing: border-box;
+        }
+        /* Ein Farbfeld füllt der Browser selbst aus. Ohne eigene Höhe fiele es
+           gegenüber den anderen Feldern zusammen, und der Innenabstand ließe den
+           Farbfleck zu klein wirken. */
+        .po-input[type="color"] { height: 32px; padding: 3px; cursor: pointer; }
+        .po-input:focus, .po-select:focus, .po-textarea:focus {
+            outline: none;
+            border-color: var(--po-frost);
+            box-shadow: 0 0 0 3px rgba(129, 190, 215, .25);
+        }
+        .po-textarea { min-height: 72px; resize: vertical; }
+        .po-search { font-size: 13px; padding: 10px 14px; border-radius: var(--po-r-lg); }
+        .po-num { width: 58px; text-align: center; padding: 5px 4px; }
+        .po-field { display: flex; gap: 6px; align-items: center; }
+        .po-field .po-input { flex: 1; min-width: 0; }
+
+        .po-range { width: 100%; accent-color: var(--po-teal); }
+        .po-range-value { font-weight: 700; color: var(--po-teal); font-variant-numeric: tabular-nums; }
+
+        .po-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; font-weight: 600; color: var(--po-ink-2); cursor: pointer; }
+        .po-check input { width: 15px; height: 15px; margin-top: 1px; accent-color: var(--po-teal); flex-shrink: 0; }
+
+        /* ---------- Karten ---------- */
+        .po-card {
+            background: var(--po-surface);
+            border: 1px solid var(--po-line);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow);
+            padding: 14px;
+        }
+        .po-card--pick { cursor: pointer; transition: border-color .15s, background-color .15s; }
+        .po-card--pick:hover { border-color: var(--po-frost); background: var(--po-surface-2); }
+
+        /* ---------- Tabellen ---------- */
+        .po-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .po-table th, .po-table td { padding: 8px 10px; border: 1px solid var(--po-line); text-align: left; }
+        .po-table th {
+            background: var(--po-surface-2);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--po-ink-2);
+            white-space: nowrap;
+        }
+        .po-table tbody tr:nth-child(even) { background: var(--po-surface-2); }
+        .po-table--center th, .po-table--center td { text-align: center; }
+        .po-table--center th:first-child, .po-table--center td:first-child { text-align: left; }
+
+        /* ---------- Zustände ---------- */
+        .po-badge {
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--po-r-pill);
+            padding: 2px 8px;
+            border: 1px solid transparent;
+            display: inline-block;
+        }
+        .po-badge--ok   { color: var(--po-ok);  background: var(--po-teal-soft); border-color: #BFE3DA; }
+        .po-badge--warn { color: #92610F;       background: #FEF6E7;             border-color: #F5D9A0; }
+        .po-badge--bad  { color: var(--po-bad); background: #FEF2F2;             border-color: #FECACA; }
+        .po-badge--neutral { color: var(--po-ink-2); background: var(--po-surface-3); border-color: var(--po-line-2); }
+
+        .po-empty { text-align: center; color: var(--po-ink-3); font-size: 12px; padding: 28px 16px; line-height: 1.6; }
+
+        /* ---------- Hinweisfenster unten rechts ---------- */
+        .po-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 200;
+            background: var(--po-chrome);
+            color: var(--po-on-chrome);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 11px 16px;
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            max-width: 340px;
+            line-height: 1.45;
+        }
+
+        /* ---------- Dialog ---------- */
+        .po-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .55);
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .po-dialog {
+            background: var(--po-surface);
+            border-radius: var(--po-r-lg);
+            box-shadow: var(--po-shadow-lg);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+        .po-dialog-head { padding: 16px 18px 0; font-size: 15px; font-weight: 700; color: var(--po-ink); }
+        .po-dialog-body { padding: 10px 18px 16px; font-size: 13px; color: var(--po-ink-2); line-height: 1.55; }
+        .po-dialog-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--po-surface-2);
+            border-top: 1px solid var(--po-line);
+        }
+
+        /* ---------- Bildlaufleisten ---------- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--po-line-2); border-radius: var(--po-r-pill); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--po-slate); }
+
+        /* ---------- Druck ---------- */
+        @media print {
+            .po-head, .po-toast, .po-backdrop, .po-no-print { display: none !important; }
+            .po-body { height: auto; overflow: visible; }
+            .po-main { overflow: visible; padding: 0; }
+            .po-panel { box-shadow: none; border-color: #ccc; }
+        }
+        /* PO-TOKENS:ENDE */
+
+        /* ---------- nur für dieses Werkzeug ---------- */
+
+        /* --- Seitenleiste mit den Roadmaps --- */
+        .rm-flaeche {
+            flex: 1; display: grid; grid-template-columns: 212px 1fr;
+            overflow: hidden; transition: grid-template-columns .18s ease;
+        }
+        .rm-flaeche.zu { grid-template-columns: 0 1fr; }
+
+        .rm-seite {
+            display: flex; flex-direction: column; min-width: 0;
+            background: var(--po-surface); border-right: 1px solid var(--po-line); overflow: hidden;
+        }
+        .rm-flaeche.zu .rm-seite { border-right: none; }
+        .rm-seitenkopf {
+            display: flex; align-items: center; gap: 4px;
+            padding: 9px 8px 9px 14px; flex-shrink: 0;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--po-ink-3);
+        }
+        .rm-seitenkopf > span { flex: 1; min-width: 0; }
+        .rm-klein {
+            font: inherit; font-size: 15px; line-height: 1; width: 22px; height: 22px; padding: 0;
+            border: 1px solid transparent; background: transparent; color: var(--po-ink-3);
+            border-radius: var(--po-r-sm); cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .rm-klein:hover { background: var(--po-surface-3); border-color: transparent; color: var(--po-teal); }
+
+        .rm-liste { list-style: none; margin: 0; padding: 0 8px 10px; overflow-y: auto; flex: 1; }
+        .rm-eintrag {
+            display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: var(--po-r);
+            cursor: pointer; font-size: 12.5px; color: var(--po-ink-2); line-height: 1.35;
+        }
+        .rm-eintrag:hover { background: var(--po-surface-3); }
+        .rm-eintrag.aktiv { background: var(--po-surface); color: var(--po-ink); font-weight: 700; box-shadow: var(--po-shadow); }
+        .rm-eintragname { flex: 1; min-width: 0; border: none; background: transparent; font: inherit; font-size: 12.5px; color: inherit; font-weight: inherit; padding: 1px 3px; }
+        .rm-eintragname:focus { outline: none; background: var(--po-surface-2); border-radius: var(--po-r-sm); box-shadow: 0 0 0 2px rgba(129,190,215,.35); }
+        .rm-werkzeuge { display: flex; opacity: 0; transition: opacity .15s; }
+        .rm-eintrag:hover .rm-werkzeuge, .rm-eintrag.aktiv .rm-werkzeuge { opacity: 1; }
+
+        /* --- Hauptteil --- */
+        .rm-haupt { display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+        .rm-leiste {
+            display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+            padding: 7px 16px; background: var(--po-surface);
+            border-bottom: 1px solid var(--po-line); flex-shrink: 0;
+        }
+        .rm-knopf {
+            font: inherit; font-size: 12.5px; height: 30px; padding: 0 11px;
+            border: 1px solid var(--po-line-2); background: var(--po-surface); color: var(--po-ink-2);
+            border-radius: var(--po-r); cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .rm-knopf:hover { background: var(--po-surface-2); color: var(--po-ink); }
+        .rm-knopf.an { background: var(--po-teal); border-color: var(--po-teal); color: #fff; }
+        .rm-knopf.schmal { width: 32px; padding: 0; font-size: 14px; }
+        .rm-trenner { width: 1px; height: 20px; background: var(--po-line); margin: 0 4px; flex-shrink: 0; }
+
+        /* Holt die ausgeblendete Leiste zurück. Steht im Hauptteil und nicht in
+           der Leiste — sonst verschwände er mit ihr. */
+        .rm-zeigen {
+            width: 30px; height: 30px; padding: 0; font-size: 15px; line-height: 1;
+            background: var(--po-surface); border: 1px solid var(--po-line-2); color: var(--po-ink-2);
+            border-radius: var(--po-r); cursor: pointer;
+            display: none; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .rm-flaeche.zu .rm-zeigen { display: inline-flex; }
+
+        /* --- Die Zeitachse --- */
+        /* Ein einziger rollender Kasten. Die Bahnennamen bleiben mit
+           position:sticky am linken Rand stehen, dadurch bleiben Name und Zeile
+           ohne Zutun auf gleicher Höhe — zwei getrennt rollende Hälften müsste
+           man von Hand gleichziehen. */
+        .rm-roll { flex: 1; overflow: auto; background: var(--po-bg); position: relative; }
+        .rm-innen { position: relative; min-height: 100%; }
+
+        .rm-zeile { display: flex; align-items: stretch; border-bottom: 1px solid var(--po-line); }
+
+        .rm-bahnname {
+            position: sticky; left: 0; z-index: 3; flex-shrink: 0;
+            width: 168px; box-sizing: border-box;
+            display: flex; align-items: flex-start; gap: 2px;
+            padding: 9px 8px 9px 14px;
+            background: var(--po-surface); border-right: 1px solid var(--po-line);
+        }
+        .rm-bahnfeld {
+            flex: 1; min-width: 0; border: none; background: transparent;
+            font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .07em;
+            text-transform: uppercase; color: var(--po-ink-2); padding: 2px 3px;
+        }
+        .rm-bahnfeld:focus { outline: none; background: var(--po-surface-2); border-radius: var(--po-r-sm); box-shadow: 0 0 0 2px rgba(129,190,215,.35); }
+        .rm-bahnwerkzeuge { display: flex; opacity: 0; transition: opacity .15s; }
+        .rm-bahnname:hover .rm-bahnwerkzeuge { opacity: 1; }
+        .rm-winzig {
+            font: inherit; font-size: 11px; line-height: 1; width: 17px; height: 17px; padding: 0;
+            border: none; background: transparent; color: var(--po-ink-3);
+            border-radius: var(--po-r-sm); cursor: pointer;
+        }
+        .rm-winzig:hover { background: var(--po-surface-3); color: var(--po-teal); }
+
+        .rm-spur { position: relative; flex-shrink: 0; cursor: crosshair; }
+
+        /* --- Kopfzeilen der Zeitachse --- */
+        .rm-kopf { position: sticky; top: 0; z-index: 5; background: var(--po-surface); }
+        .rm-kopf .rm-bahnname { z-index: 6; align-items: center; }
+        .rm-eckname {
+            font-size: 11px; font-weight: 700; letter-spacing: .07em;
+            text-transform: uppercase; color: var(--po-ink-3); padding: 2px 3px;
+        }
+        .rm-kopfspur { position: relative; flex-shrink: 0; height: 46px; }
+        .rm-jahr, .rm-spalte {
+            position: absolute; box-sizing: border-box;
+            border-left: 1px solid var(--po-line);
+            color: var(--po-ink-3); white-space: nowrap; overflow: hidden;
+        }
+        .rm-jahr {
+            top: 0; height: 22px; line-height: 22px; padding-left: 7px;
+            font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+        }
+        .rm-spalte {
+            top: 22px; height: 24px; line-height: 24px; padding-left: 5px;
+            font-size: 10.5px; border-top: 1px solid var(--po-line);
+        }
+        .rm-spalte.stark { border-left-color: var(--po-line-2); }
+
+        /* Die senkrechten Linien laufen über alle Bahnen. Sie liegen hinter den
+           Balken, deshalb ein eigener Kasten ganz unten im Stapel. */
+        .rm-raster { position: absolute; top: 0; bottom: 0; pointer-events: none; z-index: 0; }
+        .rm-linie { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--po-line); }
+        .rm-linie.stark { background: var(--po-line-2); }
+
+        .rm-heute {
+            position: absolute; top: 0; bottom: 0; width: 0; z-index: 4; pointer-events: none;
+            border-left: 2px dashed var(--po-accent);
+        }
+        .rm-heute::before {
+            content: attr(data-text); position: absolute; top: 26px; left: 4px;
+            font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+            color: var(--po-accent); background: rgba(255,255,255,.85); padding: 0 4px; border-radius: var(--po-r-sm);
+        }
+
+        /* --- Vorhaben und Meilensteine --- */
+        .rm-balken {
+            position: absolute; height: 26px; box-sizing: border-box;
+            border-radius: var(--po-r); color: #fff; z-index: 2;
+            display: flex; align-items: center; gap: 4px;
+            padding: 0 7px; cursor: grab; user-select: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.22);
+        }
+        .rm-balken.zieht { cursor: grabbing; opacity: .85; z-index: 9; }
+        .rm-balkentext {
+            flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-size: 12px; font-weight: 600;
+        }
+        .rm-balken .po-x { opacity: 0; color: #fff; flex-shrink: 0; }
+        .rm-balken:hover .po-x { opacity: .75; }
+        .rm-balken .po-x:hover { opacity: 1; }
+
+        /* Die Griffe sind absichtlich schmal: wer in der Mitte zieht, verschiebt
+           das Vorhaben, wer an der Kante zieht, ändert die Dauer. */
+        .rm-griff {
+            position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize;
+        }
+        .rm-griff-l { left: 0; border-radius: var(--po-r) 0 0 var(--po-r); }
+        .rm-griff-r { right: 0; border-radius: 0 var(--po-r) var(--po-r) 0; }
+        .rm-balken:hover .rm-griff { background: rgba(255,255,255,.28); }
+
+        .rm-stein {
+            position: absolute; height: 26px; z-index: 2;
+            display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none;
+            white-space: nowrap;
+        }
+        .rm-raute { width: 11px; height: 11px; transform: rotate(45deg); flex-shrink: 0; border-radius: 2px; margin-left: -5px; }
+        .rm-steintext { font-size: 11.5px; font-weight: 700; color: var(--po-ink-2); }
+        .rm-stein .po-x { opacity: 0; }
+        .rm-stein:hover .po-x { opacity: .8; }
+
+        /* --- Hinweis auf leerer Fläche --- */
+        .rm-hinweis {
+            position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
+            text-align: center; color: var(--po-ink-3); font-size: 13px; line-height: 1.7;
+            pointer-events: none; z-index: 1;
+        }
+        .rm-hinweis b { color: var(--po-ink-2); }
+    </style>
+</head>
+<body class="po-body">
+
+    <header class="po-head">
+        <div class="po-head-left">
+            <a class="po-brand" href="../Start_PocketOps.html" title="Zur PocketOps-Übersicht">
+                <span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>
+                <span class="po-brand-text">
+                    <span class="po-line-name">PocketOps</span>
+                    <span class="po-tool-name">Roadmap</span>
+                </span>
+            </a>
+            <span class="po-chip">Vorhaben über Monate legen</span>
+        </div>
+        <div class="po-head-actions">
+            <button class="po-btn" onclick="sichernDatei()">Sichern</button>
+            <button class="po-btn" onclick="document.getElementById('einlesen').click()">Öffnen</button>
+            <input type="file" id="einlesen" accept=".json,application/json" style="display:none" onchange="oeffnenDatei(this)">
+            <div class="po-head-sep"></div>
+            <button class="po-btn po-btn--danger" onclick="roadmapLeeren()">Leeren</button>
+            <button class="po-btn po-btn--primary" onclick="bildExport()">Als Bild speichern</button>
+            <button class="po-btn po-btn--go" onclick="neuesVorhabenMittig()">Neues Vorhaben</button>
+        </div>
+    </header>
+
+    <div class="rm-flaeche" id="rm-flaeche">
+
+        <aside class="rm-seite">
+            <div class="rm-seitenkopf">
+                <span>Roadmaps</span>
+                <button class="rm-klein" title="Neue Roadmap" onclick="neueRoadmap()">+</button>
+                <button class="rm-klein" title="Seitenleiste ausblenden" onclick="leisteUmschalten()">&laquo;</button>
+            </div>
+            <ul class="rm-liste" id="roadmaps"></ul>
+        </aside>
+
+        <main class="rm-haupt">
+            <div class="rm-leiste">
+                <button class="rm-zeigen" title="Roadmaps einblenden" onclick="leisteUmschalten()">&raquo;</button>
+                <button class="rm-knopf schmal" title="Nach links" onclick="rollen(-1)">&lsaquo;</button>
+                <button class="rm-knopf schmal" title="Nach rechts" onclick="rollen(1)">&rsaquo;</button>
+                <button class="rm-knopf" onclick="zuHeute()">Heute</button>
+                <div class="rm-trenner"></div>
+                <button class="rm-knopf" data-stufe="woche" onclick="stufeSetzen('woche')">Woche</button>
+                <button class="rm-knopf" data-stufe="monat" onclick="stufeSetzen('monat')">Monat</button>
+                <button class="rm-knopf" data-stufe="quartal" onclick="stufeSetzen('quartal')">Quartal</button>
+                <div class="rm-trenner"></div>
+                <button class="rm-knopf" onclick="neuesVorhabenMittig()">+ Vorhaben</button>
+                <button class="rm-knopf" onclick="neuerMeilenstein()">+ Meilenstein</button>
+                <button class="rm-knopf" onclick="neueBahn()">+ Bahn</button>
+                <div class="rm-trenner"></div>
+                <button class="rm-knopf schmal" id="k-zurueck" title="Rückgängig (Strg+Z)" onclick="zurueck()">&#8630;</button>
+                <button class="rm-knopf schmal" id="k-vor" title="Wiederholen (Strg+Y)" onclick="vor()">&#8631;</button>
+            </div>
+
+            <div class="rm-roll" id="roll">
+                <div class="rm-innen" id="innen"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        /* PO-SPRACHE:ANFANG (Urfassung: _design/sprache/Roadmap.js · nachziehen mit _design/sync.mjs) */
+        /* Roadmap · Anleitung und Wörterbuch */
+
+        const PO_HILFE = {
+            de: {
+                kurz: 'Vorhaben auf einer Zeitachse, nach Bahnen getrennt. Zeigt, was von wann bis wann läuft.',
+                schritte: [
+                    '<b>Doppelklick</b> auf eine Bahn legt dort ein Vorhaben an.',
+                    'Den Balken in der Mitte ziehen verschiebt ihn, an der <b>Kante</b> ziehen ändert die Dauer.',
+                    'Senkrecht ziehen bringt ein Vorhaben in eine andere Bahn. Doppelklick darauf öffnet Bahn, Daten und Farbe.'
+                ],
+                tipps: [
+                    'Woche, Monat und Quartal ändern nur den Maßstab — die Daten bleiben auf den Tag genau.',
+                    'Ein Meilenstein ist ein Tag ohne Dauer, etwa eine Abnahme oder ein Messetermin.',
+                    'Kanban zeigt, was gerade in Arbeit ist; die Roadmap zeigt, wann es läuft. Beides nebeneinander ist kein Widerspruch.'
+                ]
+            },
+            en: {
+                kurz: 'Plans on a timeline, kept apart in streams. Shows what runs from when to when.',
+                schritte: [
+                    '<b>Double-click</b> a stream to add a plan there.',
+                    'Dragging the middle of a bar moves it, dragging an <b>edge</b> changes how long it runs.',
+                    'Dragging up or down moves a plan into another stream. Double-click it to set stream, dates and colour.'
+                ],
+                tipps: [
+                    'Week, month and quarter only change the scale — the dates stay accurate to the day.',
+                    'A milestone is a single day without duration, such as a sign-off or a trade fair.',
+                    'Kanban shows what is in progress; the roadmap shows when it runs. Having both is no contradiction.'
+                ]
+            }
+        };
+
+        const PO_WB = {
+            'Roadmap · PocketOps': 'Roadmap · PocketOps',
+            'Roadmap': 'Roadmap',
+            'Vorhaben über Monate legen': 'Plan work across months',
+
+            /* Seitenleiste */
+            'Roadmaps': 'Roadmaps',
+            'Neue Roadmap': 'New roadmap',
+            'Seitenleiste ausblenden': 'Hide the sidebar',
+            'Roadmaps einblenden': 'Show the roadmaps',
+            'Roadmap löschen': 'Delete roadmap',
+            'Roadmaps öffnen': 'Open roadmaps',
+
+            /* Leiste */
+            'Nach links': 'Scroll left',
+            'Nach rechts': 'Scroll right',
+            'Heute': 'Today',
+            'Woche': 'Week',
+            'Monat': 'Month',
+            'Quartal': 'Quarter',
+            '+ Vorhaben': '+ Plan',
+            '+ Meilenstein': '+ Milestone',
+            '+ Bahn': '+ Stream',
+            'Rückgängig (Strg+Z)': 'Undo (Ctrl+Z)',
+            'Wiederholen (Strg+Y)': 'Redo (Ctrl+Y)',
+            'Sichern': 'Save',
+            'Leeren': 'Clear',
+            'Löschen': 'Delete',
+            'Als Bild speichern': 'Save as image',
+            'Neues Vorhaben': 'New plan',
+
+            /* Fläche */
+            'Bahn': 'Stream',
+            'Nach oben': 'Move up',
+            'Nach unten': 'Move down',
+            'Bahn löschen': 'Delete stream',
+            'Neue Bahn': 'New stream',
+            'Name': 'Name',
+            'Vorhaben': 'Plan',
+            'Vorhaben löschen': 'Delete plan',
+            'Meilenstein': 'Milestone',
+            'Meilenstein löschen': 'Delete milestone',
+            'Titel': 'Title',
+            'Farbe': 'Colour',
+            'Von': 'From',
+            'Bis': 'To',
+            'Am': 'On',
+            'Notiz (eine Zeile)': 'Note (one line)',
+            'Übernehmen': 'Apply',
+
+            /* Der Hinweis auf der leeren Fläche steht wegen des <b> in drei Stücken. */
+            'Noch nichts geplant.': 'Nothing planned yet.',
+            'Doppelklick': 'Double-click',
+            'auf eine Bahn legt ein Vorhaben an.': 'on a stream adds a plan.',
+
+            /* Meldungen */
+            'Ja, löschen': 'Yes, delete',
+            'Ja, leeren': 'Yes, clear',
+            'Ja, ersetzen': 'Yes, replace',
+            'Roadmap leeren': 'Clear roadmap',
+            'Die letzte Bahn lässt sich nicht löschen.': 'The last stream cannot be deleted.',
+            'Die Roadmap ist schon leer.': 'The roadmap is already empty.',
+            'Auf dieser Roadmap ist nichts zu sehen.': 'There is nothing to see on this roadmap.',
+            'Die Datei enthält keine Roadmaps.': 'The file does not contain any roadmaps.',
+            'Der Stand ließ sich nicht sichern — der Browser-Speicher ist voll.':
+                'The state could not be saved — the browser storage is full.',
+            '„{}“ wird gelöscht.': '“{}” will be deleted.',
+            '„{}“ wird gelöscht, mit {} Vorhaben. Das lässt sich nicht rückgängig machen.':
+                '“{}” will be deleted, with {} plans. This cannot be undone.',
+            'Die Bahn „{}“ wird gelöscht.': 'The stream “{}” will be deleted.',
+            'Die Bahn „{}“ wird gelöscht, mit {} Einträgen darin.':
+                'The stream “{}” will be deleted, with {} entries in it.',
+            'Alle {} Einträge dieser Roadmap werden entfernt. Die Bahnen bleiben.':
+                'All {} entries of this roadmap will be removed. The streams stay.',
+            '{} Roadmaps werden geöffnet. Der jetzige Stand wird dabei ersetzt.':
+                '{} roadmaps will be opened. This replaces what is there now.',
+            'Gesichert: {} Roadmaps': 'Saved: {} roadmaps',
+            'Geöffnet: {} Roadmaps': 'Opened: {} roadmaps',
+            'Bild gespeichert · {} × {} Punkte': 'Image saved · {} × {} pixels',
+
+            /* Die obere Kopfzeile schreibt bei der Stufe Woche „Monat Jahr“ in einem
+               Stück — deshalb als Muster und nicht als blosser Monatsname. */
+            'Januar {}': 'January {}', 'Februar {}': 'February {}', 'März {}': 'March {}',
+            'April {}': 'April {}', 'Mai {}': 'May {}', 'Juni {}': 'June {}',
+            'Juli {}': 'July {}', 'August {}': 'August {}', 'September {}': 'September {}',
+            'Oktober {}': 'October {}', 'November {}': 'November {}', 'Dezember {}': 'December {}',
+
+            /* Die kurzen Namen stehen für sich in der unteren Kopfzeile. */
+            'Jan': 'Jan', 'Feb': 'Feb', 'Mär': 'Mar', 'Apr': 'Apr', 'Mai': 'May', 'Jun': 'Jun',
+            'Jul': 'Jul', 'Aug': 'Aug', 'Sep': 'Sep', 'Okt': 'Oct', 'Nov': 'Nov', 'Dez': 'Dec'
+        };
+        /* PO-SPRACHE:ENDE */
+    </script>
+
+    <script>
+        /* PO-BASE:ANFANG (Urfassung: _design/po-base.js · nachziehen mit _design/sync.mjs) */
+        /* ======================================================================
+           POCKETOPS · GEMEINSAME BAUSTEINE
+           Nachschlagefassung. Die Werkzeuge laden diese Datei nicht — jedes trägt
+           den Block selbst, damit es als einzelne Datei läuft.
+
+           poToast(text)                  kurzer Hinweis unten rechts
+           poConfirm(frage, opt)          Rückfrage, liefert ein Versprechen
+           poAsk(titel, felder)           kleine Eingabemaske statt prompt()
+                                          Feld: { name, label, wert, typ, pflicht }
+                                          typ 'date', 'number', 'color' kommen vom
+                                          Browser; typ 'auswahl' braucht zusätzlich
+                                          optionen: [{ wert, text }] und wird zur Liste
+           poEsc(text)                    Text für HTML entschärfen
+           poDownload(name, text, typ)    Datei zum Herunterladen anbieten
+           poReadFile(input, fn)          gewählte Datei als Text lesen
+           ====================================================================== */
+
+        function poEsc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        let _poToastTimer = null;
+        function poToast(text, dauer = 2600) {
+            let t = document.getElementById('po-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'po-toast';
+                t.className = 'po-toast';
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.style.display = 'block';
+            clearTimeout(_poToastTimer);
+            _poToastTimer = setTimeout(() => { t.style.display = 'none'; }, dauer);
+        }
+
+        function _poModal(innerHtml, aufbau) {
+            const back = document.createElement('div');
+            back.className = 'po-backdrop';
+            back.innerHTML = `<div class="po-dialog" role="dialog" aria-modal="true">${innerHtml}</div>`;
+            document.body.appendChild(back);
+            const schliessen = () => { document.removeEventListener('keydown', aufTaste); back.remove(); };
+            const aufTaste = e => { if (e.key === 'Escape') { e.preventDefault(); back.__abbruch && back.__abbruch(); } };
+            document.addEventListener('keydown', aufTaste);
+            back.addEventListener('mousedown', e => { if (e.target === back) back.__abbruch && back.__abbruch(); });
+            aufbau(back, schliessen);
+            return back;
+        }
+
+        function poConfirm(frage, { titel = 'Bitte bestätigen', ja = 'Ja, weiter', nein = 'Abbrechen', gefahr = false } = {}) {
+            return new Promise(res => {
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body">${poEsc(frage)}</div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>${poEsc(nein)}</button>
+                        <button class="po-btn ${gefahr ? 'po-btn--primary' : 'po-btn--go'}" data-ja>${poEsc(ja)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(false);
+                    back.querySelector('[data-nein]').onclick = () => fertig(false);
+                    back.querySelector('[data-ja]').onclick = () => fertig(true);
+                    setTimeout(() => back.querySelector('[data-ja]').focus(), 30);
+                });
+            });
+        }
+
+        /* felder: [{ name, label, wert, typ: 'text'|'number', min, max, pflicht }]
+           Ergebnis: Objekt mit den Werten, oder null bei Abbruch. */
+        function poAsk(titel, felder, { ok = 'Hinzufügen' } = {}) {
+            return new Promise(res => {
+                /* typ: 'auswahl' erwartet zusätzlich optionen: [{ wert, text }] und wird
+                   zur Liste. Alles andere geht als type an ein <input> — 'date', 'number'
+                   und 'color' kommen so vom Browser, ohne eigenes Zutun. */
+                const html = felder.map((f, i) => {
+                    const feld = f.typ === 'auswahl'
+                        ? `<select class="po-select" id="po-f-${i}">`
+                          + (f.optionen || []).map(o =>
+                                `<option value="${poEsc(o.wert)}"${String(o.wert) === String(f.wert) ? ' selected' : ''}>${poEsc(o.text)}</option>`
+                            ).join('')
+                          + `</select>`
+                        : `<input class="po-input" id="po-f-${i}" type="${f.typ || 'text'}"
+                               value="${poEsc(f.wert == null ? '' : f.wert)}"
+                               ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''}
+                               ${f.platzhalter ? `placeholder="${poEsc(f.platzhalter)}"` : ''}>`;
+                    return `
+                    <div style="margin-bottom:10px">
+                        <label class="po-label" for="po-f-${i}">${poEsc(f.label)}</label>
+                        ${feld}
+                    </div>`;
+                }).join('');
+                _poModal(`
+                    <div class="po-dialog-head">${poEsc(titel)}</div>
+                    <div class="po-dialog-body"><form id="po-ask-form">${html}</form></div>
+                    <div class="po-dialog-foot">
+                        <button class="po-btn" data-nein>Abbrechen</button>
+                        <button class="po-btn po-btn--go" data-ja>${poEsc(ok)}</button>
+                    </div>`, (back, schliessen) => {
+                    const fertig = wert => { schliessen(); res(wert); };
+                    back.__abbruch = () => fertig(null);
+                    back.querySelector('[data-nein]').onclick = () => fertig(null);
+                    const senden = () => {
+                        const out = {};
+                        let fehlt = null;
+                        felder.forEach((f, i) => {
+                            const el = back.querySelector('#po-f-' + i);
+                            let v = el.value.trim();
+                            if (f.typ === 'number') v = v === '' ? null : Number(v);
+                            if (f.pflicht !== false && (v === '' || v === null)) fehlt = fehlt || el;
+                            out[f.name] = v;
+                        });
+                        if (fehlt) { fehlt.focus(); fehlt.style.borderColor = 'var(--po-bad)'; return; }
+                        fertig(out);
+                    };
+                    back.querySelector('[data-ja]').onclick = senden;
+                    back.querySelector('#po-ask-form').onsubmit = e => { e.preventDefault(); senden(); };
+                    setTimeout(() => back.querySelector('#po-f-0') && back.querySelector('#po-f-0').focus(), 30);
+                });
+            });
+        }
+
+        function poDownload(name, inhalt, typ = 'application/json') {
+            const blob = new Blob([inhalt], { type: typ });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }
+
+        function poReadFile(input, fn) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const r = new FileReader();
+            const melden = e => poToast('Die Datei lässt sich nicht lesen: ' + (e && e.message ? e.message : e), 4200);
+            r.onerror = () => melden(new Error('Die Datei ließ sich nicht öffnen.'));
+            r.onload = ev => {
+                // Ein Rückruf mit async wirft nicht, er gibt ein abgelehntes Versprechen
+                // zurück. Beides muss hier ankommen, sonst bleibt ein Fehler stumm.
+                try {
+                    const p = fn(ev.target.result);
+                    if (p && typeof p.catch === 'function') p.catch(melden);
+                } catch (e) { melden(e); }
+            };
+            r.readAsText(f);
+        }
+
+        /* Markenzeichen für die Kopfzeile — in jedem Werkzeug gleich */
+        const PO_MARK = '<span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>';
+
+        /* ======================================================================
+           POCKETOPS · ZWEISPRACHIGKEIT
+
+           Die Werkzeuge sind auf Deutsch geschrieben — Beschriftungen, Hinweise,
+           Meldungen, alles. Englisch entsteht nicht aus einem zweiten Satz
+           Quelltext, sondern aus einem Wörterbuch: deutscher Satz → englischer
+           Satz. Ein Beobachter schreibt um, was auf der Seite steht, und merkt
+           sich am Knoten das Original — darum geht beim Zurückschalten nichts
+           verloren, und am deutschen Quelltext ändert sich nichts.
+
+           Je Werkzeug steht sein Wörterbuch in einem eigenen Block
+           (PO-SPRACHE, Urfassung: _design/sprache/<Datei>.js) vor diesem hier.
+           Gemeinsames — Kopfzeile, Dialoge, Meldungen aus dieser Datei — steht
+           unten in PO_WB_BASIS.
+
+           Platzhalter: '{}' steht für eine Stelle, die unverändert bleibt.
+               '{} von {} Fehlern'  →  '{} of {} mistakes'
+
+           Was nie übersetzt wird: was der Nutzer selbst geschrieben hat.
+           Eingabefelder, Textflächen, alles unter contenteditable und alles
+           unter data-po-roh bleibt unangetastet.
+           ====================================================================== */
+
+        /* Gemeinsame Einträge. Gelten in jedem Werkzeug. */
+        const PO_WB_BASIS = {
+            'Zur PocketOps-Übersicht': 'To the PocketOps overview',
+            'Trinkgeld': 'Tip jar',
+            'Speichern': 'Save',
+            'Öffnen': 'Open',
+            'Zurücksetzen': 'Reset',
+            'Abbrechen': 'Cancel',
+            'Ja, weiter': 'Yes, go ahead',
+            'Ja, löschen': 'Yes, delete',
+            'Ja, alles löschen': 'Yes, delete everything',
+            'Ja, entfernen': 'Yes, remove',
+            'Bitte bestätigen': 'Please confirm',
+            'Hinzufügen': 'Add',
+            'Drucken': 'Print',
+            'Kopieren': 'Copy',
+            'Anleitung': 'Help',
+            'Sprache / Language': 'Sprache / Language',
+            'Schließen': 'Close',
+            'Die Datei lässt sich nicht lesen: {}': 'The file cannot be read: {}',
+            'Die Datei ließ sich nicht öffnen.': 'The file could not be opened.',
+            'Es ist noch nichts gezählt.': 'Nothing has been counted yet.',
+            'Es ist nichts zu löschen.': 'There is nothing to delete.',
+            'Zähler zurücksetzen': 'Reset counters',
+            'Zähler zurückgesetzt': 'Counters reset',
+            'Gegen den Rechner': 'Against the computer'
+        };
+
+        /* Text der Hilfe selbst — in beiden Sprachen, nicht über das Wörterbuch. */
+        const PO_HILFE_TEXTE = {
+            de: {
+                titel: 'Kurzanleitung',
+                schritte: 'So geht es',
+                tipps: 'Gut zu wissen',
+                oertlich: 'Deine Arbeit bleibt auf diesem Rechner. Sie wird nirgendwohin geschickt.',
+                oertlichMitNetz: 'Deine Arbeit bleibt auf diesem Rechner und wird nirgendwohin geschickt. Dieses Werkzeug lädt beim Öffnen allerdings eine Programmbibliothek nach, von: {}. Der fremde Server erfährt dabei deine IP-Adresse. Woran du arbeitest, verlässt den Rechner auch dann nicht.',
+                sicherung: 'Sichern und Zurückholen',
+                sicherungText: 'Mit <b>Speichern</b> legt das Werkzeug deine Arbeit als Datei neben sich — eine <b>.json</b>-Datei. Das ist nichts Gefährliches: eine Textdatei, die du mit dem Editor öffnen und lesen kannst. Mit <b>Öffnen</b> holst du sie zurück, in dieses oder in ein anderes Fenster.',
+                sicherungWarum: 'Warum das wichtig ist: deine Arbeit liegt sonst nur im Browser. Räumt jemand den Browser auf, ist sie weg. Die gespeicherte Datei bleibt.',
+                mehr: 'Ausführlich: Sichern &amp; Zurückholen',
+                schluss: 'Verstanden'
+            },
+            en: {
+                titel: 'Quick guide',
+                schritte: 'How it works',
+                tipps: 'Worth knowing',
+                oertlich: 'Your work stays on this computer. It is not sent anywhere.',
+                oertlichMitNetz: 'Your work stays on this computer and is not sent anywhere. This tool does fetch a code library when it opens, from: {}. That server learns your IP address. What you are working on still never leaves the machine.',
+                sicherung: 'Saving and restoring',
+                sicherungText: '<b>Save</b> puts your work into a file next to the tool — a <b>.json</b> file. Nothing dangerous about it: a text file you can open and read in any editor. <b>Open</b> brings it back, into this window or another one.',
+                sicherungWarum: 'Why this matters: otherwise your work only lives inside the browser. If someone clears the browser, it is gone. The saved file stays.',
+                mehr: 'In full: Backups &amp; restoring',
+                schluss: 'Got it'
+            }
+        };
+
+        let _poSpr = 'de';
+        try { if (localStorage.getItem('po_sprache') === 'en') _poSpr = 'en'; } catch (e) { /* ohne Speicher eben Deutsch */ }
+
+        const poSprache = () => _poSpr;
+
+        /* ---------- Wörterbuch ---------- */
+
+        const _poNormal = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+        const _poEscRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        let _poExakt = null, _poMuster = null;
+
+        function _poWbBauen() {
+            if (_poExakt) return;
+            _poExakt = new Map();
+            _poMuster = [];
+            const quellen = [PO_WB_BASIS, (typeof PO_WB !== 'undefined' ? PO_WB : null)];
+            for (const q of quellen) {
+                if (!q) continue;
+                for (const de of Object.keys(q)) {
+                    const en = q[de];
+                    if (!en) continue;
+                    if (de.indexOf('{}') >= 0) {
+                        const teile = _poNormal(de).split('{}');
+                        _poMuster.push({ re: new RegExp('^' + teile.map(_poEscRe).join('([\\s\\S]*?)') + '$'), en });
+                    } else {
+                        _poExakt.set(_poNormal(de), en);
+                    }
+                }
+            }
+        }
+
+        /* Was das Wörterbuch nicht kennt, wird hier gesammelt. Beim Pflegen einer
+           Übersetzung zeigt poLuecken() im Browser, was noch fehlt. */
+        const _poLuecken = new Set();
+        function poLuecken() { return Array.from(_poLuecken).sort((a, b) => a.localeCompare(b, 'de')); }
+
+        /* Liefert die Übersetzung oder null, wenn das Wörterbuch nichts kennt. */
+        function _poNachschlagen(text) {
+            _poWbBauen();
+            const n = _poNormal(text);
+            if (!n) return null;
+            const treffer = _poExakt.get(n);
+            if (treffer !== undefined) return treffer;
+            for (const m of _poMuster) {
+                const t = n.match(m.re);
+                if (!t) continue;
+                let i = 0;
+                return m.en.replace(/\{\}/g, () => { i++; return t[i] === undefined ? '' : t[i]; });
+            }
+            if (_poLuecken.size < 2000) _poLuecken.add(n);
+            return null;
+        }
+
+        /* Für Text, der nicht im Seitengerüst steht, sondern gezeichnet wird —
+           auf einer Leinwand etwa. Gibt auf Deutsch den Text unverändert zurück. */
+        function poT(text) {
+            if (_poSpr !== 'en') return text;
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* Die englische Fassung, unabhängig von der eingestellten Sprache. Gebraucht
+           dort, wo beide Sprachen zugleich gelten müssen — etwa in einem Suchfeld,
+           das auch nach dem Umschalten noch finden soll. */
+        function poEn(text) {
+            const u = _poNachschlagen(text);
+            return u === null ? text : u;
+        }
+
+        /* ---------- Die Seite umschreiben ---------- */
+
+        const _PO_ATTR = ['placeholder', 'title', 'aria-label', 'alt'];
+        const _PO_TABU = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1, PRE: 1, CODE: 1, CANVAS: 1 };
+
+        function _poDarf(el) {
+            for (let e = el; e && e.nodeType === 1; e = e.parentElement) {
+                if (_PO_TABU[e.tagName]) return false;
+                if (e.isContentEditable) return false;
+                if (e.hasAttribute('data-po-roh')) return false;
+                if (e.hasAttribute('data-po-nur')) return false;   // steht schon in seiner Sprache
+            }
+            return true;
+        }
+
+        /* Längere Texte — eine ganze Seite Erklärung etwa — zerfielen im Wörterbuch
+           an jedem <b> in Stücke. Dafür gibt es den zweiten Weg: zwei Blöcke, einer
+           je Sprache, ausgezeichnet mit data-po-nur="de" bzw. "en". Es wird immer
+           nur einer gezeigt.
+           Bewusst über style.display statt über hidden: eine Klasse mit display:flex
+           gewänne sonst gegen hidden, und der Block stünde trotzdem da. */
+        function _poSprachbloecke() {
+            document.querySelectorAll('[data-po-nur]').forEach(el => {
+                el.style.display = (el.getAttribute('data-po-nur') === _poSpr) ? '' : 'none';
+            });
+        }
+
+        function _poTextKnoten(k) {
+            if (!k || !k.nodeValue || !k.nodeValue.trim()) return;
+            if (k.nodeValue === k.__poEn) return;                 // steht schon auf Englisch
+            if (!_poDarf(k.parentElement)) return;
+            const neu = _poNachschlagen(k.nodeValue);
+            if (neu === null) return;
+            k.__poDe = k.nodeValue;
+            k.nodeValue = k.nodeValue.match(/^\s*/)[0] + neu + k.nodeValue.match(/\s*$/)[0];
+            k.__poEn = k.nodeValue;
+        }
+
+        function _poMerkmal(el, name) {
+            if (!el || el.nodeType !== 1 || !el.hasAttribute(name)) return;
+            if (!_poDarf(el)) return;
+            const wert = el.getAttribute(name);
+            el.__poAttrEn = el.__poAttrEn || {};
+            el.__poAttrDe = el.__poAttrDe || {};
+            if (wert === el.__poAttrEn[name]) return;
+            const neu = _poNachschlagen(wert);
+            if (neu === null) return;
+            el.__poAttrDe[name] = wert;
+            el.setAttribute(name, neu);
+            el.__poAttrEn[name] = neu;
+        }
+
+        function _poAnwenden(wurzel) {
+            if (_poSpr !== 'en' || !wurzel) return;
+            if (wurzel.nodeType === 3) { _poTextKnoten(wurzel); return; }
+            if (wurzel.nodeType !== 1) return;
+            const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) _poTextKnoten(k);
+            const mit = [wurzel].concat(Array.from(wurzel.querySelectorAll('*')));
+            for (const el of mit) for (const a of _PO_ATTR) if (el.hasAttribute && el.hasAttribute(a)) _poMerkmal(el, a);
+        }
+
+        function _poZurueck() {
+            const lauf = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+            let k;
+            while ((k = lauf.nextNode())) {
+                if (k.__poDe !== undefined && k.nodeValue === k.__poEn) { k.nodeValue = k.__poDe; k.__poEn = undefined; }
+            }
+            for (const el of document.querySelectorAll('*')) {
+                if (!el.__poAttrDe) continue;
+                for (const a of Object.keys(el.__poAttrDe)) {
+                    if (el.getAttribute(a) === el.__poAttrEn[a]) el.setAttribute(a, el.__poAttrDe[a]);
+                }
+                el.__poAttrEn = {};
+            }
+        }
+
+        let _poStill = false;
+        let _poBeob = null;
+
+        function _poBeobachten() {
+            _poBeob = new MutationObserver(aenderungen => {
+                if (_poStill || _poSpr !== 'en') return;
+                _poStill = true;
+                try {
+                    for (const a of aenderungen) {
+                        if (a.type === 'childList') a.addedNodes.forEach(n => {
+                            _poAnwenden(n);
+                            if (n.nodeType === 1 && n.querySelector && (n.hasAttribute('data-po-nur') || n.querySelector('[data-po-nur]'))) _poSprachbloecke();
+                        });
+                        else if (a.type === 'characterData') _poTextKnoten(a.target);
+                        else if (a.type === 'attributes') _poMerkmal(a.target, a.attributeName);
+                    }
+                } finally {
+                    _poBeob.takeRecords();          // eigene Änderungen nicht noch einmal ansehen
+                    _poStill = false;
+                }
+            });
+            _poBeob.observe(document.documentElement, {
+                childList: true, subtree: true, characterData: true,
+                attributes: true, attributeFilter: _PO_ATTR
+            });
+        }
+
+        /* ---------- Umschalten ---------- */
+
+        function poSpracheSetzen(spr) {
+            const neu = spr === 'en' ? 'en' : 'de';
+            if (neu === _poSpr) return;
+            _poSpr = neu;
+            try { localStorage.setItem('po_sprache', neu); } catch (e) { /* dann eben nur für dieses Fenster */ }
+            document.documentElement.lang = neu;
+            /* Beide Fenster werden geschlossen statt übersetzt: ihr Inhalt steht als
+               data-po-roh und geht am Wörterbuch vorbei. Beim nächsten Öffnen baut er
+               sich in der neuen Sprache neu auf. Ohne das bliebe nach einem Wechsel
+               bei offenem Fenster die alte Sprache stehen. */
+            const hilfe = document.getElementById('po-hilfe-fenster');
+            if (hilfe) hilfe.remove();
+            const trinkgeld = document.getElementById('po-trinkgeld-fenster');
+            if (trinkgeld) trinkgeld.remove();
+            _poStill = true;
+            try {
+                if (neu === 'en') _poAnwenden(document.documentElement);
+                else _poZurueck();
+            } finally {
+                if (_poBeob) _poBeob.takeRecords();
+                _poStill = false;
+            }
+            _poSprachbloecke();
+            _poKopfMalen();
+            // Werkzeuge, die selbst zeichnen, müssen danach neu zeichnen.
+            if (typeof poNeuZeichnen === 'function') poNeuZeichnen();
+        }
+
+        function _poKopfMalen() {
+            document.querySelectorAll('.po-sprach button').forEach(b => {
+                b.setAttribute('aria-pressed', String(b.dataset.spr === _poSpr));
+            });
+        }
+
+        /* ---------- Trinkgeld ----------
+           PocketOps verschenkt sich. Der Knopf ist die einzige Stelle, an der das
+           Werkzeug etwas von sich aus möchte — entsprechend zurückhaltend.
+
+           Bewusst „Trinkgeld“ und nicht „Spende“: eine Spende im steuerlichen Sinn
+           kann nur eine anerkannt gemeinnützige Einrichtung entgegennehmen. Hier ist
+           es eine freiwillige Zuwendung an eine Privatperson.
+
+           Der Verweis geht an PayPal.me. Bewusst nicht an die Spendenseite mit der
+           E-Mail-Adresse als Kennung: die stünde damit im Quelltext jeder der
+           sechsundzwanzig Dateien und wäre, seit das Ganze öffentlich liegt, für
+           Adress-Sammler maschinell abgreifbar. Der PayPal.me-Name zeigt sie nicht.
+
+           Den Betrag gibt der Besucher selbst an — deshalb der blanke Name ohne
+           angehängte Zahl. Soll sich das ändern, ist hier die eine Zeile zu ändern
+           und _design/sync.mjs laufen zu lassen. */
+        const PO_TRINKGELD_LINK = 'https://paypal.me/JensHeitmann306';
+
+        const PO_TRINKGELD_TEXTE = {
+            de: {
+                titel: 'Trinkgeld',
+                frei: 'PocketOps ist frei. Nimm es, gib es weiter, bau es um — es kostet nichts und wird nichts kosten.',
+                arbeit: 'Darin steckt allerdings eine Menge Arbeit. Wenn dir eines der Werkzeuge den Tag leichter gemacht hat, freue ich mich über ein Trinkgeld. Wie viel, entscheidest du.',
+                hinweis: 'Der Knopf öffnet PayPal in einem neuen Fenster. Hier wird nichts abgefragt und nichts mitgeschnitten.',
+                knopf: 'Trinkgeld über PayPal',
+                nein: 'Vielleicht später'
+            },
+            en: {
+                titel: 'Tip jar',
+                frei: 'PocketOps is free. Take it, pass it on, rebuild it — it costs nothing and it never will.',
+                arbeit: 'There is a fair amount of work in it, though. If one of these tools has made your day easier, a tip would be welcome. You decide how much.',
+                hinweis: 'The button opens PayPal in a new window. Nothing is asked for or recorded here.',
+                knopf: 'Leave a tip via PayPal',
+                nein: 'Maybe later'
+            }
+        };
+
+        function poTrinkgeld() {
+            if (document.getElementById('po-trinkgeld-fenster')) return;
+            const t = PO_TRINKGELD_TEXTE[_poSpr] || PO_TRINKGELD_TEXTE.de;
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(t.titel) + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.frei) + '</p>'
+              +   '<p style="margin:0 0 12px">' + poEsc(t.arbeit) + '</p>'
+              +   '<p style="margin:0;color:var(--po-ink-3);font-size:11px">' + poEsc(t.hinweis) + '</p>'
+              + '</div>'
+              + '<div class="po-dialog-foot">'
+              +   '<button class="po-btn" data-zu>' + poEsc(t.nein) + '</button>'
+              +   '<a class="po-btn po-btn--primary" href="' + PO_TRINKGELD_LINK + '" target="_blank" rel="noopener noreferrer">'
+              +     poEsc(t.knopf) + '</a>'
+              + '</div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    /* Nach dem Sprung zu PayPal soll hier nicht noch ein Fenster offen
+                       stehenbleiben, auf das niemand mehr schaut. */
+                    b.querySelector('a.po-btn').onclick = () => setTimeout(schliessen, 150);
+                });
+            back.id = 'po-trinkgeld-fenster';
+        }
+
+        function _poKopfBauen() {
+            const leiste = document.querySelector('.po-head-actions');
+            if (!leiste || document.querySelector('.po-meta')) return;
+            const box = document.createElement('div');
+            box.className = 'po-meta';
+            box.innerHTML =
+                '<div class="po-sprach" role="group" aria-label="Sprache / Language">'
+              + '<button type="button" data-spr="de">DE</button>'
+              + '<button type="button" data-spr="en">EN</button></div>'
+              + '<button type="button" class="po-trinkgeld" title="Trinkgeld" aria-label="Trinkgeld">&#9829;</button>'
+              + '<button type="button" class="po-frage" title="Anleitung" aria-label="Anleitung">?</button>'
+              + '<div class="po-head-sep"></div>';
+            leiste.insertBefore(box, leiste.firstChild);
+            box.querySelectorAll('[data-spr]').forEach(b => { b.onclick = () => poSpracheSetzen(b.dataset.spr); });
+            box.querySelector('.po-frage').onclick = poHilfe;
+            box.querySelector('.po-trinkgeld').onclick = poTrinkgeld;
+            _poKopfMalen();
+        }
+
+        /* ---------- Die Anleitung ---------- */
+
+        /* Die Werkzeuge liegen im Ordner tools/, die Übersicht eine Ebene darüber.
+           Woran sich das erkennen lässt: nur ein Werkzeug trägt das Markenzeichen als
+           Rückverweis; auf der Übersicht selbst steht es als blosser Text. */
+        const _poSicherungPfad = () => document.querySelector('a.po-brand') ? 'Sicherung.html' : 'tools/Sicherung.html';
+
+        /* Die Rechner, von denen diese Seite etwas nachlädt — ohne Doppelte. */
+        function _poFremdquellen() {
+            return [...document.querySelectorAll('script[src], link[rel="stylesheet"][href]')]
+                .map(e => e.getAttribute('src') || e.getAttribute('href'))
+                .filter(u => /^https?:\/\//i.test(u || ''))
+                .map(u => { try { return new URL(u).hostname; } catch (e) { return null; } })
+                .filter((h, i, a) => h && a.indexOf(h) === i);
+        }
+
+        function poHilfe() {
+            if (document.getElementById('po-hilfe-fenster')) return;
+            const t = PO_HILFE_TEXTE[_poSpr];
+            const h = (typeof PO_HILFE !== 'undefined' && PO_HILFE && PO_HILFE[_poSpr]) ? PO_HILFE[_poSpr] : null;
+            const name = (document.querySelector('.po-tool-name') || {}).textContent || 'PocketOps';
+
+            const teile = [];
+            if (h && h.kurz) teile.push('<p style="margin:0 0 12px">' + h.kurz + '</p>');
+            if (h && h.schritte && h.schritte.length) {
+                teile.push('<div class="po-hilfe-titel">' + t.schritte + '</div>'
+                         + '<ol class="po-hilfe-liste">' + h.schritte.map(s => '<li>' + s + '</li>').join('') + '</ol>');
+            }
+            if (h && h.tipps && h.tipps.length) {
+                teile.push('<div class="po-hilfe-teil"><div class="po-hilfe-titel">' + t.tipps + '</div>'
+                         + '<ul class="po-hilfe-liste">' + h.tipps.map(s => '<li>' + s + '</li>').join('') + '</ul></div>');
+            }
+            teile.push('<div class="po-hilfe-teil">'
+                     + '<div class="po-hilfe-titel">' + t.sicherung + '</div>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungText + '</p>'
+                     + '<p style="margin:0 0 8px">' + t.sicherungWarum + '</p>'
+                     + '<p style="margin:0"><a href="' + _poSicherungPfad() + '">' + t.mehr + '</a></p></div>');
+            /* Ein paar Werkzeuge holen sich eine Programmbibliothek aus dem Netz. Der
+               Hinweis liest das aus der Seite selbst aus, statt es pauschal zu
+               behaupten — so bleibt er richtig, auch wenn später eine Quelle dazukommt
+               oder wegfällt. */
+            const fremd = _poFremdquellen();
+            teile.push('<div class="po-hilfe-teil" style="color:var(--po-ink-3);font-size:11px">'
+                     + (fremd.length ? t.oertlichMitNetz.replace('{}', fremd.join(', ')) : t.oertlich)
+                     + '</div>');
+
+            const back = _poModal(
+                '<div class="po-dialog-head">' + poEsc(name) + ' — ' + t.titel + '</div>'
+              + '<div class="po-dialog-body po-hilfe" data-po-roh>' + teile.join('') + '</div>'
+              + '<div class="po-dialog-foot"><button class="po-btn po-btn--go" data-zu>' + t.schluss + '</button></div>',
+                (b, schliessen) => {
+                    b.__abbruch = schliessen;
+                    b.querySelector('[data-zu]').onclick = schliessen;
+                    setTimeout(() => b.querySelector('[data-zu]').focus(), 30);
+                });
+            back.id = 'po-hilfe-fenster';
+            back.querySelector('.po-dialog').style.maxWidth = '560px';
+        }
+
+        function _poStart() {
+            document.documentElement.lang = _poSpr;
+            _poKopfBauen();
+            _poSprachbloecke();
+            if (_poSpr === 'en') {
+                _poStill = true;
+                try { _poAnwenden(document.documentElement); } finally { _poStill = false; }
+            }
+            _poBeobachten();
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F1') { e.preventDefault(); poHilfe(); }
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _poStart);
+        else _poStart();
+        /* PO-BASE:ENDE */
+
+        /* ======================================================================
+           POCKETOPS · ROADMAP
+
+           Vorhaben auf einer Zeitachse, nach Bahnen getrennt. Kanban zeigt den
+           Zustand einer Aufgabe, der Tagesplan einen einzigen Tag — hier geht es
+           um die Frage, was von wann bis wann läuft.
+
+           Daten stehen als 'JJJJ-MM-TT' und werden nur zum Rechnen in ein Datum
+           verwandelt. Alles Sichtbare ist davon abgeleitet: aus dem Zeitraum
+           aller Vorhaben ergibt sich die Spanne, aus der Zoomstufe die Breite
+           eines Tages, daraus jede Lage auf dem Schirm.
+           ====================================================================== */
+
+        const SPEICHER = 'po_roadmap';
+        const SEITE_AUS = 'po_roadmap_seite_aus';
+        const FARBEN = ['#39756F', '#9E292B', '#2A7E9E', '#6D4AA8', '#D89B2B', '#697896'];
+
+        /* Breite eines Tages in Bildpunkten, je Zoomstufe, dazu die Beschriftung
+           der beiden Kopfzeilen. */
+        const STUFEN = {
+            woche:   { px: 20,  oben: 'monat', unten: 'woche' },
+            monat:   { px: 4.6, oben: 'jahr',  unten: 'monat' },
+            quartal: { px: 1.6, oben: 'jahr',  unten: 'quartal' }
+        };
+        const NAMENSBREITE = 168;
+        const ZEILENHOEHE = 32;      // eine Unterspur innerhalb einer Bahn
+        const MINDESTTAGE = { woche: 70, monat: 300, quartal: 760 };
+
+        const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                        'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+        const MONATE_KURZ = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun',
+                             'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+        const el = id => document.getElementById(id);
+        let zaehler = 0;
+        const neueId = p => p + Date.now().toString(36) + (++zaehler).toString(36);
+
+        let roadmaps = [];
+        let aktiv = null;
+        let stufe = 'monat';
+        let zurueckStapel = [], vorStapel = [];
+
+        const rm = () => roadmaps.find(r => r.id === aktiv) || null;
+        const px = () => STUFEN[stufe].px;
+
+        /* ---------- Rechnen mit Daten ----------
+           Alles in Ortszeit. Die Differenz zweier Daten wird gerundet, sonst
+           schlägt die Zeitumstellung durch: zwei Tage sind dann 47 oder 49
+           Stunden und eine ungerundete Division ergibt 1,96 statt 2. */
+
+        const TAG = 86400000;
+
+        function alsDatum(s) {
+            const t = String(s).split('-').map(Number);
+            return new Date(t[0], (t[1] || 1) - 1, t[2] || 1);
+        }
+        function alsText(d) {
+            return d.getFullYear() + '-' +
+                   String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(d.getDate()).padStart(2, '0');
+        }
+        function plusTage(s, n) {
+            const d = alsDatum(s);
+            d.setDate(d.getDate() + n);
+            return alsText(d);
+        }
+        const tageZwischen = (a, b) => Math.round((alsDatum(b) - alsDatum(a)) / TAG);
+        const heute = () => alsText(new Date());
+
+        /* Kalenderwoche nach ISO 8601: die Woche, in der der erste Donnerstag
+           des Jahres liegt, ist Woche 1. */
+        function kalenderwoche(d) {
+            const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            t.setDate(t.getDate() + 3 - ((t.getDay() + 6) % 7));
+            const ersterDo = new Date(t.getFullYear(), 0, 4);
+            return 1 + Math.round(((t - ersterDo) / TAG - 3 + ((ersterDo.getDay() + 6) % 7)) / 7);
+        }
+
+        /* Die Kurzhinweise an Balken und Rauten entstehen erst beim Zeichnen und
+           enthalten eingetippte Namen — das Wörterbuch kann sie nicht erfassen.
+           Deshalb richten sich Datum und Bindewort direkt nach der eingestellten
+           Sprache, die _poStart in <html lang> schreibt. */
+        const aufEnglisch = () => document.documentElement.lang === 'en';
+
+        function datumLesbar(s) {
+            return alsDatum(s).toLocaleDateString(aufEnglisch() ? 'en-GB' : 'de-DE',
+                                                  { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        /* ---------- Speichern ---------- */
+
+        function sichern() {
+            if (rm()) rm().geaendert = Date.now();
+            try { localStorage.setItem(SPEICHER, JSON.stringify({ roadmaps, aktiv, stufe })); }
+            catch (e) { poToast('Der Stand ließ sich nicht sichern — der Browser-Speicher ist voll.', 5000); }
+        }
+
+        function neueLeereRoadmap(name) {
+            const b1 = neueId('b'), b2 = neueId('b');
+            return {
+                id: neueId('r'),
+                name: name || 'Neue Roadmap',
+                bahnen: [{ id: b1, name: 'Produkt' }, { id: b2, name: 'Team' }],
+                vorhaben: [],
+                meilensteine: [],
+                geaendert: Date.now()
+            };
+        }
+
+        /* Prüft eine eingelesene Liste durch, damit eine fremde oder beschädigte
+           Datei das Werkzeug nicht lahmlegt. Was nicht stimmt, wird ersetzt,
+           nicht verworfen — lieber ein krummes Vorhaben als eine leere Seite. */
+        function pruefen(liste) {
+            const datum = (v, vor) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : vor);
+            const farbe = v => (/^#[0-9a-fA-F]{6}$/.test(v || '') ? v : FARBEN[0]);
+
+            return (Array.isArray(liste) ? liste : []).map(r => {
+                const bahnen = (Array.isArray(r.bahnen) ? r.bahnen : []).map(b => ({
+                    id: String(b.id || neueId('b')),
+                    name: String(b.name || 'Bahn')
+                }));
+                if (!bahnen.length) bahnen.push({ id: neueId('b'), name: 'Bahn' });
+                const istBahn = id => bahnen.some(b => b.id === id) ? id : bahnen[0].id;
+
+                return {
+                    id: String(r.id || neueId('r')),
+                    name: String(r.name || 'Roadmap'),
+                    geaendert: Number(r.geaendert) || Date.now(),
+                    bahnen,
+                    vorhaben: (Array.isArray(r.vorhaben) ? r.vorhaben : []).map(v => {
+                        const von = datum(v.von, heute());
+                        let bis = datum(v.bis, plusTage(von, 14));
+                        if (tageZwischen(von, bis) < 0) bis = von;   // verdrehte Spanne geradeziehen
+                        return {
+                            id: String(v.id || neueId('v')),
+                            bahn: istBahn(String(v.bahn || '')),
+                            titel: String(v.titel || 'Vorhaben'),
+                            notiz: String(v.notiz || ''),
+                            farbe: farbe(v.farbe),
+                            von, bis
+                        };
+                    }),
+                    meilensteine: (Array.isArray(r.meilensteine) ? r.meilensteine : []).map(m => ({
+                        id: String(m.id || neueId('m')),
+                        bahn: istBahn(String(m.bahn || '')),
+                        titel: String(m.titel || 'Meilenstein'),
+                        farbe: farbe(m.farbe),
+                        am: datum(m.am, heute())
+                    }))
+                };
+            });
+        }
+
+        /* ---------- Schritte zurücknehmen ----------
+           Gemerkt wird nur der Inhalt einer Roadmap, nicht die Liste. Ein Schritt
+           zurück soll ein verschobenes Vorhaben zurückholen, nicht eine gelöschte
+           Roadmap. */
+
+        function merken() {
+            if (!rm()) return;
+            const r = rm();
+            zurueckStapel.push(JSON.stringify({ bahnen: r.bahnen, vorhaben: r.vorhaben, meilensteine: r.meilensteine }));
+            if (zurueckStapel.length > 60) zurueckStapel.shift();
+            vorStapel = [];
+            knoepfeAktualisieren();
+        }
+
+        function standSetzen(roh) {
+            const r = rm();
+            r.bahnen = roh.bahnen;
+            r.vorhaben = roh.vorhaben;
+            r.meilensteine = roh.meilensteine;
+        }
+
+        function zurueck() {
+            if (!zurueckStapel.length || !rm()) return;
+            const r = rm();
+            vorStapel.push(JSON.stringify({ bahnen: r.bahnen, vorhaben: r.vorhaben, meilensteine: r.meilensteine }));
+            standSetzen(JSON.parse(zurueckStapel.pop()));
+            sichern(); malen(); knoepfeAktualisieren();
+        }
+
+        function vor() {
+            if (!vorStapel.length || !rm()) return;
+            const r = rm();
+            zurueckStapel.push(JSON.stringify({ bahnen: r.bahnen, vorhaben: r.vorhaben, meilensteine: r.meilensteine }));
+            standSetzen(JSON.parse(vorStapel.pop()));
+            sichern(); malen(); knoepfeAktualisieren();
+        }
+
+        function knoepfeAktualisieren() {
+            el('k-zurueck').disabled = !zurueckStapel.length;
+            el('k-vor').disabled = !vorStapel.length;
+            document.querySelectorAll('[data-stufe]').forEach(k => k.classList.toggle('an', k.dataset.stufe === stufe));
+        }
+
+        /* ---------- Die sichtbare Spanne ----------
+           Sie ergibt sich aus den Daten, nicht aus einer Einstellung: ein Monat
+           Luft vor dem frühesten und nach dem spätesten Eintrag, heute immer
+           dabei, und eine Mindestbreite, damit auch eine leere Roadmap eine
+           Achse hat, auf die man etwas legen kann. */
+
+        function spanne() {
+            const r = rm();
+            const alle = [heute()];
+            if (r) {
+                r.vorhaben.forEach(v => { alle.push(v.von); alle.push(v.bis); });
+                r.meilensteine.forEach(m => alle.push(m.am));
+            }
+            alle.sort();
+            const a = alsDatum(alle[0]), z = alsDatum(alle[alle.length - 1]);
+
+            let von = new Date(a.getFullYear(), a.getMonth() - 1, 1);
+            let bis = new Date(z.getFullYear(), z.getMonth() + 2, 0);
+            const mindest = MINDESTTAGE[stufe];
+            if (Math.round((bis - von) / TAG) < mindest) {
+                const ende = new Date(von.getTime() + mindest * TAG);
+                bis = new Date(ende.getFullYear(), ende.getMonth() + 1, 0);
+            }
+            return { von: alsText(von), bis: alsText(bis) };
+        }
+
+        const xVon = (sp, datum) => tageZwischen(sp.von, datum) * px();
+
+        /* Liefert die Spalten der unteren Kopfzeile: Woche, Monat oder Quartal.
+           Gleich mit Lage und Breite, damit Kopfzeile, Raster und das ausgegebene
+           Bild dieselben Zahlen benutzen und nicht auseinanderlaufen. */
+        function spalten(sp) {
+            const art = STUFEN[stufe].unten;
+            const ende = alsDatum(sp.bis);
+            const aus = [];
+            let d = alsDatum(sp.von);
+
+            if (art === 'woche') {
+                d.setDate(d.getDate() - ((d.getDay() + 6) % 7));     // auf Montag zurück
+            } else {
+                d = new Date(d.getFullYear(), art === 'quartal' ? Math.floor(d.getMonth() / 3) * 3 : d.getMonth(), 1);
+            }
+
+            while (d <= ende) {
+                const naechst = new Date(d);
+                if (art === 'woche') naechst.setDate(naechst.getDate() + 7);
+                else naechst.setMonth(naechst.getMonth() + (art === 'quartal' ? 3 : 1));
+
+                const x = xVon(sp, alsText(d));
+                aus.push({
+                    x,
+                    breite: (tageZwischen(alsText(d), alsText(naechst))) * px(),
+                    titel: art === 'woche'   ? 'KW ' + kalenderwoche(d)
+                         : art === 'quartal' ? 'Q' + (Math.floor(d.getMonth() / 3) + 1)
+                         : MONATE_KURZ[d.getMonth()],
+                    stark: art === 'woche' ? d.getDate() <= 7 : d.getMonth() === 0
+                });
+                d = naechst;
+            }
+            return aus;
+        }
+
+        /* Die obere Kopfzeile fasst gröber zusammen: Monate über den Wochen,
+           Jahre über den Monaten und Quartalen. */
+        function gruppen(sp) {
+            const art = STUFEN[stufe].oben;
+            const ende = alsDatum(sp.bis);
+            const aus = [];
+            let d = alsDatum(sp.von);
+            d = art === 'jahr' ? new Date(d.getFullYear(), 0, 1) : new Date(d.getFullYear(), d.getMonth(), 1);
+
+            while (d <= ende) {
+                const naechst = new Date(d);
+                if (art === 'jahr') naechst.setFullYear(naechst.getFullYear() + 1);
+                else naechst.setMonth(naechst.getMonth() + 1);
+                aus.push({
+                    x: xVon(sp, alsText(d)),
+                    breite: tageZwischen(alsText(d), alsText(naechst)) * px(),
+                    titel: art === 'jahr' ? String(d.getFullYear()) : MONATE[d.getMonth()] + ' ' + d.getFullYear()
+                });
+                d = naechst;
+            }
+            return aus;
+        }
+
+        /* ---------- Unterspuren innerhalb einer Bahn ----------
+           Zwei Vorhaben, die sich zeitlich überschneiden, dürfen nicht
+           übereinanderliegen. Sie wandern deshalb untereinander: jedes kommt in
+           die erste Unterspur, in der rechts noch Platz ist. Ein Meilenstein
+           zählt mit der Breite seiner Beschriftung mit, sonst überdeckt die
+           Schrift den Nachbarn. */
+
+        function verteilen(marken) {
+            const enden = [];
+            marken.sort((a, b) => a._x - b._x || a._b - b._b);
+            marken.forEach(m => {
+                let i = 0;
+                while (i < enden.length && enden[i] > m._x) i++;
+                if (i === enden.length) enden.push(0);
+                m._spur = i;
+                enden[i] = m._x + m._b + 8;
+            });
+            return Math.max(1, enden.length);
+        }
+
+        function markenDerBahn(sp, bahnId) {
+            const r = rm();
+            const marken = [];
+            r.vorhaben.filter(v => v.bahn === bahnId).forEach(v => {
+                const x = xVon(sp, v.von);
+                marken.push({ art: 'v', daten: v, _x: x,
+                              _b: Math.max(px(), (tageZwischen(v.von, v.bis) + 1) * px()) });
+            });
+            r.meilensteine.filter(m => m.bahn === bahnId).forEach(m => {
+                const x = xVon(sp, m.am);
+                marken.push({ art: 'm', daten: m, _x: x, _b: 16 + m.titel.length * 6.2 });
+            });
+            verteilen(marken);
+            return marken;
+        }
+
+        /* ---------- Zeichnen ---------- */
+
+        function malen() {
+            const r = rm();
+            if (!r) return;
+            const sp = spanne();
+            const breite = Math.max(400, tageZwischen(sp.von, sp.bis) * px());
+            const gesamt = NAMENSBREITE + breite;
+
+            const alleSpalten = spalten(sp);
+            const alleGruppen = gruppen(sp);
+
+            let h = '';
+
+            /* Raster hinter allem */
+            h += '<div class="rm-raster" style="left:' + NAMENSBREITE + 'px;width:' + breite + 'px">';
+            alleSpalten.forEach(s => {
+                h += '<div class="rm-linie' + (s.stark ? ' stark' : '') + '" style="left:' + s.x + 'px"></div>';
+            });
+            h += '</div>';
+
+            /* Kopfzeilen */
+            h += '<div class="rm-zeile rm-kopf">'
+               +   '<div class="rm-bahnname"><span class="rm-eckname">Bahn</span></div>'
+               +   '<div class="rm-kopfspur" style="width:' + breite + 'px">';
+            alleGruppen.forEach(g => {
+                h += '<div class="rm-jahr" style="left:' + g.x + 'px;width:' + g.breite + 'px">' + poEsc(g.titel) + '</div>';
+            });
+            alleSpalten.forEach(s => {
+                h += '<div class="rm-spalte' + (s.stark ? ' stark' : '') + '" style="left:' + s.x + 'px;width:' + s.breite + 'px">'
+                   + (s.breite > 26 ? poEsc(s.titel) : '') + '</div>';
+            });
+            h += '</div></div>';
+
+            /* Je Bahn eine Zeile */
+            r.bahnen.forEach(bahn => {
+                const marken = markenDerBahn(sp, bahn.id);
+                const spuren = Math.max(1, marken.reduce((m, x) => Math.max(m, x._spur + 1), 0));
+                const hoehe = spuren * ZEILENHOEHE + 10;
+
+                h += '<div class="rm-zeile" data-bahn="' + bahn.id + '" style="min-height:' + hoehe + 'px">'
+                   +   '<div class="rm-bahnname">'
+                   +     '<input class="rm-bahnfeld" value="' + poEsc(bahn.name) + '" '
+                   +            'onchange="bahnBenennen(\'' + bahn.id + '\', this.value)">'
+                   +     '<span class="rm-bahnwerkzeuge">'
+                   +       '<button class="rm-winzig" title="Nach oben" onclick="bahnSchieben(\'' + bahn.id + '\', -1)">&#9650;</button>'
+                   +       '<button class="rm-winzig" title="Nach unten" onclick="bahnSchieben(\'' + bahn.id + '\', 1)">&#9660;</button>'
+                   +       '<button class="po-x" title="Bahn löschen" onclick="bahnLoeschen(\'' + bahn.id + '\')">&#10005;</button>'
+                   +     '</span>'
+                   +   '</div>'
+                   +   '<div class="rm-spur" data-bahn="' + bahn.id + '" style="width:' + breite + 'px">';
+
+                marken.forEach(m => {
+                    const oben = 5 + m._spur * ZEILENHOEHE;
+                    if (m.art === 'v') {
+                        const v = m.daten;
+                        h += '<div class="rm-balken" data-id="' + v.id + '" '
+                           +      'style="left:' + m._x + 'px;top:' + oben + 'px;width:' + m._b + 'px;background:' + v.farbe + '" '
+                           +      'title="' + poEsc(v.titel + ' · ' + datumLesbar(v.von) + (aufEnglisch() ? ' to ' : ' bis ') + datumLesbar(v.bis) + (v.notiz ? '\n' + v.notiz : '')) + '">'
+                           +   '<span class="rm-griff rm-griff-l"></span>'
+                           +   '<span class="rm-balkentext">' + poEsc(v.titel) + '</span>'
+                           +   '<button class="po-x" title="Löschen" onclick="event.stopPropagation(); vorhabenLoeschen(\'' + v.id + '\')">&#10005;</button>'
+                           +   '<span class="rm-griff rm-griff-r"></span>'
+                           + '</div>';
+                    } else {
+                        const s = m.daten;
+                        h += '<div class="rm-stein" data-stein="' + s.id + '" '
+                           +      'style="left:' + m._x + 'px;top:' + oben + 'px" '
+                           +      'title="' + poEsc(s.titel + ' · ' + datumLesbar(s.am)) + '">'
+                           +   '<span class="rm-raute" style="background:' + s.farbe + '"></span>'
+                           +   '<span class="rm-steintext">' + poEsc(s.titel) + '</span>'
+                           +   '<button class="po-x" title="Löschen" onclick="event.stopPropagation(); meilensteinLoeschen(\'' + s.id + '\')">&#10005;</button>'
+                           + '</div>';
+                    }
+                });
+
+                h += '</div></div>';
+            });
+
+            /* Heute-Linie */
+            const xh = NAMENSBREITE + xVon(sp, heute());
+            h += '<div class="rm-heute" data-text="Heute" style="left:' + xh + 'px"></div>';
+
+            if (!r.vorhaben.length && !r.meilensteine.length) {
+                h += '<div class="rm-hinweis">Noch nichts geplant.<br>'
+                   + '<b>Doppelklick</b> auf eine Bahn legt ein Vorhaben an.</div>';
+            }
+
+            const innen = el('innen');
+            innen.style.width = gesamt + 'px';
+            innen.innerHTML = h;
+            kopfNachziehen();
+        }
+
+        function listeMalen() {
+            el('roadmaps').innerHTML = roadmaps.map(r => `
+                <li class="rm-eintrag ${r.id === aktiv ? 'aktiv' : ''}" onclick="roadmapOeffnen('${r.id}')">
+                    <input class="rm-eintragname" value="${poEsc(r.name)}" onclick="event.stopPropagation()"
+                           onchange="roadmapBenennen('${r.id}', this.value)">
+                    <span class="rm-werkzeuge">
+                        <button class="po-x" title="Löschen" onclick="event.stopPropagation(); roadmapLoeschen('${r.id}')">&#10005;</button>
+                    </span>
+                </li>`).join('');
+        }
+
+        /* ---------- Rollen ---------- */
+
+        /* Die Beschriftung der oberen Kopfzeile steht am Anfang ihres Abschnitts.
+           Rollt man in die Mitte eines Jahres, wäre sie weg — also wandert sie
+           mit an den linken Rand und bleibt stehen, bis ihr Abschnitt endet.
+           Das geht nicht mit position:sticky, weil die Beschriftung für die
+           Breite ihres Abschnitts absolut gesetzt ist. */
+        function kopfNachziehen() {
+            const s0 = el('roll').scrollLeft;
+            el('innen').querySelectorAll('.rm-jahr').forEach(j => {
+                const l = parseFloat(j.style.left), b = parseFloat(j.style.width);
+                const versatz = Math.max(0, Math.min(s0 - l, b - 64));
+                j.style.paddingLeft = (7 + versatz) + 'px';
+            });
+        }
+
+        function rollen(richtung) {
+            const k = el('roll');
+            k.scrollBy({ left: richtung * (k.clientWidth - NAMENSBREITE - 40), behavior: 'smooth' });
+        }
+
+        function zuHeute() {
+            const k = el('roll');
+            const x = NAMENSBREITE + xVon(spanne(), heute());
+            k.scrollTo({ left: Math.max(0, x - (k.clientWidth - NAMENSBREITE) / 3 - NAMENSBREITE), behavior: 'smooth' });
+        }
+
+        function stufeSetzen(neu) {
+            if (!STUFEN[neu] || neu === stufe) return;
+            /* Der Punkt in der Mitte des Schirms soll die Zoomstufe überleben,
+               sonst landet man nach dem Umschalten irgendwo im Jahr. */
+            const k = el('roll');
+            const sp = spanne();
+            const mitteX = k.scrollLeft + (k.clientWidth - NAMENSBREITE) / 2 - NAMENSBREITE;
+            const mitteTag = plusTage(sp.von, Math.round(mitteX / px()));
+
+            stufe = neu;
+            sichern(); malen(); knoepfeAktualisieren();
+
+            const nx = NAMENSBREITE + xVon(spanne(), mitteTag);
+            k.scrollLeft = Math.max(0, nx - (k.clientWidth - NAMENSBREITE) / 2 - NAMENSBREITE);
+        }
+
+        /* ---------- Vorhaben ---------- */
+
+        function neuesVorhaben(bahnId, vonDatum) {
+            const r = rm();
+            const dauer = { woche: 7, monat: 21, quartal: 60 }[stufe];
+            const v = {
+                id: neueId('v'),
+                bahn: bahnId || r.bahnen[0].id,
+                titel: 'Neues Vorhaben',
+                notiz: '',
+                farbe: FARBEN[r.vorhaben.length % FARBEN.length],
+                von: vonDatum || heute(),
+                bis: plusTage(vonDatum || heute(), dauer)
+            };
+            merken();
+            r.vorhaben.push(v);
+            sichern(); malen();
+            vorhabenBearbeiten(v.id);
+        }
+
+        function neuesVorhabenMittig() {
+            const r = rm();
+            if (!r) return;
+            const k = el('roll');
+            const sp = spanne();
+            const mitteX = k.scrollLeft + (k.clientWidth - NAMENSBREITE) / 2 - NAMENSBREITE;
+            neuesVorhaben(r.bahnen[0].id, plusTage(sp.von, Math.max(0, Math.round(mitteX / px()))));
+        }
+
+        /* Die Bahnen als Liste für die Dialoge. Wer nicht ziehen mag, ordnet ein
+           Vorhaben oder einen Meilenstein hier zu. */
+        const bahnOptionen = () => rm().bahnen.map(b => ({ wert: b.id, text: b.name }));
+
+        async function vorhabenBearbeiten(id) {
+            const v = rm().vorhaben.find(x => x.id === id);
+            if (!v) return;
+            const a = await poAsk('Vorhaben', [
+                { name: 'titel', label: 'Titel', wert: v.titel },
+                { name: 'bahn',  label: 'Bahn',  wert: v.bahn, typ: 'auswahl', optionen: bahnOptionen() },
+                { name: 'von',   label: 'Von',   wert: v.von,  typ: 'date' },
+                { name: 'bis',   label: 'Bis',   wert: v.bis,  typ: 'date' },
+                { name: 'farbe', label: 'Farbe', wert: v.farbe, typ: 'color' },
+                { name: 'notiz', label: 'Notiz (eine Zeile)', wert: v.notiz, pflicht: false }
+            ], { ok: 'Übernehmen' });
+            if (!a) return;
+            merken();
+            v.titel = a.titel;
+            v.bahn = a.bahn;
+            v.von = a.von;
+            v.bis = tageZwischen(a.von, a.bis) < 0 ? a.von : a.bis;
+            v.farbe = a.farbe;
+            v.notiz = a.notiz || '';
+            sichern(); malen();
+        }
+
+        async function vorhabenLoeschen(id) {
+            const v = rm().vorhaben.find(x => x.id === id);
+            if (!v) return;
+            const ja = await poConfirm(`„${v.titel}“ wird gelöscht.`,
+                                       { titel: 'Vorhaben löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            merken();
+            rm().vorhaben = rm().vorhaben.filter(x => x.id !== id);
+            sichern(); malen();
+        }
+
+        /* ---------- Meilensteine ---------- */
+
+        async function neuerMeilenstein() {
+            const r = rm();
+            if (!r) return;
+            const a = await poAsk('Meilenstein', [
+                { name: 'titel', label: 'Titel', wert: 'Meilenstein' },
+                { name: 'bahn',  label: 'Bahn',  wert: r.bahnen[0].id, typ: 'auswahl', optionen: bahnOptionen() },
+                { name: 'am',    label: 'Am',    wert: heute(), typ: 'date' },
+                { name: 'farbe', label: 'Farbe', wert: '#9E292B', typ: 'color' }
+            ]);
+            if (!a) return;
+            merken();
+            r.meilensteine.push({
+                id: neueId('m'), bahn: a.bahn,
+                titel: a.titel, am: a.am, farbe: a.farbe
+            });
+            sichern(); malen();
+        }
+
+        async function meilensteinBearbeiten(id) {
+            const m = rm().meilensteine.find(x => x.id === id);
+            if (!m) return;
+            const a = await poAsk('Meilenstein', [
+                { name: 'titel', label: 'Titel', wert: m.titel },
+                { name: 'bahn',  label: 'Bahn',  wert: m.bahn, typ: 'auswahl', optionen: bahnOptionen() },
+                { name: 'am',    label: 'Am',    wert: m.am, typ: 'date' },
+                { name: 'farbe', label: 'Farbe', wert: m.farbe, typ: 'color' }
+            ], { ok: 'Übernehmen' });
+            if (!a) return;
+            merken();
+            m.titel = a.titel; m.bahn = a.bahn; m.am = a.am; m.farbe = a.farbe;
+            sichern(); malen();
+        }
+
+        async function meilensteinLoeschen(id) {
+            const m = rm().meilensteine.find(x => x.id === id);
+            if (!m) return;
+            const ja = await poConfirm(`„${m.titel}“ wird gelöscht.`,
+                                       { titel: 'Meilenstein löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            merken();
+            rm().meilensteine = rm().meilensteine.filter(x => x.id !== id);
+            sichern(); malen();
+        }
+
+        /* ---------- Bahnen ---------- */
+
+        async function neueBahn() {
+            const r = rm();
+            if (!r) return;
+            const a = await poAsk('Neue Bahn', [{ name: 'name', label: 'Name', wert: 'Neue Bahn' }]);
+            if (!a) return;
+            merken();
+            r.bahnen.push({ id: neueId('b'), name: a.name });
+            sichern(); malen();
+        }
+
+        function bahnBenennen(id, wert) {
+            const b = rm().bahnen.find(x => x.id === id);
+            if (!b) return;
+            merken();
+            b.name = String(wert || '').trim() || b.name;
+            sichern(); malen();
+        }
+
+        function bahnSchieben(id, richtung) {
+            const r = rm();
+            const i = r.bahnen.findIndex(b => b.id === id);
+            const j = i + richtung;
+            if (i < 0 || j < 0 || j >= r.bahnen.length) return;
+            merken();
+            const t = r.bahnen[i]; r.bahnen[i] = r.bahnen[j]; r.bahnen[j] = t;
+            sichern(); malen();
+        }
+
+        async function bahnLoeschen(id) {
+            const r = rm();
+            if (r.bahnen.length < 2) { poToast('Die letzte Bahn lässt sich nicht löschen.'); return; }
+            const b = r.bahnen.find(x => x.id === id);
+            const anzahl = r.vorhaben.filter(v => v.bahn === id).length
+                         + r.meilensteine.filter(m => m.bahn === id).length;
+            const ja = await poConfirm(anzahl
+                    ? `Die Bahn „${b.name}“ wird gelöscht, mit ${anzahl} Einträgen darin.`
+                    : `Die Bahn „${b.name}“ wird gelöscht.`,
+                { titel: 'Bahn löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            merken();
+            r.bahnen = r.bahnen.filter(x => x.id !== id);
+            r.vorhaben = r.vorhaben.filter(v => v.bahn !== id);
+            r.meilensteine = r.meilensteine.filter(m => m.bahn !== id);
+            sichern(); malen();
+        }
+
+        /* ---------- Ziehen ----------
+           Während des Ziehens wird nur der eine Balken bewegt, nicht die ganze
+           Fläche neu gezeichnet. Erst beim Loslassen wandert das Ergebnis in die
+           Daten — ein Zug ist dadurch ein einziger Schritt zum Zurücknehmen. */
+
+        let zug = null;
+
+        el('innen').addEventListener('pointerdown', e => {
+            const bal = e.target.closest('.rm-balken');
+            if (!bal || e.target.closest('.po-x')) return;
+            const v = rm().vorhaben.find(x => x.id === bal.dataset.id);
+            if (!v) return;
+
+            zug = {
+                el: bal, v,
+                art: e.target.classList.contains('rm-griff-l') ? 'links'
+                   : e.target.classList.contains('rm-griff-r') ? 'rechts' : 'ganz',
+                x0: e.clientX,
+                l0: parseFloat(bal.style.left),
+                b0: parseFloat(bal.style.width),
+                von: v.von, bis: v.bis
+            };
+            bal.setPointerCapture(e.pointerId);
+            bal.classList.add('zieht');
+            /* Hier kein preventDefault: das unterdrückt im Browser die ganze
+               Kette der Mausereignisse, also auch click und dblclick — der
+               Doppelklick auf den Balken käme dann nie an. Gegen das Markieren
+               von Text beim Ziehen hilft stattdessen der Griff unten. */
+        });
+
+        document.addEventListener('selectstart', e => { if (zug) e.preventDefault(); });
+
+        document.addEventListener('pointermove', e => {
+            if (!zug) return;
+            const tage = Math.round((e.clientX - zug.x0) / px());
+            const dauer = tageZwischen(zug.von, zug.bis);
+
+            if (zug.art === 'ganz') {
+                zug.el.style.left = (zug.l0 + tage * px()) + 'px';
+                zug.neuVon = plusTage(zug.von, tage);
+                zug.neuBis = plusTage(zug.bis, tage);
+            } else if (zug.art === 'links') {
+                const t = Math.min(tage, dauer);
+                zug.el.style.left = (zug.l0 + t * px()) + 'px';
+                zug.el.style.width = Math.max(px(), zug.b0 - t * px()) + 'px';
+                zug.neuVon = plusTage(zug.von, t);
+                zug.neuBis = zug.bis;
+            } else {
+                const t = Math.max(tage, -dauer);
+                zug.el.style.width = Math.max(px(), zug.b0 + t * px()) + 'px';
+                zug.neuVon = zug.von;
+                zug.neuBis = plusTage(zug.bis, t);
+            }
+        });
+
+        document.addEventListener('pointerup', e => {
+            if (!zug) return;
+            const z = zug;
+            zug = null;
+            z.el.classList.remove('zieht');
+
+            /* Senkrecht gezogen wechselt das Vorhaben die Bahn. */
+            let neueBahnId = z.v.bahn;
+            if (z.art === 'ganz') {
+                z.el.style.pointerEvents = 'none';
+                const unten = document.elementFromPoint(e.clientX, e.clientY);
+                z.el.style.pointerEvents = '';
+                const zeile = unten && unten.closest('.rm-zeile[data-bahn]');
+                if (zeile) neueBahnId = zeile.dataset.bahn;
+            }
+
+            const geaendert = (z.neuVon && (z.neuVon !== z.v.von || z.neuBis !== z.v.bis))
+                           || neueBahnId !== z.v.bahn;
+            if (geaendert) {
+                merken();
+                if (z.neuVon) { z.v.von = z.neuVon; z.v.bis = z.neuBis; }
+                z.v.bahn = neueBahnId;
+                sichern();
+                malen();
+            } else {
+                /* Nichts verschoben — dann nur den Balken zurücklegen und die
+                   Fläche stehen lassen. Würde hier neu gezeichnet, wäre der
+                   Balken beim zweiten Klick ein anderes Element, und der
+                   Doppelklick fiele auf die Bahn statt auf das Vorhaben. */
+                z.el.style.left = z.l0 + 'px';
+                z.el.style.width = z.b0 + 'px';
+            }
+        });
+
+        el('innen').addEventListener('dblclick', e => {
+            const bal = e.target.closest('.rm-balken');
+            if (bal) { vorhabenBearbeiten(bal.dataset.id); return; }
+            const stein = e.target.closest('.rm-stein');
+            if (stein) { meilensteinBearbeiten(stein.dataset.stein); return; }
+
+            const spur = e.target.closest('.rm-spur');
+            if (!spur) return;
+            const x = e.clientX - spur.getBoundingClientRect().left;
+            neuesVorhaben(spur.dataset.bahn, plusTage(spanne().von, Math.max(0, Math.round(x / px()))));
+        });
+
+        /* ---------- Roadmaps ---------- */
+
+        function neueRoadmap() {
+            const r = neueLeereRoadmap();
+            roadmaps.unshift(r);
+            aktiv = r.id;
+            zurueckStapel = []; vorStapel = [];
+            sichern(); listeMalen(); malen(); knoepfeAktualisieren();
+            setTimeout(zuHeute, 30);
+        }
+
+        function roadmapOeffnen(id) {
+            if (id === aktiv) return;
+            if (!roadmaps.some(r => r.id === id)) return;
+            aktiv = id;
+            zurueckStapel = []; vorStapel = [];
+            sichern(); listeMalen(); malen(); knoepfeAktualisieren();
+            setTimeout(zuHeute, 30);
+        }
+
+        function roadmapBenennen(id, wert) {
+            const r = roadmaps.find(x => x.id === id);
+            if (!r) return;
+            r.name = String(wert || '').trim() || r.name;
+            sichern(); listeMalen();
+        }
+
+        async function roadmapLoeschen(id) {
+            const r = roadmaps.find(x => x.id === id);
+            if (!r) return;
+            const ja = await poConfirm(`„${r.name}“ wird gelöscht, mit ${r.vorhaben.length} Vorhaben. Das lässt sich nicht rückgängig machen.`,
+                                       { titel: 'Roadmap löschen', ja: 'Ja, löschen', gefahr: true });
+            if (!ja) return;
+            roadmaps = roadmaps.filter(x => x.id !== id);
+            if (!roadmaps.length) roadmaps = [neueLeereRoadmap('Roadmap')];
+            if (aktiv === id) aktiv = roadmaps[0].id;
+            zurueckStapel = []; vorStapel = [];
+            sichern(); listeMalen(); malen(); knoepfeAktualisieren();
+        }
+
+        async function roadmapLeeren() {
+            const r = rm();
+            if (!r) return;
+            const anzahl = r.vorhaben.length + r.meilensteine.length;
+            if (!anzahl) { poToast('Die Roadmap ist schon leer.'); return; }
+            const ja = await poConfirm(`Alle ${anzahl} Einträge dieser Roadmap werden entfernt. Die Bahnen bleiben.`,
+                                       { titel: 'Roadmap leeren', ja: 'Ja, leeren', gefahr: true });
+            if (!ja) return;
+            merken();
+            r.vorhaben = []; r.meilensteine = [];
+            sichern(); malen();
+        }
+
+        /* ---------- Seitenleiste ---------- */
+
+        function leisteUmschalten(aus) {
+            const f = el('rm-flaeche');
+            const zu = (aus === undefined) ? !f.classList.contains('zu') : !!aus;
+            f.classList.toggle('zu', zu);
+            try { localStorage.setItem(SEITE_AUS, zu ? '1' : '0'); }
+            catch (e) { /* dann eben nur für dieses Fenster */ }
+        }
+
+        /* ---------- Datei ---------- */
+
+        function sichernDatei() {
+            poDownload('roadmaps.json', JSON.stringify({
+                format: 'pocketops-roadmap', version: 1,
+                gesichertAm: new Date().toISOString(), roadmaps
+            }, null, 2));
+            poToast(`Gesichert: ${roadmaps.length} Roadmaps`);
+        }
+
+        function oeffnenDatei(input) {
+            poReadFile(input, async text => {
+                const p = JSON.parse(text);
+                if (!p || !Array.isArray(p.roadmaps)) { poToast('Die Datei enthält keine Roadmaps.', 4000); return; }
+                const ja = await poConfirm(`${p.roadmaps.length} Roadmaps werden geöffnet. Der jetzige Stand wird dabei ersetzt.`,
+                                           { titel: 'Roadmaps öffnen', ja: 'Ja, ersetzen', gefahr: true });
+                if (!ja) return;
+                roadmaps = pruefen(p.roadmaps);
+                if (!roadmaps.length) roadmaps = [neueLeereRoadmap('Roadmap')];
+                aktiv = roadmaps[0].id;
+                zurueckStapel = []; vorStapel = [];
+                sichern(); listeMalen(); malen(); knoepfeAktualisieren();
+                poToast(`Geöffnet: ${roadmaps.length} Roadmaps`);
+                setTimeout(zuHeute, 30);
+            });
+        }
+
+        /* ---------- Als Bild ----------
+           Die Roadmap wird für das Bild ein zweites Mal gemalt, diesmal auf eine
+           Leinwand. Das ist mehr Arbeit als ein fertiger Umwandler, kostet aber
+           kein fremdes Skript aus dem Netz: das Werkzeug bleibt eine Datei, die
+           auch ohne Verbindung tut, was sie soll. */
+
+        function bildExport() {
+            const r = rm();
+            if (!r || (!r.vorhaben.length && !r.meilensteine.length)) {
+                poToast('Auf dieser Roadmap ist nichts zu sehen.'); return;
+            }
+            const sp = spanne();
+            const breite = tageZwischen(sp.von, sp.bis) * px();
+            const alleSpalten = spalten(sp), alleGruppen = gruppen(sp);
+
+            /* Höhe der Bahnen vorab ausrechnen, damit die Leinwand passt. */
+            const zeilen = r.bahnen.map(b => {
+                const marken = markenDerBahn(sp, b.id);
+                const spuren = Math.max(1, marken.reduce((m, x) => Math.max(m, x._spur + 1), 0));
+                return { bahn: b, marken, hoehe: spuren * ZEILENHOEHE + 10 };
+            });
+
+            const KOPF = 46, RAND = 14;
+            const gesamtB = NAMENSBREITE + breite + RAND * 2;
+            const gesamtH = KOPF + zeilen.reduce((s, z) => s + z.hoehe, 0) + RAND * 2 + 24;
+            const massstab = Math.min(2.5, Math.max(1, 2000 / gesamtB));
+
+            const c = document.createElement('canvas');
+            c.width = Math.round(gesamtB * massstab);
+            c.height = Math.round(gesamtH * massstab);
+            const g = c.getContext('2d');
+            g.scale(massstab, massstab);
+            g.fillStyle = '#FFFFFF';
+            g.fillRect(0, 0, gesamtB, gesamtH);
+            g.textBaseline = 'middle';
+
+            const X0 = RAND, Y0 = RAND;
+            const spurX = X0 + NAMENSBREITE;
+
+            /* Titel */
+            g.fillStyle = '#1E293B';
+            g.font = '700 14px system-ui, sans-serif';
+            g.fillText(r.name, X0, Y0 + 8);
+
+            const oben = Y0 + 24;
+
+            /* Senkrechte Linien über die ganze Höhe */
+            const unten = oben + KOPF + zeilen.reduce((s, z) => s + z.hoehe, 0);
+            alleSpalten.forEach(s => {
+                g.strokeStyle = s.stark ? '#CBD5E1' : '#E7ECF3';
+                g.lineWidth = 1;
+                g.beginPath();
+                g.moveTo(Math.round(spurX + s.x) + .5, oben);
+                g.lineTo(Math.round(spurX + s.x) + .5, unten);
+                g.stroke();
+            });
+
+            /* Kopfzeilen */
+            g.fillStyle = '#697896';
+            g.font = '700 10px system-ui, sans-serif';
+            alleGruppen.forEach(gr => {
+                if (gr.breite < 24) return;
+                g.fillText(gr.titel.toUpperCase(), spurX + gr.x + 6, oben + 11);
+            });
+            g.font = '10px system-ui, sans-serif';
+            alleSpalten.forEach(s => {
+                if (s.breite < 26) return;
+                g.fillText(s.titel, spurX + s.x + 5, oben + 34);
+            });
+            g.strokeStyle = '#CBD5E1';
+            g.beginPath();
+            g.moveTo(X0, Math.round(oben + KOPF) + .5);
+            g.lineTo(X0 + NAMENSBREITE + breite, Math.round(oben + KOPF) + .5);
+            g.stroke();
+
+            /* Bahnen */
+            let y = oben + KOPF;
+            zeilen.forEach(z => {
+                g.fillStyle = '#475569';
+                g.font = '700 10px system-ui, sans-serif';
+                g.fillText(z.bahn.name.toUpperCase(), X0 + 4, y + 16);
+
+                z.marken.forEach(m => {
+                    const my = y + 5 + m._spur * ZEILENHOEHE;
+                    if (m.art === 'v') {
+                        const v = m.daten;
+                        g.fillStyle = v.farbe;
+                        rundesRechteck(g, spurX + m._x, my, Math.max(3, m._b), 26, 5);
+                        g.fill();
+                        g.save();
+                        rundesRechteck(g, spurX + m._x, my, Math.max(3, m._b), 26, 5);
+                        g.clip();
+                        g.fillStyle = '#FFFFFF';
+                        g.font = '600 12px system-ui, sans-serif';
+                        g.fillText(v.titel, spurX + m._x + 7, my + 13);
+                        g.restore();
+                    } else {
+                        const s = m.daten;
+                        g.save();
+                        g.translate(spurX + m._x, my + 13);
+                        g.rotate(Math.PI / 4);
+                        g.fillStyle = s.farbe;
+                        g.fillRect(-5.5, -5.5, 11, 11);
+                        g.restore();
+                        g.fillStyle = '#475569';
+                        g.font = '700 11px system-ui, sans-serif';
+                        g.fillText(s.titel, spurX + m._x + 11, my + 13);
+                    }
+                });
+
+                y += z.hoehe;
+                g.strokeStyle = '#E7ECF3';
+                g.beginPath();
+                g.moveTo(X0, Math.round(y) + .5);
+                g.lineTo(X0 + NAMENSBREITE + breite, Math.round(y) + .5);
+                g.stroke();
+            });
+
+            /* Heute */
+            const xh = spurX + xVon(sp, heute());
+            if (xh >= spurX && xh <= spurX + breite) {
+                g.strokeStyle = '#9E292B';
+                g.lineWidth = 2;
+                g.setLineDash([5, 4]);
+                g.beginPath();
+                g.moveTo(xh, oben);
+                g.lineTo(xh, unten);
+                g.stroke();
+                g.setLineDash([]);
+                g.fillStyle = '#9E292B';
+                g.font = '700 9px system-ui, sans-serif';
+                g.fillText('HEUTE', xh + 4, oben + KOPF + 6);
+            }
+
+            c.toBlob(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = r.name.replace(/[\\/:*?"<>|]/g, '-').slice(0, 60) + '.png';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+                poToast('Bild gespeichert · ' + c.width + ' × ' + c.height + ' Punkte', 4000);
+            }, 'image/png');
+        }
+
+        function rundesRechteck(g, x, y, b, h, r) {
+            const rr = Math.min(r, b / 2, h / 2);
+            g.beginPath();
+            g.moveTo(x + rr, y);
+            g.arcTo(x + b, y,     x + b, y + h, rr);
+            g.arcTo(x + b, y + h, x,     y + h, rr);
+            g.arcTo(x,     y + h, x,     y,     rr);
+            g.arcTo(x,     y,     x + b, y,     rr);
+            g.closePath();
+        }
+
+        /* ---------- Tasten ---------- */
+
+        document.addEventListener('keydown', e => {
+            if (e.target.matches('input, textarea')) return;
+            const strg = e.ctrlKey || e.metaKey;
+            if (strg && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); zurueck(); }
+            else if (strg && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); vor(); }
+        });
+
+        el('roll').addEventListener('scroll', kopfNachziehen, { passive: true });
+        window.addEventListener('beforeunload', sichern);
+
+        /* ---------- Start ---------- */
+
+        (function start() {
+            let g = null;
+            try { g = JSON.parse(localStorage.getItem(SPEICHER) || 'null'); } catch (e) { g = null; }
+
+            if (g && Array.isArray(g.roadmaps)) {
+                roadmaps = pruefen(g.roadmaps);
+                aktiv = g.aktiv;
+                if (STUFEN[g.stufe]) stufe = g.stufe;
+            }
+            if (!roadmaps.length) roadmaps = [neueLeereRoadmap('Roadmap')];
+            if (!roadmaps.some(r => r.id === aktiv)) aktiv = roadmaps[0].id;
+
+            try { if (localStorage.getItem(SEITE_AUS) === '1') leisteUmschalten(true); }
+            catch (e) { /* dann eben sichtbar */ }
+
+            listeMalen(); malen(); knoepfeAktualisieren();
+            setTimeout(zuHeute, 30);
+        })();
+    </script>
+</body>
+</html>
