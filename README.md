@@ -5,8 +5,14 @@ kein Server. Jedes Werkzeug ist **eine einzige HTML-Datei** — Doppelklick gen�
 
 ## Anfangen
 
-**[`Start_PocketOps.html`](Start_PocketOps.html) im Browser öffnen.** Das ist die
-Übersicht; von dort führt alles Weitere.
+**[ZIP herunterladen](https://github.com/Eddyiron/PocketOps/archive/refs/tags/v1.0.zip)
+→ entpacken → `Start_PocketOps.html` öffnen.** Das ist die Übersicht; von dort
+führt alles Weitere.
+
+> **Erst entpacken, sonst geht nichts.** Windows zeigt ZIP-Dateien wie Ordner an.
+> Klickt man `Start_PocketOps.html` direkt darin an, packt Windows nur diese eine
+> Datei aus — der Ordner `tools` fehlt dann, und keine Kachel führt irgendwohin.
+> Also: Rechtsklick auf die ZIP → *Alle extrahieren…*, und erst danach öffnen.
 
 ```
 PocketOps/
