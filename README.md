@@ -37,22 +37,43 @@ Alles auf Deutsch und Englisch, umschaltbar oben rechts.
 
 ## Wo deine Daten liegen
 
-Im Speicher deines Browsers (`localStorage`), auf deinem Rechner. Nichts wird an
-einen Server geschickt, es gibt keinen.
+Im Speicher deines Browsers, auf deinem Rechner. Nichts wird an einen Server
+geschickt, es gibt keinen.
 
-**Zwei Dinge, die man wissen sollte:**
+**Was du eingibst, ist augenblicklich abgelegt.** Es gibt keinen Knopf dafür und
+muss keinen geben: ein neues Ticket, ein getippter Satz, ein verschobener Zettel
+sind in demselben Moment im Speicher, in dem sie auf dem Schirm stehen. Beim
+nächsten Öffnen ist alles wieder da. Klappt das einmal nicht — weil der Vorrat
+voll ist oder der Browser nichts ablegen darf —, dann sagt das Werkzeug es mit
+einem Streifen unten am Fenster, der stehen bleibt. Still geht nichts verloren.
 
-1. **Browser-Speicher ist flüchtig.** Räumt jemand den Browser auf, ist die Arbeit
-   weg. Jedes Werkzeug kann über **Sichern** eine `.json`-Datei ablegen und über
-   **Öffnen** wieder einlesen. Das ist die eigentliche Sicherung.
-2. **Neun der Werkzeuge laden beim Öffnen eine Programmbibliothek nach** — aus dem
+**Drei Dinge, die man wissen sollte:**
+
+1. **Der Speicher gehört dem Browser, nicht der Datei.** Öffnest du dasselbe
+   Werkzeug einmal in Chrome und einmal in Edge, sind es zwei getrennte Ablagen:
+   das eine Fenster zeigt deine Arbeit, das andere ist leer. Verloren ist dabei
+   nichts — es liegt im jeweils anderen Browser. Wer wechseln will, nimmt die
+   `.json`-Datei als Weg dazwischen.
+2. **Browser-Speicher ist flüchtig.** Räumt jemand den Browser auf, ist die Arbeit
+   weg. Die Sicherung als Datei ist die eigentliche Sicherung — und davon gibt es
+   zwei Umfänge:
+
+   | Knopf | wo | was |
+   | --- | --- | --- |
+   | **Speichern Gesamtsystem** | Übersicht | eine Datei mit allem: die Übersicht, jedes Werkzeug, Bilder und Tonaufnahmen. Dazu **Gesamtsystem öffnen**, um sie zurückzuholen — auch in einen anderen Browser oder auf einen anderen Rechner. |
+   | **Tool speichern** | im Werkzeug | nur dieses eine Werkzeug. Für das Weitergeben eines Bretts oder einer Karte; zurück über **Öffnen**. |
+
+   Fürs regelmäßige Sichern nimm das Gesamtsystem. Was gerade im Speicher liegt
+   und wie viel davon belegt ist, zeigt `tools/Sicherung.html` oben auf der Seite.
+3. **Neun der Werkzeuge laden beim Öffnen eine Programmbibliothek nach** — aus dem
    Netz, nicht aus diesem Ordner. Der jeweilige Server erfährt dabei deine
-   IP-Adresse. Betroffen sind SlideCraft, PDF-Werkzeuge, Markdown-Editor, Mindmap,
-   RACI-Matrix, Stakeholder-Karte, Priorisierungsmatrix, Entscheidungsmatrix und
-   Dokument. Die Anleitung (`?` oben rechts) nennt in jedem Werkzeug die konkreten
-   Quellen. Woran du arbeitest, verlässt den Rechner auch dabei nicht.
+   IP-Adresse. Betroffen sind SlideCraft, PDF-Werkzeuge, Markdown-Editor,
+   Mindmap, RACI-Matrix, Stakeholder-Karte, Priorisierungsmatrix,
+   Entscheidungsmatrix und Dokument. Die Anleitung (`?` oben rechts) nennt in
+   jedem Werkzeug die konkreten Quellen. Woran du arbeitest, verlässt den
+   Rechner auch dabei nicht.
 
-Die übrigen 17 Werkzeuge laufen vollständig ohne Internetverbindung.
+Die übrigen 16 Werkzeuge laufen vollständig ohne Internetverbindung.
 
 ## Fremde Bibliotheken
 
@@ -99,5 +120,13 @@ node _design/sync.mjs
 Was zwischen den Marken `PO-TOKENS`, `PO-BASE`, `PO-SPRACHE` und `PO-ICON` steht,
 wird dabei überschrieben — dort also nicht von Hand hineinschreiben. Mehr dazu in
 [`_design/LIESMICH.md`](_design/LIESMICH.md).
+
+Danach die Proben laufen lassen. Sie starten Chrome ohne Fenster, bedienen die
+Werkzeuge und sehen nach, ob eine Eingabe das Schliessen und erneute Öffnen
+übersteht — es braucht kein `npm install`:
+
+```
+node _design/pruef/alle.mjs
+```
 
 Fragen und Fehler bitte als Issue hier im Projekt.

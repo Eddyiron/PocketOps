@@ -440,6 +440,45 @@ a.po-btn { text-decoration: none; }
     line-height: 1.45;
 }
 
+/* ---------- Der Streifen, wenn nicht gespeichert werden konnte ----------
+   Bewusst ein Streifen und kein Hinweisfenster: „deine Arbeit wird nicht
+   gespeichert" darf nicht nach zwei Sekunden verschwinden. Er sitzt unten
+   über der ganzen Breite, damit er auch dann auffällt, wenn der Blick in
+   der Mitte der Seite klebt. Oben wäre die Kopfzeile verdeckt, und mit ihr
+   der Knopf „Speichern", auf den der Text verweist. */
+.po-speicherwarnung {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 300;              /* über dem Hinweisfenster (200) und dem Dialog (150) */
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 16px;
+    background: #FEF2F2;
+    border-top: 3px solid var(--po-bad);
+    box-shadow: 0 -8px 20px -10px rgba(15, 23, 42, .3);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--po-ink);
+}
+.po-speicherwarnung-text { flex: 1; min-width: 0; }
+.po-speicherwarnung strong { display: block; color: var(--po-bad); font-size: 13px; margin-bottom: 2px; }
+.po-speicherwarnung-zu {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #FECACA;
+    border-radius: var(--po-r);
+    background: var(--po-surface);
+    color: var(--po-bad);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+}
+.po-speicherwarnung-zu:hover { background: #FEE2E2; }
+
 /* ---------- Dialog ---------- */
 .po-backdrop {
     position: fixed;

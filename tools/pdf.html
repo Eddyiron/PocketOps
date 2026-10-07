@@ -459,6 +459,45 @@
             line-height: 1.45;
         }
 
+        /* ---------- Der Streifen, wenn nicht gespeichert werden konnte ----------
+           Bewusst ein Streifen und kein Hinweisfenster: „deine Arbeit wird nicht
+           gespeichert" darf nicht nach zwei Sekunden verschwinden. Er sitzt unten
+           über der ganzen Breite, damit er auch dann auffällt, wenn der Blick in
+           der Mitte der Seite klebt. Oben wäre die Kopfzeile verdeckt, und mit ihr
+           der Knopf „Speichern", auf den der Text verweist. */
+        .po-speicherwarnung {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 300;              /* über dem Hinweisfenster (200) und dem Dialog (150) */
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 16px;
+            background: #FEF2F2;
+            border-top: 3px solid var(--po-bad);
+            box-shadow: 0 -8px 20px -10px rgba(15, 23, 42, .3);
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--po-ink);
+        }
+        .po-speicherwarnung-text { flex: 1; min-width: 0; }
+        .po-speicherwarnung strong { display: block; color: var(--po-bad); font-size: 13px; margin-bottom: 2px; }
+        .po-speicherwarnung-zu {
+            flex: 0 0 auto;
+            width: 24px;
+            height: 24px;
+            border: 1px solid #FECACA;
+            border-radius: var(--po-r);
+            background: var(--po-surface);
+            color: var(--po-bad);
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .po-speicherwarnung-zu:hover { background: #FEE2E2; }
+
         /* ---------- Dialog ---------- */
         .po-backdrop {
             position: fixed;
@@ -1266,6 +1305,17 @@
            poEsc(text)                    Text für HTML entschärfen
            poDownload(name, text, typ)    Datei zum Herunterladen anbieten
            poReadFile(input, fn)          gewählte Datei als Text lesen
+           poSichern(schluessel, wert)    sofort in den Browser-Speicher, mit
+                                          Prüfung und sichtbarem Fehlschlag
+           poLaden(schluessel, ersatz)    Stand zurücklesen
+           poVergessen(schluessel)        Stand löschen
+           poSpeicherLage()               was im Speicher liegt und wie viel
+           poBrowser()                    Browser, dem der Speicher gehört
+           poSpeicherStoerung()           denselben Streifen für Werkzeuge mit
+           poSpeicherBehoben()            eigener Ablage in IndexedDB
+           poBeimVerlassen(fn)            vor dem Schliessen noch wegschreiben
+           PO_ABLAGEN                     Verzeichnis aller Ablagen der Reihe
+           poAblageName(k)                Werkzeug zu einem Schlüssel, sonst null
            ====================================================================== */
 
         function poEsc(s) {
@@ -1402,6 +1452,352 @@
             r.readAsText(f);
         }
 
+        /* ======================================================================
+           POCKETOPS · SPEICHERN
+
+           poSichern(schluessel, wert)   schreibt sofort und prüft, ob es ankam
+           poLaden(schluessel, ersatz)   liest zurück, verträgt Schrott
+           poVergessen(schluessel)       Stand löschen
+           poSpeicherLage()              was liegt im Speicher, wie viel ist es
+           poBrowser()                   Name des Browsers, dem der Speicher gehört
+
+           Jede Eingabe wird augenblicklich geschrieben. Es gibt für den
+           Browser-Speicher keinen Speicherknopf und soll keinen geben — wer ein
+           Ticket anlegt und das Fenster schliesst, muss es beim nächsten Öffnen
+           wiederfinden. Der Knopf „Speichern“ in der Kopfzeile ist etwas
+           anderes: die .json-Datei, die den Browser überlebt.
+
+           Zwei Dinge dürfen dabei nie stumm bleiben:
+
+           1. Ein fehlgeschlagener Schreibvorgang. Der Browser-Speicher ist auf
+              wenige Megabyte begrenzt, und alle Werkzeuge teilen sich diesen
+              einen Vorrat, weil sie unter derselben Adresse laufen. Läuft er
+              über, wirft setItem. Früher stand der Aufruf in mehreren
+              Werkzeugen ohne try — die Karte war gezeichnet, gespeichert war
+              nichts, und niemand erfuhr davon. Darum wird hier jeder
+              Schreibvorgang zurückgelesen und ein Fehlschlag angesagt.
+
+           2. Dass der Speicher dem Browser gehört, nicht der Datei. Dieselbe
+              Datei einmal in Chrome und einmal in Edge geöffnet zeigt zwei
+              getrennte Ablagen. Die Arbeit ist dann nicht weg, sie liegt im
+              anderen Browser — aber ohne Hinweis sieht es nach Datenverlust
+              aus. Die Anleitung sagt es darum ausdrücklich und nennt den
+              Browser, in dem man gerade sitzt.
+           ====================================================================== */
+
+        const _poVoll = e => !!e && (e.name === 'QuotaExceededError'
+                                  || e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+                                  || e.code === 22);
+
+        /* Welcher Schlüssel zuletzt nicht geschrieben werden konnte. Nötig, damit
+           ein winziger Schreibvorgang, der auch bei vollem Speicher noch durchgeht
+           — eine Seitenleisten-Einstellung etwa —, den Streifen nicht wegräumt,
+           während die eigentliche Arbeit weiterhin nicht gespeichert wird. */
+        let _poSpeicherKaputt = null;
+
+        /* Einmal zu Anfang prüfen, ob überhaupt geschrieben werden darf. Im
+           privaten Fenster mancher Browser und bei gesperrtem Speicher wirft
+           schon der Zugriff auf localStorage, nicht erst setItem.
+
+           Ein voller Speicher gilt dabei ausdrücklich als vorhanden. Lesen geht
+           dort noch, ein kleinerer Stand passt womöglich hinein, und vor allem:
+           sonst meldete jedes Werkzeug nach einem Neuladen bei vollem Vorrat
+           „dieser Browser lässt keinen Speicher zu". Das ist die falsche Auskunft
+           und schickt den Nutzer zur falschen Abhilfe — aufräumen hilft, ein
+           anderer Browser nicht. */
+        const _poSpeicherDa = (() => {
+            try {
+                localStorage.setItem('po_probe', '1');
+                localStorage.removeItem('po_probe');
+                return true;
+            } catch (e) { return _poVoll(e); }
+        })();
+
+        function poSichern(schluessel, wert) {
+            const text = JSON.stringify(wert);
+            if (text === undefined) return false;          // nichts Speicherbares
+            if (!_poSpeicherDa) { _poSpeicherKaputt = schluessel; _poSpeicherWarnen('zu'); return false; }
+            try {
+                localStorage.setItem(schluessel, text);
+            } catch (e) {
+                _poSpeicherKaputt = schluessel;
+                _poSpeicherWarnen(_poVoll(e) ? 'voll' : 'fehler');
+                return false;
+            }
+            /* Zurücklesen. Es gibt Umgebungen, die setItem annehmen und den Wert
+               nicht behalten; ohne diese Prüfung merkt das niemand. */
+            if (localStorage.getItem(schluessel) !== text) {
+                _poSpeicherKaputt = schluessel;
+                _poSpeicherWarnen('fluechtig');
+                return false;
+            }
+            if (_poSpeicherKaputt === null || _poSpeicherKaputt === schluessel) {
+                _poSpeicherKaputt = null;
+                _poSpeicherEntwarnen();
+            }
+            return true;
+        }
+
+        function poLaden(schluessel, ersatz = null) {
+            if (!_poSpeicherDa) return ersatz;
+            let roh = null;
+            try { roh = localStorage.getItem(schluessel); } catch (e) { return ersatz; }
+            if (roh === null || roh === '') return ersatz;
+            try {
+                const w = JSON.parse(roh);
+                return (w === null || w === undefined) ? ersatz : w;
+            } catch (e) {
+                /* Eine Fassung von früher hat nackten Text abgelegt, kein JSON.
+                   Zurückgeben nur dann, wenn das Werkzeug überhaupt Text erwartet —
+                   sonst bekäme es eine Zeichenkette, wo es ein Objekt auspackt. */
+                return typeof ersatz === 'string' ? roh : ersatz;
+            }
+        }
+
+        /* Löschen gehört dazu: ein zurückgesetztes Werkzeug soll keinen alten
+           Stand hinterlassen, der beim nächsten Öffnen wieder auftaucht. */
+        function poVergessen(schluessel) {
+            try { localStorage.removeItem(schluessel); return true; } catch (e) { return false; }
+        }
+
+        /* Ein Ja/Nein aus dem Speicher. Ältere Stände haben '1' und '0' als nackte
+           Zeichenketten abgelegt, neue true und false — beides muss gelesen werden,
+           sonst verliert ein Nutzer beim Umstieg seine Einstellung. */
+        const _poJa = v => v === true || v === 1 || v === '1';
+
+        /* ---------- Der Hinweis, wenn nicht gespeichert werden konnte ----------
+           Bewusst kein poToast: ein Hinweis, der nach zwei Sekunden verschwindet,
+           ist für „deine Arbeit wird nicht gespeichert“ das falsche Mittel. Der
+           Streifen bleibt stehen, bis der nächste Schreibvorgang gelingt oder der
+           Nutzer ihn wegklickt. */
+
+        const _PO_SPEICHER_GRUENDE = {
+            voll: {
+                kurz: 'Nicht gespeichert: der Browser-Speicher ist voll.',
+                lang: 'Alle PocketOps-Werkzeuge teilen sich einen Vorrat von wenigen Megabyte. Lege deine Arbeit jetzt mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab und räume in den anderen Werkzeugen auf, was du nicht mehr brauchst.'
+            },
+            zu: {
+                kurz: 'Nicht gespeichert: dieser Browser lässt keinen Speicher zu.',
+                lang: 'Im privaten Fenster und bei gesperrtem Speicher kann das Werkzeug nichts ablegen. Deine Arbeit ist nur so lange da, wie dieses Fenster offen bleibt. Lege sie mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab.'
+            },
+            fluechtig: {
+                kurz: 'Nicht gespeichert: der Browser behält den Stand nicht.',
+                lang: 'Das Werkzeug hat geschrieben und beim Zurücklesen etwas anderes gefunden. Verlasse dich hier nicht auf den Browser-Speicher, sondern lege deine Arbeit mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab.'
+            },
+            fehler: {
+                kurz: 'Nicht gespeichert: der Browser hat den Stand abgelehnt.',
+                lang: 'Der Grund ist von hier aus nicht zu erkennen. Lege deine Arbeit jetzt mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab, damit sie nicht an diesem Fenster hängt.'
+            },
+            /* Notizbuch, Dokument, SlideCraft und Sprachmemo legen nicht in
+               localStorage ab, sondern in der Browser-Datenbank — dort passen Bilder
+               und Tonaufnahmen hinein, die den Vorrat von localStorage sprengen
+               würden. Scheitert das, soll derselbe Streifen stehen wie sonst. */
+            ablage: {
+                kurz: 'Nicht gespeichert: die Ablage des Browsers antwortet nicht.',
+                lang: 'Dieses Werkzeug legt in der Browser-Datenbank ab, und die ist gerade nicht zu erreichen — im privaten Fenster zum Beispiel. Lege deine Arbeit mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab, solange dieses Fenster offen ist.'
+            }
+        };
+
+        /* Für die Werkzeuge mit eigener Ablage: denselben bleibenden Streifen
+           anzeigen, statt den Fehlschlag in die Konsole zu schreiben, wo ihn
+           niemand sieht. Die Marke ist bewusst kein gültiger Schlüsselname, damit
+           sie sich nicht mit einem echten Schlüssel aus localStorage überschneidet. */
+        const _PO_ABLAGE = '\u0001ablage';
+        function poSpeicherStoerung() { _poSpeicherKaputt = _PO_ABLAGE; _poSpeicherWarnen('ablage'); }
+        function poSpeicherBehoben() {
+            if (_poSpeicherKaputt === _PO_ABLAGE) { _poSpeicherKaputt = null; _poSpeicherEntwarnen(); }
+        }
+
+        /* ---------- Beim Verlassen noch wegschreiben ----------
+           Werkzeuge, die ihre Schreibvorgänge bündeln — ein Zeichenbrett schreibt
+           nicht bei jedem Strich —, müssen sie loswerden, bevor die Seite
+           verschwindet. Sonst verliert genau der Nutzer seine letzte Eingabe, der
+           nach dem Tippen sofort schliesst.
+
+           Nicht beforeunload allein: beim Schliessen eines Tabs löst Chrome den
+           Haken nicht verlässlich aus. visibilitychange auf 'hidden' und pagehide
+           kommen zuverlässig und noch früh genug für einen Schreibvorgang. Alle drei
+           werden gesetzt, der Aufruf muss also mehrfaches Ausführen aushalten — bei
+           einem Schreibvorgang, der immer denselben Stand ablegt, ist das gegeben.
+
+           visibilitychange hat einen zweiten Nutzen: es greift auch, wenn der Nutzer
+           bloss den Tab wechselt. Dann ist der Stand schon weg, bevor irgendetwas
+           schiefgehen kann. */
+        function poBeimVerlassen(fn) {
+            /* Notizbuch, Dokument und SlideCraft geben hier eine async-Funktion
+               herein. Die wirft nicht, sie liefert ein abgelehntes Versprechen —
+               dasselbe, was bei poReadFile schon zu beachten war. Beides muss hier
+               verschwinden, denn beim Verlassen der Seite soll kein Fehler mehr
+               auffallen, auf den niemand reagieren kann. */
+            const weg = () => {
+                try {
+                    const v = fn();
+                    if (v && typeof v.catch === 'function') v.catch(() => {});
+                } catch (e) { /* beim Verlassen nicht noch stolpern */ }
+            };
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') weg(); });
+            window.addEventListener('pagehide', weg);
+            window.addEventListener('beforeunload', weg);
+        }
+
+        function _poSpeicherWarnen(art) {
+            const g = _PO_SPEICHER_GRUENDE[art] || _PO_SPEICHER_GRUENDE.fehler;
+            let s = document.getElementById('po-speicher-warnung');
+            if (!s) {
+                s = document.createElement('div');
+                s.id = 'po-speicher-warnung';
+                s.className = 'po-speicherwarnung';
+                s.setAttribute('role', 'alert');
+                s.innerHTML = '<div class="po-speicherwarnung-text"><strong></strong><span></span></div>'
+                            + '<button type="button" class="po-speicherwarnung-zu" title="Schließen" aria-label="Schließen">&#10005;</button>';
+                s.querySelector('button').onclick = () => s.remove();
+                (document.body || document.documentElement).appendChild(s);
+            }
+            /* Beim Wechsel des Grundes den Text austauschen, nicht einen zweiten
+               Streifen aufbauen. */
+            s.querySelector('strong').textContent = g.kurz;
+            s.querySelector('span').textContent = g.lang;
+        }
+
+        function _poSpeicherEntwarnen() {
+            const s = document.getElementById('po-speicher-warnung');
+            if (s) s.remove();
+        }
+
+        /* ======================================================================
+           POCKETOPS · WAS WO LIEGT
+
+           Ein Verzeichnis aller Ablagen der Reihe. Zwei Stellen brauchen es:
+           die Übersicht sichert daraus das Gesamtsystem, und „Sichern &
+           Zurückholen" zeigt daraus an, was gerade im Browser liegt.
+
+           Es steht hier und nicht an beiden Stellen, weil zwei Kopien
+           auseinanderlaufen. Und eine hier vergessene Zeile heisst: die Arbeit
+           eines Werkzeugs wandert nicht in die Gesamtsicherung. Kommt ein
+           Werkzeug dazu, gehört sein Schlüssel hierher — der Schritt steht auch
+           in _design/LIESMICH.md unter „Ein neues Werkzeug aufnehmen".
+           ====================================================================== */
+
+        const PO_ABLAGEN = {
+
+            /* Schlüssel in localStorage → Werkzeug, dem sie gehören */
+            schluessel: {
+                po_kanban:        'Kanban',
+                po_kanban_bahnen: 'Kanban mit Bahnen',
+                po_tagesplan:     'Tagesplan',
+                po_mindmap:       'Mindmap',
+                po_roadmap:       'Roadmap',
+                po_whiteboard:    'Whiteboard',
+                po_diagramm:      'Diagramm',
+                po_markdown:      'Markdown-Editor',
+                po_raci:          'RACI-Matrix',
+                po_scoring:       'Entscheidungsmatrix',
+                po_matrix:        'Priorisierungsmatrix',
+                po_stakeholder:   'Stakeholder-Karte',
+                po_radar:         'Team-Radar',
+                po_rechner:       'Rechner',
+                po_timer:         'Timer',
+                po_dreigewinnt:   'Drei gewinnt',
+                po_viergewinnt:   'Vier gewinnt',
+                po_galgen:        'Galgenmännchen',
+                po_hub_ansicht:   'Übersicht (Angeheftetes)',
+                myWorkstationHub: 'Übersicht (eigene Verweise)',
+                po_bildausschnitt_einst: 'Bildausschnitt (Verzögerung)',
+                po_mindmap_seite_aus:    'Mindmap (Seitenleiste)',
+                po_roadmap_seite_aus:    'Roadmap (Seitenleiste)',
+                po_sprache:       'Spracheinstellung'
+            },
+
+            /* Davon die, die keine Arbeit sind, sondern Einstellung. Sie wandern
+               mit in die Sicherung — aber ein Browser, in dem nur sie stehen,
+               gilt als leer. Sonst meldete der frisch ausgepackte Ordner nach dem
+               ersten Sprachwechsel, es liege schon etwas darin. */
+            einstellungen: [
+                'po_sprache', 'po_hub_ansicht', 'po_mindmap_seite_aus',
+                'po_roadmap_seite_aus', 'po_bildausschnitt_einst', 'po_timer'
+            ],
+
+            /* Schlüssel aus früheren Fassungen. Sie werden beim ersten Start
+               gelesen und nicht mehr geschrieben. In die Sicherung gehören sie
+               trotzdem, solange sie da sind. */
+            alte: {
+                mein_lokales_kanban:           'Kanban (alter Stand)',
+                mein_lokales_kanban_swimlanes: 'Kanban mit Bahnen (alter Stand)',
+                mein_lokales_mindmap_v2:       'Mindmap (alter Stand)',
+                raci_data:                     'RACI-Matrix (alter Stand)',
+                decision_matrix:               'Entscheidungsmatrix (alter Stand)',
+                matrix_data:                   'Priorisierungsmatrix (alter Stand)',
+                matrix_labels:                 'Priorisierungsmatrix (alte Achsen)',
+                stakeholders:                  'Stakeholder-Karte (alter Stand)',
+                topics:                        'Team-Radar (alte Themen)',
+                members:                       'Team-Radar (alte Mitglieder)'
+            },
+
+            /* Fünf Werkzeuge legen nicht in localStorage ab, sondern in
+               IndexedDB: dort passen Bilder und Tonaufnahmen hinein, die den
+               Vorrat von localStorage sprengen würden.
+
+               Die Behälter stehen mit ihrem Schlüsselpfad dabei (null heisst: der
+               Schlüssel liegt ausserhalb des Wertes). Beim Sichern wäre das nicht
+               nötig — da liest man sie aus der Datenbank. Beim Zurückholen in
+               einen Browser, der das Werkzeug noch nie geöffnet hat, gibt es
+               aber nichts zu lesen: dort muss die Übersicht die Datenbank selbst
+               anlegen können. Genau das ist der Fall „neuer Rechner, Sicherung
+               einlesen", und ohne diese Angaben wäre er stumm fehlgeschlagen.
+
+               Ändert ein Werkzeug seine Behälter, gehört die Fassung hier hoch. */
+            datenbanken: {
+                'pocketops-notizbuch':  { werkzeug: 'Notizbuch',      fassung: 1, behaelter: { kv: null, bilder: 'id' } },
+                'pocketops-dokument':   { werkzeug: 'Dokument',       fassung: 1, behaelter: { kv: null, bilder: 'id' } },
+                'SlideCraftDB':         { werkzeug: 'SlideCraft',     fassung: 1, behaelter: { kv: null, library: 'id' } },
+                'pocketops-sprachmemo': { werkzeug: 'Sprachmemo',     fassung: 1, behaelter: { kv: null, ton: 'id' } },
+                'po_bildausschnitt':    { werkzeug: 'Bildausschnitt', fassung: 1, behaelter: { kv: null, bilder: 'id' } }
+            }
+        };
+
+        /* Name des Werkzeugs zu einem Schlüssel — oder null, wenn der Schlüssel
+           nicht von PocketOps stammt. Unter file:// liegt der Speicher aller
+           örtlichen Seiten beieinander, da kann Fremdes dabeisein. */
+        const poAblageName = k =>
+            PO_ABLAGEN.schluessel[k] || PO_ABLAGEN.alte[k] || null;
+
+        /* Gehört der Schlüssel zu PocketOps? Maßgeblich dafür, was in die
+           Gesamtsicherung wandert. */
+        const poAblageEigen = k => poAblageName(k) !== null;
+
+        /* ---------- Auskunft über den Speicher ----------
+           Für die Seite „Sichern & Zurückholen“, und zum Nachsehen in der Konsole,
+           wenn ein Werkzeug leer startet, obwohl etwas drinstehen müsste. */
+
+        function poBrowser() {
+            const u = navigator.userAgent || '';
+            if (/Firefox\//.test(u))  return 'Firefox';
+            if (/Edg\//.test(u))      return 'Edge';
+            if (/OPR\//.test(u))      return 'Opera';
+            if (/Chrome\//.test(u))   return 'Chrome';
+            if (/Safari\//.test(u))   return 'Safari';
+            return 'dieser Browser';
+        }
+
+        function poSpeicherLage() {
+            if (!_poSpeicherDa) return { da: false, browser: poBrowser(), bytes: 0, schluessel: [] };
+            const schluessel = [];
+            let bytes = 0;
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    const v = localStorage.getItem(k) || '';
+                    /* Zwei Byte je Zeichen: der Browser legt UTF-16 ab, und genau
+                       danach rechnet er auch seine Grenze. */
+                    const b = (k.length + v.length) * 2;
+                    bytes += b;
+                    schluessel.push({ name: k, bytes: b });
+                }
+            } catch (e) { /* mitten im Zählen abgebrochen — was da ist, wird gemeldet */ }
+            schluessel.sort((a, b) => b.bytes - a.bytes);
+            return { da: true, browser: poBrowser(), bytes, schluessel };
+        }
+
         /* Markenzeichen für die Kopfzeile — in jedem Werkzeug gleich */
         const PO_MARK = '<span class="po-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h16v8a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 4 16.5v-8Z"/><path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5"/><path d="M9.5 13.5h5"/></svg></span>';
 
@@ -1433,6 +1829,13 @@
             'Zur PocketOps-Übersicht': 'To the PocketOps overview',
             'Trinkgeld': 'Tip jar',
             'Speichern': 'Save',
+            /* Zwei Umfänge, zwei Beschriftungen: in der Übersicht alles auf
+               einmal, im Werkzeug nur dieses eine. */
+            'Tool speichern': 'Save this tool',
+            'Speichern Gesamtsystem': 'Save whole system',
+            'Gesamtsystem öffnen': 'Open whole system',
+            'Gesamtsystem zurückholen': 'Restore whole system',
+            'Ja, einlesen': 'Yes, read it in',
             'Öffnen': 'Open',
             'Zurücksetzen': 'Reset',
             'Abbrechen': 'Cancel',
@@ -1453,7 +1856,44 @@
             'Es ist nichts zu löschen.': 'There is nothing to delete.',
             'Zähler zurücksetzen': 'Reset counters',
             'Zähler zurückgesetzt': 'Counters reset',
-            'Gegen den Rechner': 'Against the computer'
+            'Gegen den Rechner': 'Against the computer',
+
+            /* Die Gesamtsicherung in der Übersicht */
+            'Das Gesamtsystem wird zusammengestellt …': 'The whole system is being put together …',
+            'Die Sicherung wird eingelesen …': 'The backup is being read in …',
+            'In diesem Browser liegt noch nichts von PocketOps.': 'There is nothing from PocketOps in this browser yet.',
+            'In dieser Sicherung steht nichts.': 'There is nothing in this backup.',
+            'Das ist keine Sicherung des Gesamtsystems. Die Datei eines einzelnen Werkzeugs gehört in dieses Werkzeug, dort über „Öffnen".':
+                'That is not a whole-system backup. A single tool\'s file belongs in that tool, using Open there.',
+            'Diese Präsentation als Datei speichern (Strg+S)': 'Save this presentation to a file (Ctrl+S)',
+            'Gesamtsystem gesichert: ein Werkzeug, {}.': 'Whole system saved: one tool, {}.',
+            'Gesamtsystem gesichert: {} Werkzeuge, {}.': 'Whole system saved: {} tools, {}.',
+            'Gesamtsystem zurückgeholt: ein Werkzeug. Die Seite lädt neu.':
+                'Whole system restored: one tool. The page is reloading.',
+            'Gesamtsystem zurückgeholt: {} Werkzeuge. Die Seite lädt neu.':
+                'Whole system restored: {} tools. The page is reloading.',
+            'Die Sicherung vom {} wird eingelesen. Sie ersetzt den jetzigen Stand dieser Werkzeuge: {}. Werkzeuge, die in der Datei nicht vorkommen, bleiben unverändert. Das lässt sich nicht rückgängig machen — sichere vorher, was du behalten willst.':
+                'The backup from {} will be read in. It replaces the current state of these tools: {}. Tools that do not appear in the file are left alone. This cannot be undone — save anything you want to keep first.',
+            'Das Gesamtsystem ließ sich nicht sichern: {}': 'The whole system could not be saved: {}',
+            'Beim Einlesen ging etwas schief: {} Der Stand ist jetzt womöglich nur halb eingelesen — lies die Sicherung noch einmal ein, sobald der Grund behoben ist.':
+                'Something went wrong while reading it in: {} The state may now be only half restored — read the backup in again once the cause is fixed.',
+
+            /* Der Streifen, wenn der Browser-Speicher nicht mitspielt */
+            'Nicht gespeichert: der Browser-Speicher ist voll.': 'Not saved: the browser store is full.',
+            'Alle PocketOps-Werkzeuge teilen sich einen Vorrat von wenigen Megabyte. Lege deine Arbeit jetzt mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab und räume in den anderen Werkzeugen auf, was du nicht mehr brauchst.':
+                'All PocketOps tools share one allowance of a few megabytes. Put your work into a .json file now, with the button at the top right, and clear out what you no longer need in the other tools.',
+            'Nicht gespeichert: dieser Browser lässt keinen Speicher zu.': 'Not saved: this browser allows no storage.',
+            'Im privaten Fenster und bei gesperrtem Speicher kann das Werkzeug nichts ablegen. Deine Arbeit ist nur so lange da, wie dieses Fenster offen bleibt. Lege sie mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab.':
+                'In a private window, or with storage blocked, the tool cannot put anything down. Your work lasts only as long as this window stays open. Put it into a .json file with the button at the top right.',
+            'Nicht gespeichert: der Browser behält den Stand nicht.': 'Not saved: the browser is not keeping the state.',
+            'Das Werkzeug hat geschrieben und beim Zurücklesen etwas anderes gefunden. Verlasse dich hier nicht auf den Browser-Speicher, sondern lege deine Arbeit mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab.':
+                'The tool wrote the state and found something else when reading it back. Do not rely on the browser store here — put your work into a .json file with the button at the top right.',
+            'Nicht gespeichert: der Browser hat den Stand abgelehnt.': 'Not saved: the browser refused the state.',
+            'Der Grund ist von hier aus nicht zu erkennen. Lege deine Arbeit jetzt mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab, damit sie nicht an diesem Fenster hängt.':
+                'The reason cannot be made out from here. Put your work into a .json file now, with the button at the top right, so it does not hang on this one window.',
+            'Nicht gespeichert: die Ablage des Browsers antwortet nicht.': 'Not saved: the browser store is not responding.',
+            'Dieses Werkzeug legt in der Browser-Datenbank ab, und die ist gerade nicht zu erreichen — im privaten Fenster zum Beispiel. Lege deine Arbeit mit dem Knopf oben rechts in der Kopfzeile als .json-Datei ab, solange dieses Fenster offen ist.':
+                'This tool puts its work into the browser database, and that cannot be reached right now — in a private window, for instance. Put your work into a .json file with the button at the top right, while this window is still open.'
         };
 
         /* Text der Hilfe selbst — in beiden Sprachen, nicht über das Wörterbuch. */
@@ -1466,6 +1906,8 @@
                 oertlichMitNetz: 'Deine Arbeit bleibt auf diesem Rechner und wird nirgendwohin geschickt. Dieses Werkzeug lädt beim Öffnen allerdings eine Programmbibliothek nach, von: {}. Der fremde Server erfährt dabei deine IP-Adresse. Woran du arbeitest, verlässt den Rechner auch dann nicht.',
                 sicherung: 'Sichern und Zurückholen',
                 sicherungText: 'Mit <b>Speichern</b> legt das Werkzeug deine Arbeit als Datei neben sich — eine <b>.json</b>-Datei. Das ist nichts Gefährliches: eine Textdatei, die du mit dem Editor öffnen und lesen kannst. Mit <b>Öffnen</b> holst du sie zurück, in dieses oder in ein anderes Fenster.',
+                sofort: 'Was du eingibst, wird augenblicklich abgelegt — im Speicher des Browsers, in dem du gerade sitzt: {}. Du musst dafür nichts anklicken, und beim nächsten Öffnen ist alles wieder da.',
+                andererBrowser: 'Dieser Speicher gehört dem Browser, nicht der Datei. Öffnest du dasselbe Werkzeug in einem anderen Browser, ist es dort leer — deine Arbeit ist nicht verloren, sie liegt im ersten. Die .json-Datei ist der Weg von einem Browser zum anderen.',
                 sicherungWarum: 'Warum das wichtig ist: deine Arbeit liegt sonst nur im Browser. Räumt jemand den Browser auf, ist sie weg. Die gespeicherte Datei bleibt.',
                 mehr: 'Ausführlich: Sichern &amp; Zurückholen',
                 schluss: 'Verstanden'
@@ -1478,6 +1920,8 @@
                 oertlichMitNetz: 'Your work stays on this computer and is not sent anywhere. This tool does fetch a code library when it opens, from: {}. That server learns your IP address. What you are working on still never leaves the machine.',
                 sicherung: 'Saving and restoring',
                 sicherungText: '<b>Save</b> puts your work into a file next to the tool — a <b>.json</b> file. Nothing dangerous about it: a text file you can open and read in any editor. <b>Open</b> brings it back, into this window or another one.',
+                sofort: 'Whatever you type is put down at once — in the store of the browser you are sitting in right now: {}. There is nothing to click for it, and the next time you open the tool it is all back.',
+                andererBrowser: 'That store belongs to the browser, not to the file. Open the same tool in a different browser and it will be empty there — your work is not lost, it is in the first one. The .json file is the way from one browser to the other.',
                 sicherungWarum: 'Why this matters: otherwise your work only lives inside the browser. If someone clears the browser, it is gone. The saved file stays.',
                 mehr: 'In full: Backups &amp; restoring',
                 schluss: 'Got it'
@@ -1810,6 +2254,8 @@
             }
             teile.push('<div class="po-hilfe-teil">'
                      + '<div class="po-hilfe-titel">' + t.sicherung + '</div>'
+                     + '<p style="margin:0 0 8px">' + t.sofort.replace('{}', '<b>' + poEsc(poBrowser()) + '</b>') + '</p>'
+                     + '<p style="margin:0 0 8px">' + t.andererBrowser + '</p>'
                      + '<p style="margin:0 0 8px">' + t.sicherungText + '</p>'
                      + '<p style="margin:0 0 8px">' + t.sicherungWarum + '</p>'
                      + '<p style="margin:0"><a href="' + _poSicherungPfad() + '">' + t.mehr + '</a></p></div>');

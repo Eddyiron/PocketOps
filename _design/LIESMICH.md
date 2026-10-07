@@ -29,10 +29,11 @@ auseinander. Darum stehen die gemeinsamen Teile hier einmal als Urfassung:
 | Datei | Inhalt |
 | --- | --- |
 | `po-tokens.css` | Farben, Maße, Schatten, Bausteinklassen (`.po-btn`, `.po-panel`, `.po-table` …) |
-| `po-base.js` | `poToast`, `poConfirm`, `poAsk`, `poEsc`, `poDownload`, `poReadFile`, dazu Sprache und Anleitung |
+| `po-base.js` | `poToast`, `poConfirm`, `poAsk`, `poEsc`, `poDownload`, `poReadFile`, das Speichern (`poSichern`, `poLaden`, `poBeimVerlassen`), dazu Sprache und Anleitung |
 | `sprache/<Datei>.js` | je Werkzeug: Kurzanleitung in beiden Sprachen und das Wörterbuch |
 | `po-icon.svg` | das Produktzeichen, das als Favicon im Kopf jedes Werkzeugs steht |
 | `sync.mjs` | schreibt alles in die Werkzeuge |
+| `pruef/` | die Proben: Chrome ohne Fenster, Werkzeuge bedienen, nachsehen |
 
 Die Werkzeuge **laden diese Dateien nicht**. Sie tragen den Inhalt eingebettet
 zwischen Marken:
@@ -65,6 +66,240 @@ außerhalb der Marken bleibt unberührt — der werkzeugeigene Teil also auch.
 
 **Nicht von Hand zwischen den Marken schreiben.** Der nächste Lauf überschreibt
 es. Werkzeugeigenes CSS gehört unter den Abschnitt „nur für dieses Werkzeug".
+
+## Speichern
+
+**Jede Eingabe wird augenblicklich abgelegt.** Für den Browser-Speicher gibt es
+keinen Speicherknopf und soll keinen geben: wer ein Ticket anlegt und das Fenster
+schliesst, muss es beim nächsten Öffnen wiederfinden. Der Knopf oben rechts ist
+etwas anderes — er legt die `.json`-Datei ab, die den Browser überlebt.
+
+Die Werkzeuge sprechen `localStorage` nicht selbst an. Sie gehen über drei
+Funktionen aus `po-base.js`:
+
+```js
+poSichern('po_kanban', tickets)     // schreibt sofort, liefert true/false
+poLaden('po_kanban', [])            // liest zurück, verträgt Schrott
+poVergessen('po_kanban')            // Stand löschen
+```
+
+Das ist nicht Geschmackssache, sondern hat drei Gründe.
+
+**Erster Grund: ein Fehlschlag darf nicht stumm bleiben.** Alle Werkzeuge laufen
+unter derselben Adresse `file://` und teilen sich darum *einen* Vorrat von wenigen
+Megabyte. Läuft er über, wirft `setItem`. Vorher stand der Aufruf in acht
+Werkzeugen ohne `try` — die Karte war gezeichnet, gespeichert war nichts, und die
+Ausnahme fiel mitten aus `render()` heraus. In den übrigen stand ein `catch`, das
+den Fehler verschluckte. Beides endete gleich: der Nutzer sah seine Arbeit und
+hatte sie nicht. `poSichern` fängt den Fehler, liest den Wert zurück und stellt
+bei einem Fehlschlag einen Streifen unten ans Fenster, der stehen bleibt, bis
+wieder geschrieben werden kann.
+
+Der Streifen verschwindet nur, wenn *derselbe* Schlüssel wieder durchgeht. Sonst
+hätte eine Nebensache, die auch bei vollem Speicher noch hineinpasst — eine
+Seitenleisten-Einstellung etwa —, den Hinweis weggeräumt, während die eigentliche
+Arbeit weiterhin nicht gespeichert wird.
+
+**Zweiter Grund: ein unbrauchbarer Stand darf nicht zum Absturz führen.**
+`poLaden` gibt bei kaputtem JSON den Ersatzwert zurück statt zu werfen. Damit
+braucht der Aufrufer kein `try` mehr — und soll auch keines haben, denn dort
+verdeckt es nur noch Fehler im Quelltext. Genau das war im Kanban und in der
+Stakeholder-Karte passiert: beide luden ihren Stand, *bevor* die Hilfsfunktion
+dafür deklariert war. Der `ReferenceError` aus der Deklarationslücke fiel ins
+`catch`, der Lader gab leer zurück, und das erste Zeichnen schrieb das Leere über
+den gespeicherten Stand. Die Tickets waren nach jedem Neuöffnen weg — in jedem
+Browser, von Anfang an.
+
+Daraus die Regel: **erst alle Deklarationen, dann laden, dann zeichnen.** Der
+Ladeaufruf steht am besten unten, direkt vor dem ersten `render()`, nicht oben bei
+`let tickets = …`.
+
+**Dritter Grund: alte Stände sollen nicht verloren gehen.** `poLaden` gibt
+unparsbaren Rohtext zurück, wenn der Ersatzwert eine Zeichenkette ist — so liest
+der Markdown-Editor seinen Text von früher weiter, der damals nackt im Speicher
+lag. Für Ja/Nein gibt es `_poJa`, das `true`, `1` und `'1'` gleich behandelt.
+
+### Was gebündelt schreibt, muss beim Verlassen abschliessen
+
+Ein Zeichenbrett schreibt nicht bei jedem Strich. Whiteboard, Notizbuch, Dokument
+und SlideCraft bündeln ihre Schreibvorgänge auf eine halbe Sekunde. Wer tippt und
+sofort schliesst, verlöre sonst den letzten Satz. Dafür gibt es:
+
+```js
+poBeimVerlassen(sichern);
+```
+
+Das hängt sich an `visibilitychange`, `pagehide` **und** `beforeunload`. Nicht nur
+an `beforeunload`: beim Schliessen eines Tabs löst Chrome den nicht verlässlich
+aus. Der Aufruf muss mehrfaches Ausführen aushalten — bei einem Schreibvorgang,
+der immer denselben Stand ablegt, ist das gegeben. `visibilitychange` hat einen
+zweiten Nutzen: es greift auch beim blossen Tab-Wechsel, dann ist der Stand schon
+weg, bevor etwas schiefgehen kann.
+
+### Die vier Werkzeuge mit eigener Ablage
+
+Notizbuch, Dokument, SlideCraft und Sprachmemo legen nicht in `localStorage` ab,
+sondern in IndexedDB — dort passen Bilder und Tonaufnahmen hinein, die den Vorrat
+von `localStorage` sprengen würden. Sie benutzen `poSichern` also nicht, sollen
+aber denselben Streifen zeigen:
+
+```js
+if (!db) { poSpeicherStoerung(); return; }     // statt stumm zurückzugehen
+…
+poSpeicherBehoben();                           // nach geglücktem Schreiben
+```
+
+Vorher stand an diesen Stellen ein nacktes `return` beziehungsweise ein
+`console.warn`. In der Konsole sieht das niemand, der eine Präsentation baut.
+
+### Eine Falle in SlideCraft
+
+Dort steht der Block `PO-BASE` im **letzten** `<script>` der Datei, nicht im
+ersten. Alles aus `po-base.js`, was beim Auswerten eines früheren Blocks
+*aufgerufen* wird, ist dort noch nicht deklariert. Zur Laufzeit ist es da — die
+Anmeldung von `poBeimVerlassen` wartet darum auf `DOMContentLoaded`.
+
+### Der Speicher gehört dem Browser
+
+Das ist die Verwechslung, die sich sonst nicht auflösen lässt: wer dieselbe Datei
+abwechselnd in Chrome und in Edge öffnet, sieht zwei getrennte Ablagen und hält
+das für Datenverlust. Zwei Stellen sagen es darum ausdrücklich:
+
+* die Anleitung in jedem Werkzeug nennt den Browser, in dem man gerade sitzt
+  (`poBrowser()`), und erklärt die Trennung;
+* `Sicherung.html` zeigt oben, was im Speicher liegt, je Werkzeug mit Grösse und
+  Belegung (`poSpeicherLage()`). Liegt dort nichts, sagt der Kasten, dass man im
+  anderen Browser nachsehen soll.
+
+Die Grenze von 5 MB ist nicht abfragbar. Der Balken dort ist als Anhalt zu lesen,
+die Zahl davor ist gemessen.
+
+### Was bewusst nicht gemacht wurde
+
+**Kein Durchschreiben in eine echte Datei.** Das wäre haltbar auch gegen
+Aufräumprogramme, bräuchte aber die File-System-Access-Schnittstelle, und ob die
+bei `file://`-Adressen bereitsteht, ist nicht geprüft. Solange das offen ist,
+bleibt die `.json`-Datei der Weg nach draussen.
+
+**Kein Zurückholen eines laufenden Timers.** Der Timer merkt sich die *eingestellte*
+Zeit, nicht den Lauf. Einen laufenden Zähler über das Schliessen zu retten hiesse
+zu entscheiden, ob er in der Zwischenzeit weitergelaufen ist — und beides wäre
+falsch.
+
+### Zwei Umfänge, zwei Knöpfe
+
+Vorher hiess derselbe Knopf in sieben Werkzeugen „Sichern", in sechs
+„Speichern" und in einem „Alles sichern" — und in der Übersicht sicherte er
+nur die Übersicht. Jetzt sagt die Beschriftung, was er umfasst:
+
+| Knopf | wo | Umfang |
+| --- | --- | --- |
+| `Speichern Gesamtsystem` | Übersicht | alles: die Übersicht, jedes Werkzeug, Bilder und Tonaufnahmen. Zurück über `Gesamtsystem öffnen`. |
+| `Tool speichern` | im Werkzeug | nur dieses eine. Zurück über `Öffnen`. |
+
+Die Beschriftung darf nicht wieder auseinanderlaufen; `_design/pruef/knoepfe.mjs`
+prüft über alle Dateien, dass kein Sicherungsknopf eine alte Beschriftung trägt
+und dass alle sechzehn mit Sicherung `Tool speichern` heissen.
+
+Was das Gesamtsystem umfasst, steht nicht in der Übersicht, sondern in
+`PO_ABLAGEN` in `po-base.js`: die Schlüssel in `localStorage`, die aus früheren
+Fassungen, und die fünf Datenbanken in IndexedDB. Dieselbe Liste speist die
+Auskunft auf `Sicherung.html`. **Kommt ein Werkzeug dazu, gehört sein Schlüssel
+dorthin** — sonst wandert seine Arbeit nicht in die Gesamtsicherung, und das
+fällt erst auf, wenn jemand sie braucht.
+
+### Wie die Übersicht an die Werkzeuge kommt
+
+Alle Dateien der Reihe laufen unter derselben Adresse `file://`. Der Browser
+gibt ihnen darum denselben Speicher: die Übersicht liest den Stand aller
+Werkzeuge, ohne eines davon zu öffnen. Nachgemessen in Chrome —
+`indexedDB.databases()` nennt von der Übersicht aus die Datenbanken der
+Werkzeuge, und ihr Inhalt lässt sich lesen.
+
+Vier Dinge, über die der Entwurf gestolpert ist:
+
+1. **`indexedDB.open(name)` legt eine fehlende Datenbank an.** Ein Sichern darf
+   nichts hinterlassen, was vorher nicht da war. `_gsVorhandene()` fragt darum
+   erst `databases()`; wo das fehlt, öffnet es, erkennt am leeren
+   Behälterverzeichnis die eben entstandene Datenbank und löscht sie wieder.
+
+2. **Beim Zurückholen gibt es nichts zu lesen.** Auf einem Rechner, der ein
+   Werkzeug noch nie geöffnet hat, existiert seine Datenbank nicht — und damit
+   auch kein Behälter, in den man schreiben könnte. `_gsDbSchreiben` würde
+   stumm nichts tun. Darum steht in `PO_ABLAGEN.datenbanken` die Form jedes
+   Behälters samt Schlüsselpfad, und die Übersicht legt sie bei Bedarf selbst
+   an. Das ist genau der Fall „neuer Browser, Sicherung einlesen", also der
+   Hauptzweck der ganzen Übung; `_design/pruef/gesamtsystem.mjs` fährt ihn mit
+   zwei Chrome-Profilen durch.
+
+3. **Ein Blob überlebt `JSON.stringify` nicht.** Es käme ein leeres Objekt
+   heraus, und niemand merkte etwas — eine Sicherung ohne die Tonaufnahmen,
+   die aussieht wie eine vollständige. Bilder und Ton gehen darum als Base64
+   mit, rekursiv durch den ganzen Wert, weil der Blob je nach Werkzeug
+   verschieden tief liegt. Umgewandelt wird in Stücken von 32 kB:
+   `String.fromCharCode` mit einer Tonaufnahme als Argumentliste sprengt den
+   Aufrufstapel.
+
+4. **Beim Zurückholen muss der Behälter erst geleert werden.** Sonst blieben
+   Bilder stehen, die in der Sicherung nicht vorkommen, und der Vorrat wüchse
+   mit jedem Einlesen.
+
+Zurückgeholt wird, was in der Datei steht; Werkzeuge, die darin nicht
+vorkommen, bleiben unverändert. Die Rückfrage sagt das ausdrücklich und zählt
+die betroffenen Werkzeuge auf — „alles wird ersetzt" wäre gelogen, und
+„irgendwas wird ersetzt" wäre keine Grundlage für ein Ja.
+
+Die Werte aus `speicher` gehen mit `localStorage.setItem` zurück, **nicht** über
+`poSichern`: in der Datei liegen sie schon als fertiger Text, so wie sie im
+Speicher standen. `poSichern` würde sie ein zweites Mal in JSON einpacken.
+
+### Was die Gesamtsicherung nicht ist
+
+**Keine Sicherung der Dateien selbst.** Sie enthält, was du angelegt hast, nicht
+die Werkzeuge. Die kommen aus der ZIP.
+
+**Nicht klein.** Eine Tonaufnahme oder ein Dutzend Bilder in SlideCraft machen
+aus wenigen Kilobyte schnell viele Megabyte. Das ist der Preis der
+Vollständigkeit; wie gross es geworden ist, sagt die Meldung am Ende.
+
+**Nicht verschlüsselt.** Eine Textdatei, lesbar im Editor — wie die
+Einzelsicherungen auch. Wer sie in eine Wolke legt, legt den Inhalt dorthin.
+
+## Die Proben
+
+```
+node _design/pruef/alle.mjs
+node _design/pruef/speicher.mjs Kanban      nur die passenden
+```
+
+Sie starten Chrome ohne Fenster, laden die Werkzeuge als `file://`-Adressen und
+bedienen sie. Es braucht **kein** `npm install`: der Treiber in `pruef/cdp.mjs`
+spricht das DevTools-Protokoll über den WebSocket, den Node selbst mitbringt.
+Steht Chrome woanders, hilft `POCKETOPS_CHROME`.
+
+| Probe | prüft |
+| --- | --- |
+| `speicher.mjs` | Je Werkzeug: etwas eingeben, Seite neu laden, nachsehen, ob es noch da ist. Das ist die Probe, an der Kanban und Stakeholder-Karte durchgefallen sind. |
+| `warnung.mjs` | Speicher randvoll schreiben, dann ein Ticket anlegen: steht der Streifen, bleibt der Haken „gespeichert" aus, zeichnet das Brett trotzdem weiter, geht der Streifen nach dem Aufräumen weg? |
+| `ablage.mjs` | Notizbuch, Dokument und SlideCraft mit ausgefallener IndexedDB: kommt der Streifen, geht er wieder weg? |
+| `gesamtsystem.mjs` | In vier Werkzeugen etwas anlegen, Gesamtsystem sichern, Chrome mit frischem Profil starten, einlesen, überall nachsehen — ein Bild inbegriffen, einmal durch Base64 und zurück. |
+| `knoepfe.mjs` | Dass die Beschriftung der Sicherungsknöpfe nicht wieder auseinanderläuft, in beiden Sprachen. |
+| `sicherung.mjs` | Der Kasten auf `Sicherung.html`: nennt er den Browser, meldet er leer als leer, steht der Werkzeugname statt des Schlüssels da, geht er beim Umschalten der Sprache mit? |
+| `sprache.mjs` | Die neuen Texte auf Englisch, und `poLuecken()` darf bei ihnen nichts melden. |
+
+Jede Probe startet ein eigenes Chrome mit **frischem Profil**. Der Speicher ist
+damit leer, und eine bestandene Probe beweist, dass das Werkzeug selbst
+geschrieben hat — nicht, dass von früher noch etwas dalag.
+
+Zwei Dinge, über die man beim Schreiben einer Probe stolpert:
+
+1. *Der Haken „gespeichert" steht womöglich schon.* Die Seite speichert beim Laden
+   einmal erfolgreich. Wer prüfen will, dass er nach einem Fehlschlag ausbleibt,
+   muss ihn vorher wegnehmen.
+2. *Rückwärtsstriche in einer Vorlage in einer Vorlage.* Aus `/\s+/` wurde beim
+   ersten Versuch `/s+/`; das strich jedes s aus dem Text, und zwei Zusicherungen
+   schlugen scheinbar fehl, obwohl die Seite stimmte. Normalisiert wird darum in
+   Node, nicht in der Seite.
 
 ## Zwei Sprachen, ein Quelltext
 
@@ -137,6 +372,19 @@ Werkzeug ein Unterordner, Datum rückwärts voran, die letzten drei behalten —
 und wie das Zurückholen geht. Dazu die häufigen Sorgen und was wirklich
 passiert.
 
+Oben darüber steht, was gerade wirklich im Browser liegt: welcher Browser den
+Speicher hält, welches Werkzeug wie viel belegt, und was die zwei Umfänge der
+Sicherung unterscheidet. Der Kasten steht **einmal** da und nicht je Sprache,
+weil sein Inhalt aus Zahlen besteht — die Beschriftung setzt das Skript, und
+po-base ruft nach dem Umschalten von sich aus `poNeuZeichnen` auf. Die Namen
+der Werkzeuge kommen aus `PO_ABLAGEN`, nicht aus einer zweiten Liste.
+
+Liegt dort nichts, sagt der Kasten nicht „leer", sondern den Grund, der
+wahrscheinlicher ist: im anderen Browser nachsehen. Einstellungen — Sprache,
+Angeheftetes, Seitenleisten — zählen dabei nicht als Arbeitsstand, sonst
+meldete der frisch ausgepackte Ordner nach dem ersten Sprachwechsel, es liege
+schon etwas darin.
+
 Sie steht in der Übersicht in der eigenen Gruppe „Zum Nachlesen" und wird aus
 jedem Hilfefenster heraus verlinkt.
 
@@ -147,7 +395,7 @@ Chip mit einem Satz dazu, rechts die Aktionen. Das Markenzeichen führt zurück
 auf `Start_PocketOps.html` eine Ebene darüber.
 
 Reihenfolge der Aktionen rechts, von links nach rechts: erst das Beiläufige
-(Sichern, Öffnen), dann ein Trenner, dann das Gefährliche (Zurücksetzen) und
+(Tool speichern, Öffnen), dann ein Trenner, dann das Gefährliche (Zurücksetzen) und
 zuletzt die Hauptsache des Werkzeugs (Exportieren, Neues Ticket …).
 
 ## Das Produktzeichen
@@ -348,12 +596,12 @@ nicht dreimal hintereinander dasselbe kommt.
 
 `Start_PocketOps.html` ordnet die Werkzeuge **nach Mächtigkeit**: oben die ausgebauten,
 in denen man länger sitzt, darunter das Tägliche und die Methoden für den
-Anlass, zuletzt die Pause. Neun, sechs, fünf und drei Werkzeuge, dazu eine
+Anlass, zuletzt die Pause. Zehn, sechs, fünf und drei Werkzeuge, dazu eine
 Seite zum Nachlesen.
 
 | Gruppe | Gedanke | Werkzeuge |
 | --- | --- | --- |
-| **Große Werkzeuge** | ausgebaut, für längeres Arbeiten | Tagesplan, SlideCraft, Dokument, Mindmap, Diagramm, Whiteboard, PDF-Werkzeuge, Kanban, Kanban mit Bahnen |
+| **Große Werkzeuge** | ausgebaut, für längeres Arbeiten | Tagesplan, SlideCraft, Dokument, Mindmap, Diagramm, Whiteboard, PDF-Werkzeuge, Kanban, Kanban mit Bahnen, Roadmap |
 | **Am Schreibtisch** | allein, im täglichen Lauf | Notizbuch, Sprachmemo, Bildausschnitt, Markdown-Editor, Rechner, Timer |
 | **Mit anderen** | Besprechung, Werkstatt, Abstimmung | RACI-Matrix, Entscheidungsmatrix, Priorisierungsmatrix, Stakeholder-Karte, Team-Radar |
 | **In der Pause** | fünf Minuten gegen den Rechner | Drei gewinnt, Vier gewinnt, Galgenmännchen |
@@ -379,3 +627,13 @@ unter `po_hub_ansicht`.
    `_design/sprache/Start_PocketOps.js` nachtragen.
 5. Auf Englisch schalten, das Werkzeug einmal durchklicken und `poLuecken()`
    abrufen. Was dort noch steht, fehlt im Wörterbuch.
+6. Den Stand über `poSichern`/`poLaden` ablegen — nie über `localStorage`
+   unmittelbar — und **erst nach allen Deklarationen laden**, direkt vor dem
+   ersten Zeichnen. Warum, steht oben unter „Speichern".
+7. Den Schlüssel in `PO_ABLAGEN` in `po-base.js` eintragen. Ohne das wandert
+   die Arbeit des Werkzeugs **nicht** in die Gesamtsicherung, und auf
+   `Sicherung.html` steht ein Schlüssel ohne Namen. Legt das Werkzeug in
+   IndexedDB ab, gehören auch seine Behälter samt Schlüsselpfad dorthin.
+8. Den Sicherungsknopf `Tool speichern` nennen.
+9. In `_design/pruef/speicher.mjs` eine Probe eintragen: etwas eingeben, neu
+   laden, nachsehen. Dann `node _design/pruef/alle.mjs`.
